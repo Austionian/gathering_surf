@@ -1,4 +1,4 @@
-use axum_tailwind_template::{get_configuration, startup};
+use gathering_surf::{get_configuration, startup};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::Level;

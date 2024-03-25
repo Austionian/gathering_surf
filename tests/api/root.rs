@@ -9,5 +9,5 @@ async fn it_returns_the_index() {
     let response = reqwest::get(format!("http://{}/", &addr)).await.unwrap();
 
     assert_eq!(response.status().as_u16(), 200);
-    assert!(response.text().await.unwrap().contains("Welcome"));
+    assert!(response.text().await.unwrap().contains("Gathering Surf"));
 }

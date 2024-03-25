@@ -20,9 +20,9 @@ RUN apt-get update -y \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/axum_tailwind_template axum_tailwind_template 
+COPY --from=builder /app/target/release/gathering_surf gathering_surf 
 COPY config config
 COPY assets assets
 COPY templates templates
 ENV APP_ENVIRONMENT production 
-ENTRYPOINT ["./axum_tailwind_template]
+ENTRYPOINT ["./gathering_surf]
