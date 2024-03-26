@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.81"
 axum = "0.7"
 chrono = "0.4"
 config = { version = "0.14", default-features = false, features = ["yaml"] }

@@ -1,20 +1,64 @@
 use crate::{AppState, TEMPLATES};
-use axum::{extract::State, response::Html};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::{Html, IntoResponse, Response},
+};
 use chrono::{DateTime, Local, TimeZone};
 use std::sync::Arc;
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct Forecast {
+    properties: Properties,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct Properties {
+    wave_height: String,
+}
+
 /// Handler to return the website's index
-pub async fn root(State(state): State<Arc<AppState>>) -> Html<String> {
+pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
     let mut context = tera::Context::new();
 
     context.insert("title", &state.title);
 
     let data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt")
-        .await
-        .unwrap()
+        .await?
         .text()
-        .await
+        .await?;
+
+    let client = reqwest::Client::builder()
+        .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
+        .build()
         .unwrap();
+
+    let forecast = client
+        .get("https://api.weather.gov/gridpoints/MKX/91,67")
+        .send()
+        .await?
+        .json::<serde_json::Value>()
+        .await?;
+
+    println!(
+        "{:?}",
+        forecast
+            .get("properties")
+            .unwrap()
+            .get("waveHeight")
+            .unwrap()
+            .get("values")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .first()
+            .unwrap()
+            .get("value")
+            .unwrap()
+            .as_f64()
+            .unwrap()
+    );
 
     let latest = data.lines().collect::<Vec<_>>();
     let latest = latest.get(2).unwrap();
@@ -50,7 +94,32 @@ pub async fn root(State(state): State<Arc<AppState>>) -> Html<String> {
     context.insert("gusts", gusts);
 
     match TEMPLATES.render("index.html", &context) {
-        Ok(s) => Html(s),
-        Err(_) => Html("<html><body>Error</body></html>".to_string()),
+        Ok(s) => Ok(Html(s)),
+        Err(_) => Ok(Html("<html><body>Error</body></html>".to_string())),
+    }
+}
+
+// Make our own error that wraps `anyhow::Error`.
+pub struct AppError(anyhow::Error);
+
+// Tell axum how to convert `AppError` into a response.
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {}", self.0),
+        )
+            .into_response()
+    }
+}
+
+// This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
+// `Result<_, AppError>`. That way you don't need to do that manually.
+impl<E> From<E> for AppError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(err: E) -> Self {
+        Self(err.into())
     }
 }
