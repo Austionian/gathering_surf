@@ -1,11 +1,13 @@
 use crate::{AppState, TEMPLATES};
+use anyhow::anyhow;
 use axum::{
     extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
 };
 use chrono::{DateTime, Local, TimeZone};
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
+use tracing::Value;
 
 struct Latest {
     as_of: String,
@@ -62,6 +64,21 @@ impl Latest {
     }
 }
 
+#[derive(Debug)]
+struct WaveHeightForecast {
+    value: f64,
+    valid_time: String,
+}
+
+impl From<serde_json::Value> for WaveHeightForecast {
+    fn from(v: serde_json::Value) -> Self {
+        let value = v.get("value").unwrap().as_f64().unwrap();
+        let valid_time = v.get("validTime").unwrap().to_string();
+
+        Self { value, valid_time }
+    }
+}
+
 /// Handler to return the website's index
 pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
     let mut context = tera::Context::new();
@@ -80,24 +97,21 @@ pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, Ap
         .json::<serde_json::Value>()
         .await?;
 
-    println!(
-        "{:?}",
-        forecast
-            .get("properties")
-            .unwrap()
-            .get("waveHeight")
-            .unwrap()
-            .get("values")
-            .unwrap()
-            .as_array()
-            .unwrap()
-            .first()
-            .unwrap()
-            .get("value")
-            .unwrap()
-            .as_f64()
-            .unwrap()
-    );
+    let wave_heights = forecast
+        .get("properties")
+        .ok_or(anyhow!("no properties found!"))?
+        .get("waveHeight")
+        .ok_or(anyhow!("no wave heights found!"))?
+        .get("values")
+        .ok_or(anyhow!("no values found!"))?
+        .as_array()
+        .ok_or(anyhow!("array not found!"))?
+        .clone()
+        .into_iter()
+        .map(WaveHeightForecast::from)
+        .collect::<Vec<_>>();
+
+    println!("{:?}", wave_heights);
 
     context.insert("title", &state.title);
     context.insert("as_of", &latest.as_of);
