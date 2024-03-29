@@ -58,6 +58,44 @@
             </tbody>
           </table>
         </div>
+        <div>
+          <canvas id="myChart"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+          const ctx = document.getElementById("myChart");
+
+          new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: [{{ wave_height_labels | safe }}],
+              datasets: [
+                {
+                  label: "wave height (feet)",
+                    data: [{{ wave_height_data }}],
+                  borderWidth: 1,
+                    fill: true,
+                    pointRadius: 1,
+                },
+              ],
+            },
+            options: {
+                elements: {
+                    line: {
+                        tension: 0.2
+                    }
+                },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                    max: 8,
+                },
+              },
+            },
+          });
+        </script>
       </div>
     </div>
   </div>
