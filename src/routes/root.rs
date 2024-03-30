@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Response},
 };
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use std::sync::Arc;
 
 struct Latest {
@@ -44,7 +44,7 @@ impl Latest {
 
     fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
         let as_of = as_of.trim().split(" ").collect::<Vec<_>>();
-        let as_of: DateTime<Local> = chrono::Utc
+        let as_of: DateTime<Local> = Utc
             .with_ymd_and_hms(
                 as_of.get(0).unwrap().parse::<i32>().unwrap(),
                 as_of.get(1).unwrap().parse::<u32>().unwrap(),
@@ -66,11 +66,15 @@ impl Latest {
 #[derive(Debug)]
 struct WaveHeightData(Vec<WaveHeightForecast>);
 
+fn convert_meter_to_feet(value: f64) -> f64 {
+    value * 3.281
+}
+
 impl WaveHeightData {
     fn get_data(&self) -> String {
         self.0
             .iter()
-            .map(|data| format!("{:.3},", data.value * 3.281))
+            .map(|data| format!("{:.3},", convert_meter_to_feet(data.value)))
             .collect()
     }
 
@@ -79,6 +83,20 @@ impl WaveHeightData {
             .iter()
             .map(|data| format!("'{}',", data.valid_time))
             .collect()
+    }
+
+    fn get_current_wave_height(&self) -> String {
+        for wave_height in self.0.iter() {
+            if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Local::now() {
+                let height = convert_meter_to_feet(wave_height.value);
+                if height < 1.5 {
+                    return "Flat".to_string();
+                }
+                return height.to_string();
+            }
+        }
+
+        "Flat".to_string()
     }
 }
 
@@ -99,7 +117,7 @@ fn parse_hour(s: &str) -> anyhow::Result<usize> {
 
 fn increment_time(t: &str, amount: usize) -> anyhow::Result<String> {
     let time = t.strip_prefix("\"").unwrap();
-    let time: DateTime<Local> = chrono::DateTime::parse_from_str(time, "%+").unwrap().into();
+    let time: DateTime<Local> = DateTime::parse_from_str(time, "%+").unwrap().into();
 
     Ok((time + std::time::Duration::from_secs(amount as u64 * 3_600)).to_string())
 }
@@ -185,6 +203,10 @@ pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, Ap
     context.insert("gusts", &latest.gusts);
     context.insert("wave_height_data", &wave_heights.get_data());
     context.insert("wave_height_labels", &wave_heights.get_labels());
+    context.insert(
+        "current_wave_height",
+        &wave_heights.get_current_wave_height(),
+    );
 
     match TEMPLATES.render("index.html", &context) {
         Ok(s) => Ok(Html(s)),

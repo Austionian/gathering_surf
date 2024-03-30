@@ -1,104 +1,251 @@
 {% extends "base.html" %} {% block body %}
-<div>
-  <h1 class="text-primary-600 dark:text-primary-300">Gathering Surf</h1>
-  <div class="px-4 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-primary-500">
-          Right Now
-        </h1>
+<main>
+  <header>
+    <!-- Secondary navigation -->
+    <nav class="flex overflow-x-auto border-b border-white/10 py-4">
+      <ul
+        role="list"
+        class="flex min-w-full flex-none gap-x-6 px-4 text-sm font-semibold leading-6 text-gray-400 sm:px-6 lg:px-8"
+      >
+        <li>
+          <a href="#" class="text-indigo-400">Overview</a>
+        </li>
+        <li>
+          <a href="#" class="">Activity</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Heading -->
+    <div
+      class="border-t border-white/5 flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-700/10 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
+    >
+      <h1 class="flex self-center gap-x-3 text-base leading-7">Atwater</h1>
+      <div
+        class="flex order-first rounded-full bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 sm:order-none"
+      >
+        <div
+          class="flex-none rounded-full bg-green-400/10 p-1 mr-3 text-green-400"
+        >
+          <div class="h-2 w-2 rounded-full bg-current"></div>
+        </div>
+        Live as of {{ as_of }}
       </div>
     </div>
-    <div class="mt-8 flow-root">
-      <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-        <div class="inline-block min-w-full py-2 align-middle">
-          <table
-            class="min-w-full border-separate border-spacing-0 text-primary-500"
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 bg-gray-700/10 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
+        <p class="text-sm font-medium leading-6 text-gray-400">
+          Forecasted Wave Height
+        </p>
+        <p class="mt-2 flex items-baseline gap-x-2">
+          <span class="text-4xl font-semibold tracking-tight text-white"
+            >{{ current_wave_height }}
+          </span>
+          <span class="text-sm text-gray-400">ft.</span>
+        </p>
+      </div>
+      <div
+        class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+      >
+        <p class="text-sm font-medium leading-6 text-gray-400">
+          Wind Direction
+        </p>
+        <p class="mt-2 flex items-baseline gap-x-2">
+          <span class="text-4xl font-semibold tracking-tight text-white"
+            >{{ wind_direction }}<span class="text-gray-400">&#176;</span></span
           >
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                  class="sticky top-0 z-10 border-b border-gray-300 bg-secondary-300 bg-opacity-90 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter sm:pl-6 lg:pl-8"
-                >
-                  Wind Direction
-                </th>
-                <th
-                  scope="col"
-                  class="sticky top-0 z-10 hidden border-b border-gray-300 bg-secondary-300 bg-opacity-90 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter sm:table-cell"
-                >
-                  Wind Speed
-                </th>
-                <th
-                  scope="col"
-                  class="sticky top-0 z-10 hidden border-b border-gray-300 bg-secondary-300 bg-opacity-90 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter lg:table-cell"
-                >
-                  Gusts
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td
-                  class="whitespace-nowrap border-b border-gray-200 py-4 pl-4 pr-3 text-sm font-medium sm:pl-6 lg:pl-8"
-                >
-                  {{ wind_direction }}
-                </td>
-                <td
-                  class="whitespace-nowrap border-b border-gray-200 hidden px-3 py-4 text-sm sm:table-cell"
-                >
-                  {{ wind_speed}}
-                </td>
-                <td
-                  class="whitespace-nowrap border-b border-gray-200 hidden px-3 py-4 text-sm lg:table-cell"
-                >
-                  {{ gusts }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <canvas id="myChart"></canvas>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-        <script>
-          const ctx = document.getElementById("myChart");
-
-          new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: [{{ wave_height_labels | safe }}],
-              datasets: [
-                {
-                  label: "wave height (feet)",
-                    data: [{{ wave_height_data }}],
-                  borderWidth: 1,
-                    fill: true,
-                    pointRadius: 1,
-                },
-              ],
-            },
-            options: {
-                elements: {
-                    line: {
-                        tension: 0.2
-                    }
-                },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                    max: 8,
-                },
-              },
-            },
-          });
-        </script>
+        </p>
+      </div>
+      <div
+        class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
+      >
+        <p class="text-sm font-medium leading-6 text-gray-400">Wind Speed</p>
+        <p class="mt-2 flex items-baseline gap-x-2">
+          <span class="text-4xl font-semibold tracking-tight text-white"
+            >{{ wind_speed }}</span
+          >
+          <span class="text-sm text-gray-400">m/s</span>
+        </p>
+      </div>
+      <div
+        class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+      >
+        <p class="text-sm font-medium leading-6 text-gray-400">Gusts</p>
+        <p class="mt-2 flex items-baseline gap-x-2">
+          <span class="text-4xl font-semibold tracking-tight text-white"
+            >{{ gusts }}</span
+          >
+          <span class="text-sm text-gray-400">m/s</span>
+        </p>
       </div>
     </div>
+  </header>
+
+  <!-- Forecast Chart -->
+  <div class="border-t border-white/10 pt-11">
+    <h2 class="px-4 text-base font-semibold text-white sm:px-6 lg:px-8">
+      Forecast
+    </h2>
+    <canvas class="m-auto w-full max-w-6xl" id="forecast"></canvas>
   </div>
-  <div>As of {{ as_of }}</div>
-</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById("forecast");
+
+  const down = (ctx, value) => ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined;
+
+  const getOrCreateTooltip = (chart) => {
+  let tooltipEl = chart.canvas.parentNode.querySelector('div');
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.style.background = 'rgba(0, 0, 0, 0.7)';
+    tooltipEl.style.borderRadius = '3px';
+    tooltipEl.style.color = 'white';
+    tooltipEl.style.opacity = 1;
+    tooltipEl.style.pointerEvents = 'none';
+    tooltipEl.style.position = 'absolute';
+    tooltipEl.style.transform = 'translate(-50%, 0)';
+    tooltipEl.style.transition = 'all .1s ease';
+
+    const table = document.createElement('table');
+    table.style.margin = '0px';
+
+    tooltipEl.appendChild(table);
+    chart.canvas.parentNode.appendChild(tooltipEl);
+  }
+
+  return tooltipEl;
+};
+
+const externalTooltipHandler = (context) => {
+  // Tooltip Element
+  const {chart, tooltip} = context;
+  const tooltipEl = getOrCreateTooltip(chart);
+
+  // Hide if no tooltip
+  if (tooltip.opacity === 0) {
+    tooltipEl.style.opacity = 0;
+    return;
+  }
+
+  // Set Text
+  if (tooltip.body) {
+    const titleLines = tooltip.title || [];
+    const bodyLines = tooltip.body.map(b => b.lines);
+
+    const tableHead = document.createElement('thead');
+
+    titleLines.forEach(title => {
+      const tr = document.createElement('tr');
+      tr.style.borderWidth = 0;
+
+      const th = document.createElement('th');
+      th.style.borderWidth = 0;
+      const text = document.createTextNode(title);
+
+      th.appendChild(text);
+      tr.appendChild(th);
+      tableHead.appendChild(tr);
+    });
+
+    const tableBody = document.createElement('tbody');
+    bodyLines.forEach((body, i) => {
+      const colors = tooltip.labelColors[i];
+
+      const span = document.createElement('span');
+      span.style.background = colors.backgroundColor;
+      span.style.borderColor = colors.borderColor;
+      span.style.borderWidth = '2px';
+      span.style.marginRight = '10px';
+      span.style.height = '10px';
+      span.style.width = '10px';
+      span.style.display = 'inline-block';
+
+      const tr = document.createElement('tr');
+      tr.style.backgroundColor = 'inherit';
+      tr.style.borderWidth = 0;
+
+      const td = document.createElement('td');
+      td.style.borderWidth = 0;
+
+      const text = document.createTextNode(body);
+
+      td.appendChild(span);
+      td.appendChild(text);
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    });
+
+    const tableRoot = tooltipEl.querySelector('table');
+
+    // Remove old children
+    while (tableRoot.firstChild) {
+      tableRoot.firstChild.remove();
+    }
+
+    // Add new children
+    tableRoot.appendChild(tableHead);
+    tableRoot.appendChild(tableBody);
+  }
+
+  const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+
+  // Display, position, and set styles for font
+  tooltipEl.style.opacity = 1;
+  tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+  tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+  tooltipEl.style.font = tooltip.options.bodyFont.string;
+  tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
+};
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [{{ wave_height_labels | safe }}],
+      datasets: [
+        {
+          label: "wave height (feet)",
+          data: [{{ wave_height_data }}],
+          borderWidth: 1,
+          fill: true,
+          pointRadius: 1,
+          backgroundColor: "#4ade80",
+          segment: {
+              backgroundColor: ctx => down(ctx, 'rgb(192,75,75)') || "#4ade80",
+              borderColor: ctx => down(ctx, 'rgb(192,75,75)') || "#4ade80",
+          },
+        },
+      ],
+    },
+    options: {
+        plugins: {
+                  tooltip: {
+        enabled: false,
+        position: 'nearest',
+        external: externalTooltipHandler
+      }
+        },
+        elements: {
+            line: {
+                tension: 0.2
+            }
+        },
+        responsive: true,
+    interaction: {
+      intersect: false,
+      axis: 'x'
+    },
+      scales: {
+        y: {
+          beginAtZero: true,
+            max: 8,
+        },
+      },
+    },
+  });
+</script>
 {% endblock %}
