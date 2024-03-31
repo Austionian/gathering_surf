@@ -85,7 +85,7 @@
 
   <!-- Forecast Chart -->
   <div class="border-t border-white/10 pt-11">
-    <h2 class="px-4 text-base font-semibold text-white sm:px-6 lg:px-8">
+    <h2 class="mb-4 px-4 text-base font-semibold text-white sm:px-6 lg:px-8">
       Forecast
     </h2>
     <canvas class="m-auto w-full max-w-6xl" id="forecast"></canvas>
@@ -93,26 +93,27 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const ctx = document.getElementById("forecast");
+const ctx = document.getElementById("forecast");
 
-  const down = (ctx, value) => ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined;
+const down = (ctx, value) =>
+  ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined;
 
-  const getOrCreateTooltip = (chart) => {
-  let tooltipEl = chart.canvas.parentNode.querySelector('div');
+const getOrCreateTooltip = (chart) => {
+  let tooltipEl = chart.canvas.parentNode.querySelector("div");
 
   if (!tooltipEl) {
-    tooltipEl = document.createElement('div');
-    tooltipEl.style.background = 'rgba(0, 0, 0, 0.7)';
-    tooltipEl.style.borderRadius = '3px';
-    tooltipEl.style.color = 'white';
+    tooltipEl = document.createElement("div");
+    tooltipEl.style.background = "rgba(0, 0, 0, 0.7)";
+    tooltipEl.style.borderRadius = "3px";
+    tooltipEl.style.color = "white";
     tooltipEl.style.opacity = 1;
-    tooltipEl.style.pointerEvents = 'none';
-    tooltipEl.style.position = 'absolute';
-    tooltipEl.style.transform = 'translate(-50%, 0)';
-    tooltipEl.style.transition = 'all .1s ease';
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.position = "absolute";
+    tooltipEl.style.transform = "translate(-50%, 0)";
+    tooltipEl.style.transition = "all .1s ease";
 
-    const table = document.createElement('table');
-    table.style.margin = '0px';
+    const table = document.createElement("table");
+    table.style.margin = "0px";
 
     tooltipEl.appendChild(table);
     chart.canvas.parentNode.appendChild(tooltipEl);
@@ -123,7 +124,7 @@
 
 const externalTooltipHandler = (context) => {
   // Tooltip Element
-  const {chart, tooltip} = context;
+  const { chart, tooltip } = context;
   const tooltipEl = getOrCreateTooltip(chart);
 
   // Hide if no tooltip
@@ -135,15 +136,15 @@ const externalTooltipHandler = (context) => {
   // Set Text
   if (tooltip.body) {
     const titleLines = tooltip.title || [];
-    const bodyLines = tooltip.body.map(b => b.lines);
+    const bodyLines = tooltip.body.map((b) => b.lines);
 
-    const tableHead = document.createElement('thead');
+    const tableHead = document.createElement("thead");
 
-    titleLines.forEach(title => {
-      const tr = document.createElement('tr');
+    titleLines.forEach((title) => {
+      const tr = document.createElement("tr");
       tr.style.borderWidth = 0;
 
-      const th = document.createElement('th');
+      const th = document.createElement("th");
       th.style.borderWidth = 0;
       const text = document.createTextNode(title);
 
@@ -152,24 +153,24 @@ const externalTooltipHandler = (context) => {
       tableHead.appendChild(tr);
     });
 
-    const tableBody = document.createElement('tbody');
+    const tableBody = document.createElement("tbody");
     bodyLines.forEach((body, i) => {
       const colors = tooltip.labelColors[i];
 
-      const span = document.createElement('span');
+      const span = document.createElement("span");
       span.style.background = colors.backgroundColor;
       span.style.borderColor = colors.borderColor;
-      span.style.borderWidth = '2px';
-      span.style.marginRight = '10px';
-      span.style.height = '10px';
-      span.style.width = '10px';
-      span.style.display = 'inline-block';
+      span.style.borderWidth = "2px";
+      span.style.marginRight = "10px";
+      span.style.height = "10px";
+      span.style.width = "10px";
+      span.style.display = "inline-block";
 
-      const tr = document.createElement('tr');
-      tr.style.backgroundColor = 'inherit';
+      const tr = document.createElement("tr");
+      tr.style.backgroundColor = "inherit";
       tr.style.borderWidth = 0;
 
-      const td = document.createElement('td');
+      const td = document.createElement("td");
       td.style.borderWidth = 0;
 
       const text = document.createTextNode(body);
@@ -180,7 +181,7 @@ const externalTooltipHandler = (context) => {
       tableBody.appendChild(tr);
     });
 
-    const tableRoot = tooltipEl.querySelector('table');
+    const tableRoot = tooltipEl.querySelector("table");
 
     // Remove old children
     while (tableRoot.firstChild) {
@@ -192,60 +193,69 @@ const externalTooltipHandler = (context) => {
     tableRoot.appendChild(tableBody);
   }
 
-  const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+  const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
 
   // Display, position, and set styles for font
   tooltipEl.style.opacity = 1;
-  tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-  tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+  tooltipEl.style.left = positionX + tooltip.caretX + "px";
+  tooltipEl.style.top = positionY + tooltip.caretY + "px";
   tooltipEl.style.font = tooltip.options.bodyFont.string;
-  tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
+  tooltipEl.style.padding =
+    tooltip.options.padding + "px " + tooltip.options.padding + "px";
 };
 
-  new Chart(ctx, {
-    type: "line",
-    data: {
-        labels: [{{ wave_height_labels | safe }}],
-      datasets: [
-        {
-          label: "wave height (feet)",
-          data: [{{ wave_height_data }}],
-          borderWidth: 1,
-          fill: true,
-          pointRadius: 1,
-          backgroundColor: "#4ade80",
-          segment: {
-              backgroundColor: ctx => down(ctx, 'rgb(192,75,75)') || "#4ade80",
-              borderColor: ctx => down(ctx, 'rgb(192,75,75)') || "#4ade80",
-          },
-        },
-      ],
-    },
-    options: {
-        plugins: {
-                  tooltip: {
-        enabled: false,
-        position: 'nearest',
-        external: externalTooltipHandler
-      }
-        },
-        elements: {
-            line: {
-                tension: 0.2
-            }
-        },
-        responsive: true,
-    interaction: {
-      intersect: false,
-      axis: 'x'
-    },
-      scales: {
-        y: {
-          beginAtZero: true,
-            max: 8,
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [{{ wave_height_labels | safe }}],
+    datasets: [
+      {
+        label: "wave height (feet)",
+        data: [{{ wave_height_data }}],
+        borderWidth: 1,
+        fill: true,
+        pointRadius: 1,
+        backgroundColor: "#4ade80",
+        segment: {
+          backgroundColor: (ctx) => down(ctx, "rgb(192,75,75)") || "#4ade80",
+          borderColor: (ctx) => down(ctx, "rgb(192,75,75)") || "#4ade80",
         },
       },
+    ],
+  },
+  options: {
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: false,
+        position: "nearest",
+        external: externalTooltipHandler,
+      },
     },
-  });
+    elements: {
+      line: {
+        tension: 0.2,
+      },
+    },
+    responsive: true,
+    interaction: {
+      intersect: false,
+      axis: "x",
+    },
+    scales: {
+      x: {
+        ticks: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        max: 8,
+      },
+    },
+  },
+});
 </script>
 {% endblock %}
