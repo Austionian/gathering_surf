@@ -6,7 +6,7 @@ use axum::{
     response::{Html, IntoResponse, Response},
 };
 use chrono::{DateTime, Local, TimeZone, Utc};
-use std::sync::Arc;
+use std::{cmp::Ordering, sync::Arc};
 
 struct Latest {
     as_of: String,
@@ -63,7 +63,7 @@ impl Latest {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct WaveHeightData(Vec<WaveHeightForecast>);
 
 fn convert_meter_to_feet(value: f64) -> f64 {
@@ -99,13 +99,23 @@ impl WaveHeightData {
     }
 
     fn get_current_wave_height(&self) -> String {
-        for wave_height in self.0.iter() {
+        for (i, wave_height) in self.0.iter().enumerate() {
             if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Local::now() {
                 let height = convert_meter_to_feet(wave_height.value);
                 if height < 1.5 {
                     return "Flat".to_string();
                 }
-                return height.to_string();
+                // Try to get range of current surf
+                if let Some(last_hour) = self.0.get(i - 1) {
+                    let last_hour_height = convert_meter_to_feet(last_hour.value);
+                    return match height.partial_cmp(&last_hour_height) {
+                        Some(Ordering::Less) => format!("{:.0}-{:.0}", height, last_hour_height),
+                        Some(Ordering::Greater) => format!("{:.0}-{:.0}", last_hour_height, height),
+                        Some(Ordering::Equal) => format!("{:.0}", height),
+                        None => unreachable!("Found no ordering in wave heights."),
+                    };
+                }
+                return format!("{:.0}", height);
             }
         }
 
@@ -113,7 +123,7 @@ impl WaveHeightData {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct WaveHeightForecast {
     value: f64,
     valid_time: String,
