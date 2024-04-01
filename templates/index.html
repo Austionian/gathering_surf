@@ -20,7 +20,7 @@
     <div
       class="border-t border-white/5 flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-700/10 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
     >
-      <h1 class="flex self-center gap-x-3 text-base leading-7">Atwater</h1>
+      <h1 class="flex self-center gap-x-3 text-xl leading-7">Current Conditions @ Atwater</h1>
       <div
         class="flex order-first rounded-full bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 sm:order-none"
       >
@@ -236,7 +236,7 @@ new Chart(ctx, {
     },
     elements: {
       line: {
-        tension: 0.2,
+        tension: 0.4,
       },
     },
     responsive: true,
@@ -252,7 +252,7 @@ new Chart(ctx, {
       },
       y: {
         beginAtZero: true,
-        max: 8,
+          max: {{ graph_max }} >= 8 ? {{ graph_max }} : 8,
       },
     },
   },

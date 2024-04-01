@@ -71,11 +71,24 @@ fn convert_meter_to_feet(value: f64) -> f64 {
 }
 
 impl WaveHeightData {
-    fn get_data(&self) -> String {
+    fn get_data(&self) -> (String, u8) {
+        let mut smoothed_data = Vec::new();
+        let mut out = Vec::new();
         self.0
             .iter()
-            .map(|data| format!("{:.3},", convert_meter_to_feet(data.value)))
-            .collect()
+            .for_each(|data| smoothed_data.push(convert_meter_to_feet(data.value)));
+
+        smoothed_data.windows(3).for_each(|window| match window {
+            [x, y, z] => out.push((x + y + z) / 3.0),
+            [x, y] => out.push((x + y) / 2.0),
+            [x] => out.push(*x),
+            _ => panic!("what dafuq is this?"),
+        });
+
+        (
+            out.iter().map(|value| format!("{:.3},", value)).collect(),
+            smoothed_data.iter().map(|v| v.clone() as u8).max().unwrap(),
+        )
     }
 
     fn get_labels(&self) -> String {
@@ -196,12 +209,15 @@ pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, Ap
             .collect::<Vec<_>>(),
     );
 
+    let (wave_height_data, graph_max) = wave_heights.get_data();
+
     context.insert("title", &state.title);
     context.insert("as_of", &latest.as_of);
     context.insert("wind_direction", &latest.wind_direction);
     context.insert("wind_speed", &latest.wind_speed);
     context.insert("gusts", &latest.gusts);
-    context.insert("wave_height_data", &wave_heights.get_data());
+    context.insert("wave_height_data", &wave_height_data);
+    context.insert("graph_max", &(graph_max + 2));
     context.insert("wave_height_labels", &wave_heights.get_labels());
     context.insert(
         "current_wave_height",
