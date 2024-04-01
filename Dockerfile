@@ -25,4 +25,4 @@ COPY config config
 COPY assets assets
 COPY templates templates
 ENV APP_ENVIRONMENT production 
-ENTRYPOINT ["./gathering_surf]
+ENTRYPOINT ["./gathering_surf"]
