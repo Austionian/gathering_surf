@@ -5,6 +5,11 @@
     document.getElementById("wind-speed-data").innerText = {{ wind_speed }}
     document.getElementById("gusts-data").innerText = {{ gusts }}
     document.getElementById("as-of-data").innerText = "Live as of {{ as_of }}"
+    document.getElementById("wind-icon").setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);")
+
+    document.querySelectorAll(".loader").forEach(e => e.remove())
+    document.getElementById("wind-icon-container").classList.remove("hidden")
+    document.getElementById("as-of-container").classList.remove("animate-pulse")
 </script>
 <script>
 const ctx = document.getElementById("forecast");
@@ -171,8 +176,6 @@ new Chart(ctx, {
     },
   },
 });
-    document.getElementById("graph-loader").remove()
 </script>
-<div x-effect="loading=false"></div>
 </body>
 </html>

@@ -23,12 +23,10 @@
       href="https://cdn.jsdelivr.net/npm/chart.js"
       as="script"
     />
-    <link rel="preload" href="//unpkg.com/alpinejs" />
 
     <link href="/assets/styles.css" rel="stylesheet" type="text/css" />
-    <script src="//unpkg.com/alpinejs" defer></script>
   </head>
-  <body class="bg-white dark:bg-[#121c22]" x-data="{ loading: true }">
+  <body class="bg-white dark:bg-[#121c22]">
     <main>
       <header>
         <!-- Secondary navigation -->
@@ -54,8 +52,8 @@
             Current Conditions @ Atwater
           </h1>
           <div
+            id="as-of-container"
             class="animate-pulse flex order-first rounded-full bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 sm:order-none"
-            :class="{ 'animate-none': !loading }"
           >
             <div
               class="flex-none rounded-full bg-green-400/10 p-1 mr-3 text-green-400"
@@ -76,8 +74,7 @@
             </p>
             <div class="mt-2 flex items-baseline gap-x-2">
               <div
-                :class="{ 'hidden': !loading }"
-                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
               ></div>
               <span
                 id="forecasted-wave-height-data"
@@ -95,8 +92,7 @@
             </p>
             <div class="mt-2 flex items-baseline gap-x-2">
               <div
-                :class="{ 'hidden': !loading }"
-                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
               ></div>
               <span
                 id="wind-direction-data"
@@ -105,6 +101,19 @@
               ><span class="text-4xl tracking-tight font-semibold text-gray-400"
                 >&#176;</span
               >
+              <div class="w-8 h-8 fill-white" id="wind-icon-container">
+                <svg
+                  id="wind-icon"
+                  class="transition"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                >
+                  <title>wind direction</title>
+                  <path
+                    d="M26.71,10.29l-10-10a1,1,0,0,0-1.41,0l-10,10,1.41,1.41L15,3.41V32h2V3.41l8.29,8.29Z"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
           <div
@@ -115,14 +124,13 @@
             </p>
             <div class="mt-2 flex items-baseline gap-x-2">
               <div
-                :class="{ 'hidden': !loading }"
-                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
               ></div>
               <span
                 id="wind-speed-data"
                 class="text-4xl font-semibold tracking-tight text-white"
               ></span>
-              <span class="text-sm text-gray-400">m/s</span>
+              <span class="text-sm text-gray-400">mph</span>
             </div>
           </div>
           <div
@@ -131,14 +139,13 @@
             <p class="text-sm font-medium leading-6 text-gray-400">Gusts</p>
             <div class="mt-2 flex items-baseline gap-x-2">
               <div
-                :class="{ 'hidden': !loading }"
-                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
               ></div>
               <span
                 id="gusts-data"
                 class="text-4xl font-semibold tracking-tight text-white"
               ></span>
-              <span class="text-sm text-gray-400">m/s</span>
+              <span class="text-sm text-gray-400">mph</span>
             </div>
           </div>
         </div>
@@ -151,8 +158,7 @@
           Forecast
         </h2>
         <div
-            id="graph-loader"
-          class="m-auto w-full sm:max-w-2xl lg:max-w-6xl h-[50vh] animate-pulse bg-slate-700 rounded-xl"
+          class="loader m-auto w-full sm:max-w-2xl lg:max-w-6xl h-[50vh] animate-pulse bg-slate-700 rounded-xl"
         ></div>
         <canvas class="m-auto w-full max-w-6xl" id="forecast"></canvas>
       </div>

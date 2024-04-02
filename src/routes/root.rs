@@ -72,6 +72,10 @@ fn convert_meter_to_feet(value: f64) -> f64 {
     value * 3.281
 }
 
+fn convert_meter_to_mile(value: &str) -> String {
+    format!("{:.2}", value.parse().unwrap_or(0.0) * 2.2369)
+}
+
 impl WaveHeightData {
     fn get_data(&self) -> (String, u8) {
         let mut smoothed_data = Vec::new();
@@ -246,14 +250,18 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         context.insert("title", &state.title);
         context.insert("as_of", &latest.as_of);
         context.insert("wind_direction", &latest.wind_direction);
-        context.insert("wind_speed", &latest.wind_speed);
-        context.insert("gusts", &latest.gusts);
+        context.insert("wind_speed", &convert_meter_to_mile(&latest.wind_speed));
+        context.insert("gusts", &convert_meter_to_mile(&latest.gusts));
         context.insert("wave_height_data", &wave_height_data);
         context.insert("graph_max", &(graph_max + 2));
         context.insert("wave_height_labels", &wave_heights.get_labels());
         context.insert(
             "current_wave_height",
             &wave_heights.get_current_wave_height(),
+        );
+        context.insert(
+            "wind_icon_direction",
+            &(latest.wind_direction.parse::<u32>().unwrap() + 180),
         );
         tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
             .await
