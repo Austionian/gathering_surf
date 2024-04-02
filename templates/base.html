@@ -16,9 +16,146 @@
       media="(prefers-color-scheme: dark)"
       content="#000"
     />
+
+    <link rel="preload" href="/assets/styles.css" as="style" />
+    <link
+      rel="preload"
+      href="https://cdn.jsdelivr.net/npm/chart.js"
+      as="script"
+    />
+    <link rel="preload" href="//unpkg.com/alpinejs" />
+
     <link href="/assets/styles.css" rel="stylesheet" type="text/css" />
+    <script src="//unpkg.com/alpinejs" defer></script>
   </head>
-  <body class="bg-white dark:bg-[#121c22]">
-    {% block body %} {% endblock %} 
+  <body class="bg-white dark:bg-[#121c22]" x-data="{ loading: true }">
+    <main>
+      <header>
+        <!-- Secondary navigation -->
+        <nav class="flex overflow-x-auto border-b border-white/10 py-4">
+          <ul
+            role="list"
+            class="flex min-w-full flex-none gap-x-6 px-4 text-sm font-semibold leading-6 text-gray-400 sm:px-6 lg:px-8"
+          >
+            <li>
+              <a href="#" class="text-indigo-400">Overview</a>
+            </li>
+            <li>
+              <a href="#" class="">Activity</a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Heading -->
+        <div
+          class="border-t border-white/5 flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-700/10 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
+        >
+          <h1 class="flex self-center gap-x-3 text-xl leading-7">
+            Current Conditions @ Atwater
+          </h1>
+          <div
+            class="animate-pulse flex order-first rounded-full bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 sm:order-none"
+            :class="{ 'animate-none': !loading }"
+          >
+            <div
+              class="flex-none rounded-full bg-green-400/10 p-1 mr-3 text-green-400"
+            >
+              <div class="h-2 w-2 rounded-full bg-current"></div>
+            </div>
+            <span id="as-of-data">_____________________________ </span>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div
+          class="grid grid-cols-1 bg-gray-700/10 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-sm font-medium leading-6 text-gray-400">
+              Forecasted Wave Height
+            </p>
+            <div class="mt-2 flex items-baseline gap-x-2">
+              <div
+                :class="{ 'hidden': !loading }"
+                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+              ></div>
+              <span
+                id="forecasted-wave-height-data"
+                class="text-4xl font-semibold tracking-tight text-white"
+              >
+              </span>
+              <span class="text-sm text-gray-400">ft.</span>
+            </div>
+          </div>
+          <div
+            class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+          >
+            <p class="text-sm font-medium leading-6 text-gray-400">
+              Wind Direction
+            </p>
+            <div class="mt-2 flex items-baseline gap-x-2">
+              <div
+                :class="{ 'hidden': !loading }"
+                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+              ></div>
+              <span
+                id="wind-direction-data"
+                class="text-4xl font-semibold tracking-tight text-white"
+              ></span
+              ><span class="text-4xl tracking-tight font-semibold text-gray-400"
+                >&#176;</span
+              >
+            </div>
+          </div>
+          <div
+            class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
+          >
+            <p class="text-sm font-medium leading-6 text-gray-400">
+              Wind Speed
+            </p>
+            <div class="mt-2 flex items-baseline gap-x-2">
+              <div
+                :class="{ 'hidden': !loading }"
+                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+              ></div>
+              <span
+                id="wind-speed-data"
+                class="text-4xl font-semibold tracking-tight text-white"
+              ></span>
+              <span class="text-sm text-gray-400">m/s</span>
+            </div>
+          </div>
+          <div
+            class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+          >
+            <p class="text-sm font-medium leading-6 text-gray-400">Gusts</p>
+            <div class="mt-2 flex items-baseline gap-x-2">
+              <div
+                :class="{ 'hidden': !loading }"
+                class="w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+              ></div>
+              <span
+                id="gusts-data"
+                class="text-4xl font-semibold tracking-tight text-white"
+              ></span>
+              <span class="text-sm text-gray-400">m/s</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <!-- Forecast Chart -->
+      <div class="border-t border-white/10 pt-11">
+        <h2
+          class="mb-4 px-4 text-base font-semibold text-white sm:px-6 lg:px-8"
+        >
+          Forecast
+        </h2>
+        <div
+            id="graph-loader"
+          class="m-auto w-full sm:max-w-2xl lg:max-w-6xl h-[50vh] animate-pulse bg-slate-700 rounded-xl"
+        ></div>
+        <canvas class="m-auto w-full max-w-6xl" id="forecast"></canvas>
+      </div>
+    </main>
   </body>
 </html>

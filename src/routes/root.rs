@@ -1,12 +1,14 @@
 use crate::{AppState, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
+    body::Body,
     extract::State,
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Local, TimeZone, Utc};
-use std::{cmp::Ordering, sync::Arc};
+use std::{cmp::Ordering, convert::Infallible, sync::Arc};
+use tokio::sync::mpsc;
 
 struct Latest {
     as_of: String,
@@ -183,61 +185,90 @@ impl From<serde_json::Value> for WaveHeightForecast {
 }
 
 /// Handler to return the website's index
-pub async fn root(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
-    let mut context = tera::Context::new();
+pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
-    let latest = Latest::get().await?;
+    tokio::spawn(async move {
+        let mut context = tera::Context::new();
+        let mut buffer_beater = Vec::with_capacity(5000);
+        buffer_beater.fill(" ");
+        tx.send(Ok(buffer_beater
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<String>()))
+            .await
+            .unwrap();
+        tx.send(Ok(TEMPLATES.render("base.html", &context).unwrap()))
+            .await
+            .unwrap();
 
-    let client = reqwest::Client::builder()
-        .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
-        .build()
-        .unwrap();
+        let latest = Latest::get().await.unwrap();
 
-    // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
-    let forecast = client
-        .get("https://api.weather.gov/gridpoints/MKX/90,67")
-        .send()
-        .await?
-        .json::<serde_json::Value>()
-        .await?;
+        let client = reqwest::Client::builder()
+            .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
+            .build()
+            .unwrap();
 
-    let wave_heights = WaveHeightData(
-        forecast
-            .get("properties")
-            .ok_or(anyhow!("no properties found!"))?
-            .get("waveHeight")
-            .ok_or(anyhow!("no wave heights found!"))?
-            .get("values")
-            .ok_or(anyhow!("no values found!"))?
-            .as_array()
-            .ok_or(anyhow!("array not found!"))?
-            .clone()
-            .into_iter()
-            .map(WaveHeightForecast::from)
-            .map(|w| WaveHeightForecast::expand_time_ranges(&w).unwrap())
-            .flatten()
-            .collect::<Vec<_>>(),
-    );
+        // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
+        let forecast = client
+            .get("https://api.weather.gov/gridpoints/MKX/90,67")
+            .send()
+            .await
+            .unwrap()
+            .json::<serde_json::Value>()
+            .await
+            .unwrap();
 
-    let (wave_height_data, graph_max) = wave_heights.get_data();
+        let wave_heights = WaveHeightData(
+            forecast
+                .get("properties")
+                .ok_or(anyhow!("no properties found!"))
+                .unwrap()
+                .get("waveHeight")
+                .ok_or(anyhow!("no wave heights found!"))
+                .unwrap()
+                .get("values")
+                .ok_or(anyhow!("no values found!"))
+                .unwrap()
+                .as_array()
+                .ok_or(anyhow!("array not found!"))
+                .unwrap()
+                .clone()
+                .into_iter()
+                .map(WaveHeightForecast::from)
+                .map(|w| WaveHeightForecast::expand_time_ranges(&w).unwrap())
+                .flatten()
+                .collect::<Vec<_>>(),
+        );
 
-    context.insert("title", &state.title);
-    context.insert("as_of", &latest.as_of);
-    context.insert("wind_direction", &latest.wind_direction);
-    context.insert("wind_speed", &latest.wind_speed);
-    context.insert("gusts", &latest.gusts);
-    context.insert("wave_height_data", &wave_height_data);
-    context.insert("graph_max", &(graph_max + 2));
-    context.insert("wave_height_labels", &wave_heights.get_labels());
-    context.insert(
-        "current_wave_height",
-        &wave_heights.get_current_wave_height(),
-    );
+        let (wave_height_data, graph_max) = wave_heights.get_data();
 
-    match TEMPLATES.render("index.html", &context) {
-        Ok(s) => Ok(Html(s)),
-        Err(_) => Ok(Html("<html><body>Error</body></html>".to_string())),
-    }
+        context.insert("title", &state.title);
+        context.insert("as_of", &latest.as_of);
+        context.insert("wind_direction", &latest.wind_direction);
+        context.insert("wind_speed", &latest.wind_speed);
+        context.insert("gusts", &latest.gusts);
+        context.insert("wave_height_data", &wave_height_data);
+        context.insert("graph_max", &(graph_max + 2));
+        context.insert("wave_height_labels", &wave_heights.get_labels());
+        context.insert(
+            "current_wave_height",
+            &wave_heights.get_current_wave_height(),
+        );
+        tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
+            .await
+            .unwrap();
+    });
+
+    let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
+    let body = Body::from_stream(stream);
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(body)
+        .unwrap()
 }
 
 // Make our own error that wraps `anyhow::Error`.

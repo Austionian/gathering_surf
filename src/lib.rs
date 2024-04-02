@@ -4,8 +4,6 @@ mod routes;
 use axum::{routing::get, Router};
 use lazy_static::lazy_static;
 use std::sync::Arc;
-use tower::ServiceBuilder;
-use tower_http::compression::CompressionLayer;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
@@ -42,8 +40,6 @@ pub fn startup() -> Result<Router, String> {
         // attaches the root route to the root.
         .route("/", get(routes::root))
         .fallback(routes::handle_404)
-        // compresses server response.
-        .layer(ServiceBuilder::new().layer(CompressionLayer::new()))
         // binds the telemetry.
         .layer(TraceLayer::new_for_http())
         // adds the app state that will be available across Axum routes.
