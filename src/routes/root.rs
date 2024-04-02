@@ -66,7 +66,7 @@ impl Latest {
 }
 
 #[derive(Debug, Default)]
-struct WaveHeightData(Vec<WaveHeightForecast>);
+struct WaveHeightData(Vec<WaveHeightForecast>, String);
 
 fn convert_meter_to_feet(value: f64) -> f64 {
     value * 3.281
@@ -243,6 +243,21 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 .map(|w| WaveHeightForecast::expand_time_ranges(&w).unwrap())
                 .flatten()
                 .collect::<Vec<_>>(),
+            DateTime::parse_from_str(
+                forecast
+                    .get("properties")
+                    .unwrap()
+                    .get("updateTime")
+                    .unwrap()
+                    .as_str()
+                    .unwrap(),
+                "%+",
+            )
+            .unwrap()
+            .to_rfc2822()
+            .strip_suffix("+0000")
+            .unwrap()
+            .to_string(),
         );
 
         let (wave_height_data, graph_max) = wave_heights.get_data();
@@ -263,6 +278,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             "wind_icon_direction",
             &(latest.wind_direction.parse::<u32>().unwrap() + 180),
         );
+        context.insert("forecast_as_of", &wave_heights.1);
         tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
             .await
             .unwrap();

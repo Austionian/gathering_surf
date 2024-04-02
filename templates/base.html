@@ -153,14 +153,20 @@
       <!-- Forecast Chart -->
       <div class="border-t border-white/10 pt-11">
         <h2
-          class="mb-4 px-4 text-base font-semibold text-white sm:px-6 lg:px-8"
+          class="mb-4 mx-4 text-base font-semibold text-white sm:mx-6 lg:mx-20"
         >
           Forecast
         </h2>
         <div
           class="loader m-auto w-full sm:max-w-2xl lg:max-w-6xl h-[50vh] animate-pulse bg-slate-700 rounded-xl"
         ></div>
-        <canvas class="m-auto w-full max-w-6xl" id="forecast"></canvas>
+        <canvas class="hidden m-auto w-full max-w-6xl" id="forecast"></canvas>
+      </div>
+      <div
+        id="forecast-as-of-container"
+        class="w-fit mx-4 lg:mx-20 animate-pulse flex order-first rounded-full bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 sm:order-none"
+      >
+        <span id="forecast-as-of-data">_____________________________ </span>
       </div>
     </main>
   </body>
