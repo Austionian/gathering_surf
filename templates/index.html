@@ -1,7 +1,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.getElementById("forecasted-wave-height-data").innerText = {{ current_wave_height }}
-    document.getElementById("wind-direction-data").innerText = {{ wind_direction }}
     document.getElementById("wind-speed-data").innerText = {{ wind_speed }}
     document.getElementById("gusts-data").innerText = {{ gusts }}
     document.getElementById("as-of-data").innerText = "Live as of {{ as_of }}"
@@ -12,7 +11,7 @@
     document.getElementById("wind-icon-container").classList.remove("hidden")
     document.getElementById("as-of-container").classList.remove("animate-pulse")
     document.getElementById("forecast-as-of-container").classList.remove("animate-pulse")
-    documnet.getElementById("forecast").classList.remove("hidden")
+    document.getElementById("forecast").classList.remove("hidden")
 </script>
 <script>
 const ctx = document.getElementById("forecast");

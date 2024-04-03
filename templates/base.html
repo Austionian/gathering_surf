@@ -49,7 +49,7 @@
           class="border-t border-white/5 flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-700/10 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
         >
           <h1 class="flex self-center gap-x-3 text-xl leading-7">
-            Current Conditions @ Atwater
+            Current Conditions<span>-</span><span class="text-indigo-400">Atwater</span>
           </h1>
           <div
             id="as-of-container"
@@ -65,9 +65,7 @@
         </div>
 
         <!-- Stats -->
-        <div
-          class="grid grid-cols-1 bg-gray-700/10 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <div class="grid grid-cols-1 bg-gray-700/10 lg:grid-cols-3">
           <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
             <p class="text-sm font-medium leading-6 text-gray-400">
               Forecasted Wave Height
@@ -81,27 +79,20 @@
                 class="text-4xl font-semibold tracking-tight text-white"
               >
               </span>
-              <span class="text-sm text-gray-400">ft.</span>
+              <span class="text-sm text-gray-400">ft. @</span>
+              <span class="text-sm text-gray-400"
+                ><span class="text-lg text-white">6</span>s
+              </span>
             </div>
           </div>
           <div
             class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
           >
-            <p class="text-sm font-medium leading-6 text-gray-400">
-              Wind Direction
-            </p>
-            <div class="mt-2 flex items-baseline gap-x-2">
-              <div
-                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
-              ></div>
-              <span
-                id="wind-direction-data"
-                class="text-4xl font-semibold tracking-tight text-white"
-              ></span
-              ><span class="text-4xl tracking-tight font-semibold text-gray-400"
-                >&#176;</span
-              >
-              <div class="w-8 h-8 fill-white" id="wind-icon-container">
+            <p class="text-sm font-medium leading-6 text-gray-400">Wind</p>
+            <div
+              class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+            >
+              <div class="w-8 h-8 fill-white mr-2" id="wind-icon-container">
                 <svg
                   id="wind-icon"
                   class="transition"
@@ -114,38 +105,28 @@
                   />
                 </svg>
               </div>
+              <span id="wind-speed-data"></span>
+              -
+              <span id="gusts-data"></span>
+              <span class="text-sm text-gray-400">mph</span>
             </div>
           </div>
           <div
             class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
           >
             <p class="text-sm font-medium leading-6 text-gray-400">
-              Wind Speed
+              Water Temperature
             </p>
-            <div class="mt-2 flex items-baseline gap-x-2">
+            <div
+              class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+            >
               <div
                 class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
               ></div>
-              <span
-                id="wind-speed-data"
-                class="text-4xl font-semibold tracking-tight text-white"
-              ></span>
-              <span class="text-sm text-gray-400">mph</span>
-            </div>
-          </div>
-          <div
-            class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
-          >
-            <p class="text-sm font-medium leading-6 text-gray-400">Gusts</p>
-            <div class="mt-2 flex items-baseline gap-x-2">
-              <div
-                class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
-              ></div>
-              <span
-                id="gusts-data"
-                class="text-4xl font-semibold tracking-tight text-white"
-              ></span>
-              <span class="text-sm text-gray-400">mph</span>
+              <span id="water-temp-data"></span>
+              <span class="text-4xl tracking-tight font-semibold text-gray-400"
+                >&#176;</span
+              >
             </div>
           </div>
         </div>

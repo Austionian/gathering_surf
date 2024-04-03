@@ -73,7 +73,7 @@ fn convert_meter_to_feet(value: f64) -> f64 {
 }
 
 fn convert_meter_to_mile(value: &str) -> String {
-    format!("{:.2}", value.parse().unwrap_or(0.0) * 2.2369)
+    format!("{:.0}", value.parse().unwrap_or(0.0) * 2.2369)
 }
 
 impl WaveHeightData {
@@ -141,7 +141,7 @@ fn parse_hour(s: &str) -> anyhow::Result<usize> {
         return Ok(hour.parse()?);
     };
 
-    Err(anyhow!("no T found!"))
+    Err(anyhow!("no hour found!"))
 }
 
 fn increment_time(t: &str, amount: usize) -> anyhow::Result<String> {
@@ -161,9 +161,9 @@ impl WaveHeightForecast {
         let mut total = 0;
         if let Some((day, hour)) = period.split_once("D") {
             total += day.parse::<usize>().unwrap() * 24;
-            total += parse_hour(hour)?;
+            total += parse_hour(hour).unwrap_or(0);
         } else {
-            total += parse_hour(period)?;
+            total += parse_hour(period).unwrap_or(0);
         };
 
         let mut out = Vec::with_capacity(total);
