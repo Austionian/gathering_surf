@@ -1,5 +1,7 @@
 mod configuration;
+mod latest;
 mod routes;
+mod utils;
 
 use axum::{routing::get, Router};
 use lazy_static::lazy_static;
@@ -8,6 +10,8 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 pub use configuration::get_configuration;
+pub use latest::Latest;
+pub use utils::*;
 
 lazy_static! {
     pub static ref TEMPLATES: tera::Tera = {

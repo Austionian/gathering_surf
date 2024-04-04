@@ -1,8 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.getElementById("forecasted-wave-height-data").innerText = {{ current_wave_height }}
-    document.getElementById("wind-speed-data").innerText = {{ wind_speed }}
-    document.getElementById("gusts-data").innerText = {{ gusts }}
+    document.getElementById("forecasted-wave-height-data").innerText = "{{ current_wave_height }}"
+    document.getElementById("wind-data").innerText = "{{ wind }}"
     document.getElementById("as-of-data").innerText = "Live as of {{ as_of }}"
     document.getElementById("wind-icon").setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);")
     document.getElementById("forecast-as-of-data").innerText = "Forecast last updated at {{ forecast_as_of }}"

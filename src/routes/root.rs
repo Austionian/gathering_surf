@@ -1,4 +1,4 @@
-use crate::{AppState, TEMPLATES};
+use crate::{utils, AppState, Latest, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -6,83 +6,57 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Local, TimeZone, Utc};
+use chrono::{DateTime, Local};
 use std::{cmp::Ordering, convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
 
-struct Latest {
-    as_of: String,
-    wind_direction: String,
-    wind_speed: String,
-    gusts: String,
+struct Forecast {
+    last_updated: String,
+    wave_height: Vec<ForecastValue>,
+    wind_speed: Vec<ForecastValue>,
+    wind_gust: Vec<ForecastValue>,
+    wind_direction: Vec<ForecastValue>,
 }
 
-impl Latest {
+impl Forecast {
     async fn get() -> anyhow::Result<Self> {
-        let data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt")
-            .await?
-            .text()
-            .await?;
-
-        let latest = data.lines().collect::<Vec<_>>();
-        let latest = latest.get(2).unwrap();
-
-        let (as_of, measurements) = latest.split_at(16);
-
-        let as_of = Self::parse_as_of(as_of)?;
-        let mut measurements = measurements.trim().split_whitespace();
-        let wind_direction = measurements.next().unwrap().to_string();
-
-        let wind_speed = measurements.next().unwrap().to_string();
-        let gusts = measurements.next().unwrap().to_string();
-
-        Ok(Self {
-            as_of,
-            wind_direction,
-            wind_speed,
-            gusts,
-        })
-    }
-
-    fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
-        let as_of = as_of.trim().split(" ").collect::<Vec<_>>();
-        let as_of: DateTime<Local> = Utc
-            .with_ymd_and_hms(
-                as_of.get(0).unwrap().parse::<i32>().unwrap(),
-                as_of.get(1).unwrap().parse::<u32>().unwrap(),
-                as_of.get(2).unwrap().parse::<u32>().unwrap(),
-                as_of.get(3).unwrap().parse::<u32>().unwrap(),
-                as_of.get(4).unwrap().parse::<u32>().unwrap(),
-                00,
-            )
-            .unwrap()
-            .try_into()
+        let client = reqwest::Client::builder()
+            .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
+            .build()
             .unwrap();
 
-        let as_of = as_of.to_rfc2822();
-
-        Ok(as_of.split(" -").next().unwrap().to_string())
+        // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
+        Ok(Forecast::from(
+            client
+                .get("https://api.weather.gov/gridpoints/MKX/90,67")
+                .send()
+                .await?
+                .json::<serde_json::Value>()
+                .await?,
+        ))
     }
-}
 
-#[derive(Debug, Default)]
-struct WaveHeightData(Vec<WaveHeightForecast>, String);
+    fn condense(&mut self) {
+        let length = self.wave_height.len();
 
-fn convert_meter_to_feet(value: f64) -> f64 {
-    value * 3.281
-}
+        let _ = self.wind_speed.split_off(length);
+        let _ = self.wind_gust.split_off(length);
+        let _ = self.wind_direction.split_off(length);
+    }
 
-fn convert_meter_to_mile(value: &str) -> String {
-    format!("{:.0}", value.parse().unwrap_or(0.0) * 2.2369)
-}
+    fn get_labels(&self) -> String {
+        self.wave_height
+            .iter()
+            .map(|data| format!("'{}',", data.valid_time))
+            .collect()
+    }
 
-impl WaveHeightData {
-    fn get_data(&self) -> (String, u8) {
+    fn get_wave_data(&self) -> (String, u8) {
         let mut smoothed_data = Vec::new();
         let mut out = Vec::new();
-        self.0
+        self.wave_height
             .iter()
-            .for_each(|data| smoothed_data.push(convert_meter_to_feet(data.value)));
+            .for_each(|data| smoothed_data.push(utils::convert_meter_to_feet(data.value)));
 
         smoothed_data.windows(3).for_each(|window| match window {
             [x, y, z] => out.push((x + y + z) / 3.0),
@@ -97,26 +71,22 @@ impl WaveHeightData {
         )
     }
 
-    fn get_labels(&self) -> String {
-        self.0
-            .iter()
-            .map(|data| format!("'{}',", data.valid_time))
-            .collect()
-    }
-
     fn get_current_wave_height(&self) -> String {
-        for (i, wave_height) in self.0.iter().enumerate() {
+        for (i, wave_height) in self.wave_height.iter().enumerate() {
             if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Local::now() {
-                let height = convert_meter_to_feet(wave_height.value);
+                let height = utils::convert_meter_to_feet(wave_height.value);
                 if height < 1.5 {
                     return "Flat".to_string();
                 }
                 // Try to get range of current surf
-                if let Some(last_hour) = self.0.get(i - 1) {
-                    let last_hour_height = convert_meter_to_feet(last_hour.value);
+                if let Some(last_hour) = self.wave_height.get(i - 1) {
+                    let last_hour_height = utils::convert_meter_to_feet(last_hour.value);
+                    println!("{last_hour_height} {height}");
                     return match height.partial_cmp(&last_hour_height) {
                         Some(Ordering::Less) => format!("{:.0}-{:.0}", height, last_hour_height),
-                        Some(Ordering::Greater) => format!("{:.0}-{:.0}", last_hour_height, height),
+                        Some(Ordering::Greater) => {
+                            format!("{:.0}-{:.0}+", last_hour_height, height)
+                        }
                         Some(Ordering::Equal) => format!("{:.0}", height),
                         None => unreachable!("Found no ordering in wave heights."),
                     };
@@ -129,29 +99,28 @@ impl WaveHeightData {
     }
 }
 
-#[derive(Debug, Default)]
-struct WaveHeightForecast {
+struct ForecastValue {
     value: f64,
     valid_time: String,
 }
 
-fn parse_hour(s: &str) -> anyhow::Result<usize> {
-    if let Some((_, hour)) = s.split_once("T") {
-        let hour = hour.strip_suffix("H\"").ok_or(anyhow!("no hour found!"))?;
-        return Ok(hour.parse()?);
-    };
+impl ForecastValue {
+    fn get(properties: &serde_json::Value, key: &str) -> anyhow::Result<Vec<Self>> {
+        Ok(properties
+            .get(key)
+            .ok_or(anyhow!("no {key} found!"))?
+            .get("values")
+            .ok_or(anyhow!("no values found!"))?
+            .as_array()
+            .ok_or(anyhow!("array not found!"))?
+            .clone()
+            .into_iter()
+            .map(ForecastValue::from)
+            .map(|w| ForecastValue::expand_time_ranges(&w).unwrap())
+            .flatten()
+            .collect())
+    }
 
-    Err(anyhow!("no hour found!"))
-}
-
-fn increment_time(t: &str, amount: usize) -> anyhow::Result<String> {
-    let time = t.strip_prefix("\"").unwrap();
-    let time: DateTime<Local> = DateTime::parse_from_str(time, "%+").unwrap().into();
-
-    Ok((time + std::time::Duration::from_secs(amount as u64 * 3_600)).to_string())
-}
-
-impl WaveHeightForecast {
     fn expand_time_ranges(&self) -> anyhow::Result<Vec<Self>> {
         let (time, period) = self
             .valid_time
@@ -161,9 +130,9 @@ impl WaveHeightForecast {
         let mut total = 0;
         if let Some((day, hour)) = period.split_once("D") {
             total += day.parse::<usize>().unwrap() * 24;
-            total += parse_hour(hour).unwrap_or(0);
+            total += utils::parse_hour(hour).unwrap_or(0);
         } else {
-            total += parse_hour(period).unwrap_or(0);
+            total += utils::parse_hour(period).unwrap_or(0);
         };
 
         let mut out = Vec::with_capacity(total);
@@ -171,7 +140,7 @@ impl WaveHeightForecast {
         for i in 0..total {
             out.push(Self {
                 value: self.value.clone(),
-                valid_time: increment_time(time, i)?,
+                valid_time: utils::increment_time(time, i)?,
             })
         }
 
@@ -179,7 +148,39 @@ impl WaveHeightForecast {
     }
 }
 
-impl From<serde_json::Value> for WaveHeightForecast {
+impl From<serde_json::Value> for Forecast {
+    fn from(value: serde_json::Value) -> Self {
+        let properties = value
+            .get("properties")
+            .ok_or(anyhow!("no properties found!"))
+            .unwrap();
+
+        let last_updated = DateTime::parse_from_str(
+            properties.get("updateTime").unwrap().as_str().unwrap(),
+            "%+",
+        )
+        .unwrap()
+        .to_rfc2822()
+        .strip_suffix("+0000")
+        .unwrap()
+        .to_string();
+
+        let wave_height = ForecastValue::get(properties, "waveHeight").unwrap();
+        let wind_speed = ForecastValue::get(properties, "windSpeed").unwrap();
+        let wind_gust = ForecastValue::get(properties, "windGust").unwrap();
+        let wind_direction = ForecastValue::get(properties, "windDirection").unwrap();
+
+        Self {
+            last_updated,
+            wave_height,
+            wind_speed,
+            wind_gust,
+            wind_direction,
+        }
+    }
+}
+
+impl From<serde_json::Value> for ForecastValue {
     fn from(v: serde_json::Value) -> Self {
         let value = v.get("value").unwrap().as_f64().unwrap();
         let valid_time = v.get("validTime").unwrap().to_string();
@@ -194,94 +195,45 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 
     tokio::spawn(async move {
         let mut context = tera::Context::new();
-        let mut buffer_beater = Vec::with_capacity(5000);
-        buffer_beater.fill(" ");
-        tx.send(Ok(buffer_beater
-            .iter()
-            .map(|v| v.to_string())
-            .collect::<String>()))
-            .await
-            .unwrap();
+
         tx.send(Ok(TEMPLATES.render("base.html", &context).unwrap()))
             .await
             .unwrap();
 
         let latest = Latest::get().await.unwrap();
+        if let Ok(mut forecast) = Forecast::get().await {
+            forecast.condense();
 
-        let client = reqwest::Client::builder()
-            .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
-            .build()
-            .unwrap();
+            let (wave_height_data, graph_max) = forecast.get_wave_data();
 
-        // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
-        let forecast = client
-            .get("https://api.weather.gov/gridpoints/MKX/90,67")
-            .send()
-            .await
-            .unwrap()
-            .json::<serde_json::Value>()
-            .await
-            .unwrap();
-
-        let wave_heights = WaveHeightData(
-            forecast
-                .get("properties")
-                .ok_or(anyhow!("no properties found!"))
-                .unwrap()
-                .get("waveHeight")
-                .ok_or(anyhow!("no wave heights found!"))
-                .unwrap()
-                .get("values")
-                .ok_or(anyhow!("no values found!"))
-                .unwrap()
-                .as_array()
-                .ok_or(anyhow!("array not found!"))
-                .unwrap()
-                .clone()
-                .into_iter()
-                .map(WaveHeightForecast::from)
-                .map(|w| WaveHeightForecast::expand_time_ranges(&w).unwrap())
-                .flatten()
-                .collect::<Vec<_>>(),
-            DateTime::parse_from_str(
-                forecast
-                    .get("properties")
-                    .unwrap()
-                    .get("updateTime")
-                    .unwrap()
-                    .as_str()
-                    .unwrap(),
-                "%+",
-            )
-            .unwrap()
-            .to_rfc2822()
-            .strip_suffix("+0000")
-            .unwrap()
-            .to_string(),
-        );
-
-        let (wave_height_data, graph_max) = wave_heights.get_data();
-
-        context.insert("title", &state.title);
-        context.insert("as_of", &latest.as_of);
-        context.insert("wind_direction", &latest.wind_direction);
-        context.insert("wind_speed", &convert_meter_to_mile(&latest.wind_speed));
-        context.insert("gusts", &convert_meter_to_mile(&latest.gusts));
-        context.insert("wave_height_data", &wave_height_data);
-        context.insert("graph_max", &(graph_max + 2));
-        context.insert("wave_height_labels", &wave_heights.get_labels());
-        context.insert(
-            "current_wave_height",
-            &wave_heights.get_current_wave_height(),
-        );
-        context.insert(
-            "wind_icon_direction",
-            &(latest.wind_direction.parse::<u32>().unwrap() + 180),
-        );
-        context.insert("forecast_as_of", &wave_heights.1);
-        tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
-            .await
-            .unwrap();
+            context.insert("title", &state.title);
+            context.insert("as_of", &latest.as_of);
+            context.insert("wind_direction", &latest.wind_direction);
+            context.insert(
+                "wind",
+                &format!(
+                    "{}-{}",
+                    utils::convert_meter_to_mile(&latest.wind_speed),
+                    utils::convert_meter_to_mile(&latest.gusts)
+                ),
+            );
+            context.insert("wave_height_data", &wave_height_data);
+            context.insert("graph_max", &(graph_max + 2));
+            context.insert("wave_height_labels", &forecast.get_labels());
+            context.insert("current_wave_height", &forecast.get_current_wave_height());
+            context.insert(
+                "wind_icon_direction",
+                &(latest.wind_direction.parse::<u32>().unwrap() + 180),
+            );
+            context.insert("forecast_as_of", &forecast.last_updated);
+            tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
+                .await
+                .unwrap();
+        } else {
+            tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                .await
+                .unwrap();
+        }
     });
 
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
