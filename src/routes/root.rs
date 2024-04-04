@@ -7,12 +7,37 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Local};
+use scraper::{Html, Selector};
 use std::{cmp::Ordering, convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
+
+struct WaterTemp(String);
+
+impl WaterTemp {
+    async fn get() -> Self {
+        let response = reqwest::get("https://seatemperature.net/current/united-states/milwaukee-wisconsin-united-states-sea-temperature")
+            .await
+            .unwrap();
+        let html = Html::parse_document(&response.text().await.unwrap());
+        let selector = Selector::parse("#temp1").unwrap();
+
+        Self(
+            html.select(&selector)
+                .next()
+                .unwrap()
+                .text()
+                .next()
+                .unwrap()
+                .parse::<String>()
+                .unwrap(),
+        )
+    }
+}
 
 struct Forecast {
     last_updated: String,
     wave_height: Vec<ForecastValue>,
+    wave_period: Vec<ForecastValue>,
     wind_speed: Vec<ForecastValue>,
     wind_gust: Vec<ForecastValue>,
     wind_direction: Vec<ForecastValue>,
@@ -37,11 +62,12 @@ impl Forecast {
     }
 
     fn condense(&mut self) {
-        let length = self.wave_height.len();
+        let length = self.wave_period.len();
 
         let _ = self.wind_speed.split_off(length);
         let _ = self.wind_gust.split_off(length);
         let _ = self.wind_direction.split_off(length);
+        let _ = self.wave_height.split_off(length);
     }
 
     fn get_labels(&self) -> String {
@@ -81,7 +107,6 @@ impl Forecast {
                 // Try to get range of current surf
                 if let Some(last_hour) = self.wave_height.get(i - 1) {
                     let last_hour_height = utils::convert_meter_to_feet(last_hour.value);
-                    println!("{last_hour_height} {height}");
                     return match height.partial_cmp(&last_hour_height) {
                         Some(Ordering::Less) => format!("{:.0}-{:.0}", height, last_hour_height),
                         Some(Ordering::Greater) => {
@@ -166,6 +191,7 @@ impl From<serde_json::Value> for Forecast {
         .to_string();
 
         let wave_height = ForecastValue::get(properties, "waveHeight").unwrap();
+        let wave_period = ForecastValue::get(properties, "wavePeriod").unwrap();
         let wind_speed = ForecastValue::get(properties, "windSpeed").unwrap();
         let wind_gust = ForecastValue::get(properties, "windGust").unwrap();
         let wind_direction = ForecastValue::get(properties, "windDirection").unwrap();
@@ -173,6 +199,7 @@ impl From<serde_json::Value> for Forecast {
         Self {
             last_updated,
             wave_height,
+            wave_period,
             wind_speed,
             wind_gust,
             wind_direction,
@@ -202,9 +229,11 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 
         let latest = Latest::get().await.unwrap();
         if let Ok(mut forecast) = Forecast::get().await {
-            forecast.condense();
+            // forecast.condense();
 
             let (wave_height_data, graph_max) = forecast.get_wave_data();
+
+            let water_temp = WaterTemp::get().await;
 
             context.insert("title", &state.title);
             context.insert("as_of", &latest.as_of);
@@ -226,6 +255,8 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 &(latest.wind_direction.parse::<u32>().unwrap() + 180),
             );
             context.insert("forecast_as_of", &forecast.last_updated);
+            context.insert("water_temp", &water_temp.0);
+
             tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
                 .await
                 .unwrap();

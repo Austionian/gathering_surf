@@ -5,6 +5,7 @@
     document.getElementById("as-of-data").innerText = "Live as of {{ as_of }}"
     document.getElementById("wind-icon").setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);")
     document.getElementById("forecast-as-of-data").innerText = "Forecast last updated at {{ forecast_as_of }}"
+    document.getElementById("water-temp-data").innerText = "{{ water_temp }}"
 
     document.querySelectorAll(".loader").forEach(e => e.remove())
     document.getElementById("wind-icon-container").classList.remove("hidden")
