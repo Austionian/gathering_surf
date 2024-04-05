@@ -10,6 +10,10 @@ pub fn convert_meter_to_mile(value: &str) -> String {
     format!("{:.0}", value.parse().unwrap_or(0.0) * 2.2369)
 }
 
+pub fn convert_celsius_to_fahrenheit(value: &str) -> String {
+    format!("{:.0}", value.parse().unwrap_or(0.0) * 1.8 + 32.0)
+}
+
 pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     if let Some((_, hour)) = s.split_once("T") {
         let hour = hour.strip_suffix("H\"").ok_or(anyhow!("no hour found!"))?;

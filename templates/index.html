@@ -2,6 +2,7 @@
 <script>
     document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
     document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
+    document.getElementById("current-water-temp").innerText = "{{ current_water_temp }}"
     document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
     document.getElementById("wind").innerText = "{{ wind }}"
     document.getElementById("as-of").innerText = "Live as of {{ as_of }}"

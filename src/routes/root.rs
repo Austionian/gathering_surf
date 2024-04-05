@@ -275,6 +275,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 &(latest.wind_direction.parse::<u32>().unwrap() + 180),
             );
             context.insert("forecast_as_of", &forecast.last_updated);
+            context.insert("current_water_temp", &latest.water_temp);
 
             tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
                 .await

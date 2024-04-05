@@ -1,3 +1,4 @@
+use crate::utils::convert_celsius_to_fahrenheit;
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
 
@@ -6,6 +7,7 @@ pub struct Latest {
     pub wind_direction: String,
     pub wind_speed: String,
     pub gusts: String,
+    pub water_temp: String,
 }
 
 impl Latest {
@@ -14,6 +16,21 @@ impl Latest {
             .await?
             .text()
             .await?;
+
+        let bouy_data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/45214.txt")
+            .await?
+            .text()
+            .await?;
+
+        let water_temp = convert_celsius_to_fahrenheit(
+            bouy_data
+                .lines()
+                .nth(2)
+                .unwrap()
+                .split_whitespace()
+                .nth(14)
+                .unwrap(),
+        );
 
         let latest = data.lines().collect::<Vec<_>>();
         let latest = latest.get(2).unwrap();
@@ -32,6 +49,7 @@ impl Latest {
             wind_direction,
             wind_speed,
             gusts,
+            water_temp,
         })
     }
 
