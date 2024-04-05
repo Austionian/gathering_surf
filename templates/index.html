@@ -2,14 +2,15 @@
 <script>
     document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
     document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
+    document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
     document.getElementById("wind").innerText = "{{ wind }}"
     document.getElementById("as-of").innerText = "Live as of {{ as_of }}"
     document.getElementById("wind-icon").setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);")
     document.getElementById("forecast-as-of").innerText = "Last updated at {{ forecast_as_of }}"
-    document.getElementById("water-temp").innerText = "{{ water_temp }}"
 
     document.querySelectorAll(".loader").forEach(e => e.remove())
     document.getElementById("wind-icon-container").classList.remove("hidden")
+    document.getElementById("wave-icon-container").classList.remove("hidden")
     document.getElementById("as-of-container").classList.remove("animate-pulse")
     document.getElementById("forecast").classList.remove("hidden")
 </script>

@@ -1,4 +1,5 @@
-use chrono::{DateTime, Local, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
+use chrono_tz::US::Central;
 
 pub struct Latest {
     pub as_of: String,
@@ -36,7 +37,7 @@ impl Latest {
 
     pub fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
         let as_of = as_of.trim().split(" ").collect::<Vec<_>>();
-        let as_of: DateTime<Local> = Utc
+        let as_of = Utc
             .with_ymd_and_hms(
                 as_of.get(0).unwrap().parse::<i32>().unwrap(),
                 as_of.get(1).unwrap().parse::<u32>().unwrap(),
@@ -45,11 +46,9 @@ impl Latest {
                 as_of.get(4).unwrap().parse::<u32>().unwrap(),
                 00,
             )
-            .unwrap()
-            .try_into()
             .unwrap();
 
-        let as_of = as_of.to_rfc2822();
+        let as_of = as_of.with_timezone(&Central).to_rfc2822();
 
         Ok(as_of.split(" -").next().unwrap().to_string())
     }
