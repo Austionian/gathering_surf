@@ -6,7 +6,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Local, TimeZone, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
+use chrono_tz::US::Central;
 use scraper::{Html, Selector};
 use std::{cmp::Ordering, convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
@@ -201,19 +202,18 @@ impl From<serde_json::Value> for Forecast {
             .ok_or(anyhow!("no properties found!"))
             .unwrap();
 
-        let last_updated: DateTime<Utc> = DateTime::parse_from_str(
-            properties.get("updateTime").unwrap().as_str().unwrap(),
-            "%+",
-        )
-        .unwrap()
-        .into();
-
-        let last_updated: DateTime<Local> = DateTime::from(last_updated);
-        let last_updated = last_updated
-            .to_rfc2822()
-            .strip_suffix(" -0500")
+        let last_updated = properties
+            .get("updateTime")
             .unwrap()
-            .to_string();
+            .as_str()
+            .unwrap()
+            .strip_suffix("+00:00")
+            .unwrap()
+            .parse::<NaiveDateTime>()
+            .unwrap();
+
+        let last_updated = Central.from_utc_datetime(&last_updated).to_rfc2822();
+        let last_updated = last_updated.strip_suffix(" -0500").unwrap().to_string();
 
         let wave_height = ForecastValue::get(properties, "waveHeight").unwrap();
         let wave_period = ForecastValue::get(properties, "wavePeriod").unwrap();

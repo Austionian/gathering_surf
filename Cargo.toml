@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.81"
 axum = "0.7"
 chrono = "0.4"
+chrono-tz = "0.8.6"
 config = { version = "0.14", default-features = false, features = ["yaml"] }
 hyper = { version = "1", features = ["full"] }
 lazy_static = "1"
