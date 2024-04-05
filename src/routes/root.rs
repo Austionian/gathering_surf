@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use scraper::{Html, Selector};
 use std::{cmp::Ordering, convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
@@ -61,13 +61,29 @@ impl Forecast {
         ))
     }
 
+    /// Condenses the forecast to even length vecs.
+    ///
+    /// Not all data from the api will cover the same length of
+    /// time. This ensures no dangling data.
+    ///
+    /// TODO - Might not be necessary. Prone to future bug. No way
+    /// to ensure all relevent fields are taken into account.
     fn condense(&mut self) {
-        let length = self.wave_period.len();
+        let lengths = [
+            self.wave_period.len(),
+            self.wave_height.len(),
+            self.wind_speed.len(),
+            self.wind_gust.len(),
+            self.wind_direction.len(),
+        ];
 
-        let _ = self.wind_speed.split_off(length);
-        let _ = self.wind_gust.split_off(length);
-        let _ = self.wind_direction.split_off(length);
-        let _ = self.wave_height.split_off(length);
+        let min = lengths.iter().min().unwrap();
+
+        let _ = self.wave_height.split_off(*min);
+        let _ = self.wind_speed.split_off(*min);
+        let _ = self.wind_gust.split_off(*min);
+        let _ = self.wind_direction.split_off(*min);
+        let _ = self.wave_height.split_off(*min);
     }
 
     fn get_labels(&self) -> String {
@@ -97,30 +113,35 @@ impl Forecast {
         )
     }
 
-    fn get_current_wave_height(&self) -> String {
+    fn get_current_wave_height_and_period(&self) -> (String, String) {
         for (i, wave_height) in self.wave_height.iter().enumerate() {
             if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Local::now() {
                 let height = utils::convert_meter_to_feet(wave_height.value);
+                let period = self.wave_period.get(i).unwrap().value.to_string();
+
                 if height < 1.5 {
-                    return "Flat".to_string();
+                    return ("Flat".to_string(), period);
                 }
+
                 // Try to get range of current surf
                 if let Some(last_hour) = self.wave_height.get(i - 1) {
                     let last_hour_height = utils::convert_meter_to_feet(last_hour.value);
                     return match height.partial_cmp(&last_hour_height) {
-                        Some(Ordering::Less) => format!("{:.0}-{:.0}", height, last_hour_height),
-                        Some(Ordering::Greater) => {
-                            format!("{:.0}-{:.0}+", last_hour_height, height)
+                        Some(Ordering::Less) => {
+                            (format!("{:.0}-{:.0}", height, last_hour_height), period)
                         }
-                        Some(Ordering::Equal) => format!("{:.0}", height),
+                        Some(Ordering::Greater) => {
+                            (format!("{:.0}-{:.0}+", last_hour_height, height), period)
+                        }
+                        Some(Ordering::Equal) => (format!("{:.0}", height), period),
                         None => unreachable!("Found no ordering in wave heights."),
                     };
                 }
-                return format!("{:.0}", height);
+                return (format!("{:.0}", height), period);
             }
         }
 
-        "Flat".to_string()
+        ("Flat".to_string(), String::default())
     }
 }
 
@@ -180,15 +201,19 @@ impl From<serde_json::Value> for Forecast {
             .ok_or(anyhow!("no properties found!"))
             .unwrap();
 
-        let last_updated = DateTime::parse_from_str(
+        let last_updated: DateTime<Utc> = DateTime::parse_from_str(
             properties.get("updateTime").unwrap().as_str().unwrap(),
             "%+",
         )
         .unwrap()
-        .to_rfc2822()
-        .strip_suffix("+0000")
-        .unwrap()
-        .to_string();
+        .into();
+
+        let last_updated: DateTime<Local> = DateTime::from(last_updated);
+        let last_updated = last_updated
+            .to_rfc2822()
+            .strip_suffix(" -0500")
+            .unwrap()
+            .to_string();
 
         let wave_height = ForecastValue::get(properties, "waveHeight").unwrap();
         let wave_period = ForecastValue::get(properties, "wavePeriod").unwrap();
@@ -229,9 +254,11 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 
         let latest = Latest::get().await.unwrap();
         if let Ok(mut forecast) = Forecast::get().await {
-            // forecast.condense();
+            forecast.condense();
 
             let (wave_height_data, graph_max) = forecast.get_wave_data();
+            let (current_wave_height, current_wave_period) =
+                forecast.get_current_wave_height_and_period();
 
             let water_temp = WaterTemp::get().await;
 
@@ -249,7 +276,8 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             context.insert("wave_height_data", &wave_height_data);
             context.insert("graph_max", &(graph_max + 2));
             context.insert("wave_height_labels", &forecast.get_labels());
-            context.insert("current_wave_height", &forecast.get_current_wave_height());
+            context.insert("current_wave_height", &current_wave_height);
+            context.insert("current_wave_period", &current_wave_period);
             context.insert(
                 "wind_icon_direction",
                 &(latest.wind_direction.parse::<u32>().unwrap() + 180),

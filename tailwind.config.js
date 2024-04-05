@@ -3,6 +3,7 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
   content: ["./templates/**/*.{html,js}"],
+  pulgins: [require("@tailwindcss/forms")],
   theme: {
     extend: {
       colors: {
