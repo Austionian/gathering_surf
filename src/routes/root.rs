@@ -1,4 +1,4 @@
-use crate::{utils, AppState, Latest, TEMPLATES};
+use crate::{quality, utils, AppState, Latest, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -222,6 +222,11 @@ impl From<serde_json::Value> for Forecast {
     }
 }
 
+static GOOD: (&'static str, &'static str) = ("Good", "#0bd674");
+static OK: (&'static str, &'static str) = ("OK", "#f4496d");
+static POOR: (&'static str, &'static str) = ("Poor", "#ff9500");
+static VERY_POOR: (&'static str, &'static str) = ("Very Poor", "#f4496d");
+
 impl From<serde_json::Value> for ForecastValue {
     fn from(v: serde_json::Value) -> Self {
         let value = v.get("value").unwrap().as_f64().unwrap();
@@ -253,14 +258,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             context.insert("title", &state.title);
             context.insert("as_of", &latest.as_of);
             context.insert("wind_direction", &latest.wind_direction);
-            context.insert(
-                "wind",
-                &format!(
-                    "{}-{}",
-                    utils::convert_meter_to_mile(&latest.wind_speed),
-                    utils::convert_meter_to_mile(&latest.gusts)
-                ),
-            );
+            context.insert("wind", &latest.get_wind_data());
             context.insert("wave_height_data", &wave_height_data);
             context.insert("graph_max", &(graph_max + 2));
             context.insert("wave_height_labels", &forecast.get_labels());
@@ -270,12 +268,17 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 "current_wave_direction",
                 &(current_wave_direction.parse::<u32>().unwrap() + 180),
             );
-            context.insert(
-                "wind_icon_direction",
-                &(latest.wind_direction.parse::<u32>().unwrap() + 180),
-            );
+            context.insert("wind_icon_direction", &(latest.wind_direction + 180));
             context.insert("forecast_as_of", &forecast.last_updated);
             context.insert("current_water_temp", &latest.water_temp);
+            context.insert(
+                "wave_quality_text",
+                quality::get_quality(&latest.wind_speed, latest.wind_direction).0,
+            );
+            context.insert(
+                "wave_quality",
+                quality::get_quality(&latest.wind_speed, latest.wind_direction).1,
+            );
 
             tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
                 .await

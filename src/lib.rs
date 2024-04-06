@@ -1,5 +1,6 @@
 mod configuration;
 mod latest;
+mod quality;
 mod routes;
 mod utils;
 
@@ -11,6 +12,7 @@ use tower_http::trace::TraceLayer;
 
 pub use configuration::get_configuration;
 pub use latest::Latest;
+pub use quality::*;
 pub use utils::*;
 
 lazy_static! {

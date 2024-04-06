@@ -1,5 +1,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    document.getElementById("wave-quality").setAttribute("style", "background-color: {{ wave_quality }};")
+    document.getElementById("wave-quality-text").innerText = "{{ wave_quality_text }}"
+    document.getElementById("wave-quality-text").setAttribute("style", "color: {{ wave_quality }};")
     document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
     document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
     document.getElementById("current-water-temp").innerText = "{{ current_water_temp }}"
@@ -140,8 +143,8 @@ new Chart(ctx, {
         pointRadius: 1,
         backgroundColor: "#4ade80",
         segment: {
-          backgroundColor: (ctx) => down(ctx, "rgb(192,75,75)") || "#4ade80",
-          borderColor: (ctx) => down(ctx, "rgb(192,75,75)") || "#4ade80",
+          backgroundColor: (ctx) => down(ctx, "#ffff00") || "#4ade80",
+          borderColor: (ctx) => down(ctx, "#ffff00") || "#4ade80",
         },
       },
     ],
