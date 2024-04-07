@@ -19,6 +19,7 @@ struct Forecast {
     wind_speed: Vec<ForecastValue>,
     wind_gust: Vec<ForecastValue>,
     wind_direction: Vec<ForecastValue>,
+    quality: Option<Vec<String>>,
 }
 
 impl Forecast {
@@ -100,7 +101,7 @@ impl Forecast {
                 let period = self.wave_period.get(i).unwrap().value.to_string();
                 let direction = self.wave_direction.get(i).unwrap().value.to_string();
 
-                if height < 1.5 {
+                if height < 1.0 {
                     return ("Flat".to_string(), period, direction);
                 }
 
@@ -127,6 +128,18 @@ impl Forecast {
         }
 
         ("Flat".to_string(), String::default(), String::default())
+    }
+
+    fn get_quality(&mut self) {
+        let mut qualities = Vec::with_capacity(self.wind_direction.len());
+        for (wind_direction, wind_speed) in self.wind_direction.iter().zip(self.wind_speed.iter()) {
+            qualities.push(format!(
+                "'{}'",
+                quality::get_quality(wind_speed.value, wind_direction.value).1
+            ));
+        }
+
+        self.quality = Some(qualities)
     }
 }
 
@@ -218,14 +231,10 @@ impl From<serde_json::Value> for Forecast {
             wind_speed,
             wind_gust,
             wind_direction,
+            quality: None,
         }
     }
 }
-
-static GOOD: (&'static str, &'static str) = ("Good", "#0bd674");
-static OK: (&'static str, &'static str) = ("OK", "#f4496d");
-static POOR: (&'static str, &'static str) = ("Poor", "#ff9500");
-static VERY_POOR: (&'static str, &'static str) = ("Very Poor", "#f4496d");
 
 impl From<serde_json::Value> for ForecastValue {
     fn from(v: serde_json::Value) -> Self {
@@ -250,6 +259,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         let latest = Latest::get().await.unwrap();
         if let Ok(mut forecast) = Forecast::get().await {
             forecast.condense();
+            forecast.get_quality();
 
             let (wave_height_data, graph_max) = forecast.get_wave_data();
             let (current_wave_height, current_wave_period, current_wave_direction) =
@@ -273,12 +283,21 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             context.insert("current_water_temp", &latest.water_temp);
             context.insert(
                 "wave_quality_text",
-                quality::get_quality(&latest.wind_speed, latest.wind_direction).0,
+                quality::get_quality(
+                    latest.wind_speed.parse().unwrap(),
+                    latest.wind_direction as f64,
+                )
+                .0,
             );
             context.insert(
                 "wave_quality",
-                quality::get_quality(&latest.wind_speed, latest.wind_direction).1,
+                quality::get_quality(
+                    latest.wind_speed.parse().unwrap(),
+                    latest.wind_direction as f64,
+                )
+                .1,
             );
+            context.insert("qualities", &forecast.quality.unwrap());
 
             tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
                 .await
