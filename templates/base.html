@@ -89,7 +89,7 @@
                 <h1
                   class="text-white flex sm:self-center gap-x-3 text-xl leading-7 mb-0"
                 >
-                  Current Conditions<span>-</span
+                  Right Now<span>-</span
                   ><span class="text-indigo-400">Atwater</span>
                 </h1>
               </div>
@@ -109,14 +109,12 @@
             <!-- Stats -->
             <div class="grid grid-cols-1 bg-gray-700/10 lg:grid-cols-3">
               <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
-                <p class="text-sm font-medium leading-6 text-gray-400">
-                  Forecasted Waves
-                </p>
+                <p class="text-sm font-medium leading-6 text-gray-400">Waves</p>
                 <div class="mt-2 flex items-baseline gap-x-2">
                   <div
                     style="
                       width: 6px;
-                      height: 45px;
+                      height: 60px;
                       border-radius: 99px;
                       margin: auto 10px auto 0;
                     "
@@ -127,7 +125,7 @@
                   ></div>
                   <div
                     id="wave-quality"
-                    class="w-[6px] h-16 self-center rounded-full mr-[10px]"
+                    class="hidden w-[6px] h-16 self-center rounded-full mr-[10px]"
                   ></div>
                   <div class="flex flex-col">
                     <div class="flex items-baseline space-x-1">
@@ -168,7 +166,7 @@
                     </div>
                     <div class="flex items-baseline">
                       <div
-                        class="loader w-[40px] h-[20px] animate-pulse rounded-xl bg-gray-700"
+                        class="loader -ml-12 w-[40px] h-[20px] animate-pulse rounded-xl bg-gray-700"
                       ></div>
                       <div
                         id="wave-quality-text"
@@ -203,22 +201,42 @@
                 </div>
               </div>
               <div
-                class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
+                class="flex justify-between border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
               >
-                <p class="text-sm font-medium leading-6 text-gray-400">
-                  Water Temperature
-                </p>
-                <div
-                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
-                >
+                <div>
+                  <p class="text-sm font-medium leading-6 text-gray-400">
+                    Water Temp
+                  </p>
                   <div
-                    class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
-                  ></div>
-                  <span id="current-water-temp"></span>
-                  <span
-                    class="text-4xl tracking-tight font-semibold text-gray-400"
-                    >&#176;</span
+                    class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
                   >
+                    <div
+                      class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                    ></div>
+                    <span id="current-water-temp"></span>
+                    <span
+                      class="text-sm tracking-tight font-semibold text-gray-400"
+                      >°F</span
+                    >
+                  </div>
+                </div>
+                <div class="border-r border-white/5"></div>
+                <div>
+                  <p class="text-sm font-medium leading-6 text-gray-400">
+                    Air Temp
+                  </p>
+                  <div
+                    class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                  >
+                    <div
+                      class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                    ></div>
+                    <span id="current-air-temp"></span>
+                    <span
+                      class="text-sm tracking-tight font-semibold text-gray-400"
+                      >°F</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -235,6 +253,87 @@
               class="loader h-[50vh] animate-pulse bg-slate-700 rounded-xl"
             ></div>
             <canvas class="hidden" id="forecast"></canvas>
+            <div
+              class="loader h-[10vh] animate-pulse bg-slate-700 rounded-xl"
+            ></div>
+            <div
+              id="legend"
+              class="rounded text-white pointer-events-none transition flex justify-center text-lg m-auto mt-10"
+            >
+              <div class="mx-auto max-w-7xl text-black">
+                <div class="grid grid-cols-1">
+                  <div
+                    id="legend-label"
+                    class="px-4 pt-4 py-2 sm:px-6 lg:px-8 font-light text-2xl mb-0"
+                  ></div>
+                </div>
+                <div
+                  class="grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4"
+                >
+                  <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <p class="text-sm font-medium leading-6 text-gray-700">
+                      Wave Height
+                    </p>
+                    <p class="mt-2 flex items-baseline gap-x-2">
+                      <span
+                        class="text-3xl font-semibold tracking-tight"
+                        id="legend-wave-height"
+                      ></span>
+                    </p>
+                  </div>
+                  <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <p class="text-sm font-medium leading-6 text-gray-700">
+                      Wind
+                    </p>
+                    <div class="mt-2 flex items-baseline gap-x-2">
+                      <div
+                        class="w-8 h-8 fill-black mr-2"
+                        id="legend-wind-icon-container"
+                      >
+                        <svg
+                          id="legend-wind-icon"
+                          class="transition"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 32 32"
+                        >
+                          <title>wind direction</title>
+                          <path
+                            d="M26.71,10.29l-10-10a1,1,0,0,0-1.41,0l-10,10,1.41,1.41L15,3.41V32h2V3.41l8.29,8.29Z"
+                          />
+                        </svg>
+                      </div>
+                      <span
+                        id="legend-wind-speed"
+                        class="text-3xl font-semibold tracking-tight"
+                      ></span>
+                      <span class="text-sm text-gray-700">mph</span>
+                    </div>
+                  </div>
+                  <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <p class="text-sm font-medium leading-6 text-gray-700">
+                      Gusts
+                    </p>
+                    <p class="mt-2 flex items-baseline gap-x-2">
+                      <span class="text-3xl font-semibold tracking-tight"
+                        >3</span
+                      >
+                      <span class="text-sm text-gray-700">mph</span>
+                    </p>
+                  </div>
+                  <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <p class="text-sm font-medium leading-6 text-gray-700">
+                      Wave Period
+                    </p>
+                    <p class="mt-2 flex items-baseline gap-x-2">
+                      <span class="text-3xl font-semibold tracking-tight"
+                        >9</span
+                      >
+                      <span class="text-sm text-gray-700">s</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>

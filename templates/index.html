@@ -1,11 +1,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    const qualities = {{ qualities | safe }}
+    const wave_height_labels = [{{ wave_height_labels | safe }}]
+    const wave_heights = [{{ wave_height_data }}]
+    const wind_speeds = [{{ wind_speed_data }}]
+    const wind_directions = [{{ wind_direction_data }}]
+
+    document.querySelector("#legend").setAttribute("style", "background-color: {{ wave_quality }};")
+    document.querySelector("#legend-label").innerText = wave_height_labels[0];
+    document.querySelector("#legend-wave-height").innerText = wave_heights[0];
+    document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
+    document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`)
+
     document.getElementById("wave-quality").setAttribute("style", "background-color: {{ wave_quality }};")
     document.getElementById("wave-quality-text").innerText = "{{ wave_quality_text }}"
     document.getElementById("wave-quality-text").setAttribute("style", "color: {{ wave_quality }};")
     document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
     document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
     document.getElementById("current-water-temp").innerText = "{{ current_water_temp }}"
+    document.getElementById("current-air-temp").innerText = "{{ current_air_temp }}"
     document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
     document.getElementById("wind").innerText = "{{ wind }}"
     document.getElementById("as-of").innerText = "Live as of {{ as_of }}"
@@ -17,155 +30,64 @@
     document.getElementById("wave-icon-container").classList.remove("hidden")
     document.getElementById("as-of-container").classList.remove("animate-pulse")
     document.getElementById("forecast").classList.remove("hidden")
-</script>
-<script>
+    document.getElementById("wave-quality").classList.remove("hidden")
+
 const ctx = document.getElementById("forecast");
 
-const qualities = {{ qualities | safe }}
 const quality = ctx => qualities[ctx.p0.parsed.x]
 
-
-const getOrCreateTooltip = (chart) => {
-  let tooltipEl = chart.canvas.parentNode.querySelector("div");
-
-  let bg = qualities[chart.tooltip.dataPoints[0].parsed.x]
-  if (!tooltipEl) {
-    tooltipEl = document.createElement("div");
-    tooltipEl.style.borderRadius = "3px";
-    tooltipEl.style.color = "white";
-    tooltipEl.style.opacity = 1;
-    tooltipEl.style.pointerEvents = "none";
-    tooltipEl.style.position = "fixed";
-    tooltipEl.style.left = "50vw";
-    tooltipEl.style.transform = "translate(-50%, 0)";
-    tooltipEl.style.transition = "all .1s ease";
-    tooltipEl.style.width = document.querySelector("canvas").style.width;
-    tooltipEl.style.display = "flex";
-    tooltipEl.style.justifyContent = "center";
-    tooltipEl.style.fontSize = "large";
-    tooltipEl.style.margin = "auto";
-
-    const table = document.createElement("table");
-    table.style.margin = "0px";
-
-    tooltipEl.appendChild(table);
-    chart.canvas.parentNode.appendChild(tooltipEl);
-  }
-  tooltipEl.style.background = bg
-
-  return tooltipEl;
-};
-
-const externalTooltipHandler = (context) => {
-  // Tooltip Element
-  const { chart, tooltip } = context;
-  const tooltipEl = getOrCreateTooltip(chart);
-
-  // Set Text
-  if (tooltip.body) {
-    const titleLines = tooltip.title || [];
-    const bodyLines = tooltip.body.map((b) => b.lines);
-
-    const tableHead = document.createElement("thead");
-
-    titleLines.forEach((title) => {
-      const tr = document.createElement("tr");
-      tr.style.borderWidth = 0;
-
-      const th = document.createElement("th");
-      th.style.borderWidth = 0;
-      const text = document.createTextNode(title);
-
-      th.appendChild(text);
-      tr.appendChild(th);
-      tableHead.appendChild(tr);
-    });
-
-    const tableBody = document.createElement("tbody");
-    bodyLines.forEach((body, i) => {
-      const colors = tooltip.labelColors[i];
-
-      const span = document.createElement("span");
-
-      const tr = document.createElement("tr");
-      tr.style.backgroundColor = "inherit";
-      tr.style.borderWidth = 0;
-
-      const td = document.createElement("td");
-      td.style.borderWidth = 0;
-
-      const text = document.createTextNode(body);
-
-      td.appendChild(span);
-      td.appendChild(text);
-      tr.appendChild(td);
-      tableBody.appendChild(tr);
-    });
-
-    const tableRoot = tooltipEl.querySelector("table");
-
-    // Remove old children
-    while (tableRoot.firstChild) {
-      tableRoot.firstChild.remove();
-    }
-
-    // Add new children
-    tableRoot.appendChild(tableHead);
-    tableRoot.appendChild(tableBody);
-  }
-
-  const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-
-  // Display, position, and set styles for font
-  // tooltipEl.style.left = positionX + tooltip.caretX + "px";
-  // tooltipEl.style.top = positionY + tooltip.caretY + "px";
-  // tooltipEl.style.font = tooltip.options.bodyFont.string;
-  // tooltipEl.style.padding =
-  //   tooltip.options.padding + "px " + tooltip.options.padding + "px";
-};
-
-const totalDuration = 1000;
-const delayBetweenPoints = totalDuration / qualities.length;
-const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
-const animation = {
-  x: {
-    type: 'number',
-    easing: 'linear',
-    duration: delayBetweenPoints,
-    from: NaN, // the point is initially skipped
-    delay(ctx) {
-      if (ctx.type !== 'data' || ctx.xStarted) {
-        return 0;
+const plugin = {
+    id: 'vert',
+    defaults: {
+        width: 1,
+        dash: [3, 3],
+    },
+    afterInit: (chart, args, opts) => {
+      chart.corsair = {
+        x: 0,
+        y: 0,
       }
-      ctx.xStarted = true;
-      return ctx.index * delayBetweenPoints;
-    }
-  },
-  y: {
-    type: 'number',
-    easing: 'linear',
-    duration: delayBetweenPoints,
-    from: previousY,
-    delay(ctx) {
-      if (ctx.type !== 'data' || ctx.yStarted) {
-        return 0;
-      }
-      ctx.yStarted = true;
-      return ctx.index * delayBetweenPoints;
+    },
+    afterEvent: (chart, args) => {
+      const {inChartArea} = args
+      const {type,x,y} = args.event
+
+      chart.corsair = {x, y, draw: inChartArea}
+      chart.draw()
+    },
+    beforeDatasetsDraw: (chart, args, opts) => {
+      const {ctx} = chart
+      const {top, bottom, left, right} = chart.chartArea
+      const {x, draw} = chart.corsair
+      if (!draw) return
+
+      ctx.save()
+      
+      ctx.beginPath()
+      ctx.lineWidth = opts.width
+      ctx.strokeStyle = opts.color
+      ctx.setLineDash(opts.dash)
+      ctx.moveTo(x, bottom)
+      ctx.lineTo(x, top)
+      ctx.stroke()
+      
+      ctx.restore()
     }
   }
-};
+
+console.log(wave_height_labels, wave_heights.length )
 
 new Chart(ctx, {
   type: "line",
+  plugins: [plugin],
   data: {
-    labels: [{{ wave_height_labels | safe }}],
+    labels: wave_height_labels, 
     datasets: [
       {
         label: "wave height (feet)",
-        data: [{{ wave_height_data }}],
+        data: wave_heights,
         pointStyle: false,
-        fill: true,
+        fill: false,
         segment: {
           backgroundColor: (ctx) => quality(ctx) || "#4ade80",
           borderColor: (ctx) => quality(ctx) || "#4ade80",
@@ -174,15 +96,31 @@ new Chart(ctx, {
     ],
   },
   options: {
-    animation,
+        onHover: (e, _, chart) => {
+            const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+            // Substitute the appropriate scale IDs
+            const x_value = chart.scales.x.getValueForPixel(canvasPosition.x) 
+            const x = x_value && x_value > 0 
+                ? x_value > wave_heights.length 
+                    ? wave_heights.length 
+                    : x_value 
+                : 0;
+            const color = qualities[x];
+            document.querySelector("#legend").setAttribute("style", `background-color: ${ color }`);
+            document.querySelector("#legend-label").innerText = wave_height_labels[x];
+            document.querySelector("#legend-wave-height").innerText = wave_heights[x];
+            document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
+            document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[x]}deg);`)
+        },
     plugins: {
       legend: {
         display: false,
       },
+    vert: {
+      color: 'white',
+    },
       tooltip: {
         enabled: false,
-        position: "nearest",
-        external: externalTooltipHandler,
       },
     },
     elements: {
@@ -203,7 +141,7 @@ new Chart(ctx, {
       },
       y: {
         beginAtZero: true,
-          max: {{ graph_max }} >= 8 ? {{ graph_max }} : 8,
+        max: {{ graph_max }} + 1,
       },
     },
   },

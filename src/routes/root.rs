@@ -1,4 +1,4 @@
-use crate::{quality, utils, AppState, Latest, TEMPLATES};
+use crate::{convert_kilo_meter_to_mile, quality, utils, AppState, Latest, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -13,13 +13,15 @@ use tokio::sync::mpsc;
 
 struct Forecast {
     last_updated: String,
+    probability_of_precipitation: Vec<ForecastValue>,
+    quality: Option<Vec<String>>,
+    temperature: Vec<ForecastValue>,
     wave_height: Vec<ForecastValue>,
     wave_period: Vec<ForecastValue>,
     wave_direction: Vec<ForecastValue>,
     wind_speed: Vec<ForecastValue>,
     wind_gust: Vec<ForecastValue>,
     wind_direction: Vec<ForecastValue>,
-    quality: Option<Vec<String>>,
 }
 
 impl Forecast {
@@ -65,10 +67,10 @@ impl Forecast {
         let _ = self.wave_height.split_off(*min);
     }
 
-    fn get_labels(&self) -> String {
+    fn get_labels(&mut self) -> String {
         self.wave_height
-            .iter()
-            .map(|data| format!("'{}',", data.valid_time))
+            .iter_mut()
+            .map(|data| format!("'{}',", data.display_time.take().unwrap()))
             .collect()
     }
 
@@ -90,6 +92,20 @@ impl Forecast {
             out.iter().map(|value| format!("{:.3},", value)).collect(),
             smoothed_data.iter().map(|v| v.clone() as u8).max().unwrap(),
         )
+    }
+
+    fn get_wind_data(&self) -> String {
+        self.wind_speed
+            .iter()
+            .map(|v| format!("{:.2},", convert_kilo_meter_to_mile(v.value)))
+            .collect()
+    }
+
+    fn get_wind_direction_data(&self) -> String {
+        self.wind_direction
+            .iter()
+            .map(|v| format!("{:.2},", v.value))
+            .collect()
     }
 
     /// Returns the wave height, period and direction from the forecasted
@@ -146,6 +162,7 @@ impl Forecast {
 struct ForecastValue {
     value: f64,
     valid_time: String,
+    display_time: Option<String>,
 }
 
 impl ForecastValue {
@@ -182,9 +199,11 @@ impl ForecastValue {
         let mut out = Vec::with_capacity(total);
 
         for i in 0..total {
+            let (valid_time, display_time) = utils::increment_time(time, i)?;
             out.push(Self {
                 value: self.value.clone(),
-                valid_time: utils::increment_time(time, i)?,
+                valid_time,
+                display_time,
             })
         }
 
@@ -222,9 +241,14 @@ impl From<serde_json::Value> for Forecast {
         let wind_speed = ForecastValue::get(properties, "windSpeed").unwrap();
         let wind_gust = ForecastValue::get(properties, "windGust").unwrap();
         let wind_direction = ForecastValue::get(properties, "windDirection").unwrap();
+        let temperature = ForecastValue::get(properties, "temperature").unwrap();
+        let probability_of_precipitation =
+            ForecastValue::get(properties, "probabilityOfPrecipitation").unwrap();
 
         Self {
             last_updated,
+            probability_of_precipitation,
+            temperature,
             wave_height,
             wave_period,
             wave_direction,
@@ -241,7 +265,11 @@ impl From<serde_json::Value> for ForecastValue {
         let value = v.get("value").unwrap().as_f64().unwrap();
         let valid_time = v.get("validTime").unwrap().to_string();
 
-        Self { value, valid_time }
+        Self {
+            value,
+            valid_time,
+            display_time: None,
+        }
     }
 }
 
@@ -270,6 +298,8 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             context.insert("wind_direction", &latest.wind_direction);
             context.insert("wind", &latest.get_wind_data());
             context.insert("wave_height_data", &wave_height_data);
+            context.insert("wind_speed_data", &forecast.get_wind_data());
+            context.insert("wind_direction_data", &forecast.get_wind_direction_data());
             context.insert("graph_max", &(graph_max + 2));
             context.insert("wave_height_labels", &forecast.get_labels());
             context.insert("current_wave_height", &current_wave_height);
@@ -298,6 +328,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 .1,
             );
             context.insert("qualities", &forecast.quality.unwrap());
+            context.insert("current_air_temp", &latest.air_temp);
 
             tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
                 .await

@@ -8,6 +8,7 @@ pub struct Latest {
     pub wind_speed: String,
     pub gusts: String,
     pub water_temp: String,
+    pub air_temp: String,
 }
 
 impl Latest {
@@ -44,7 +45,10 @@ impl Latest {
         let wind_speed = convert_meter_to_mile(measurements.next().unwrap());
         let gusts = convert_meter_to_mile(measurements.next().unwrap());
 
+        let air_temp = convert_celsius_to_fahrenheit(measurements.nth(5).unwrap());
+
         Ok(Self {
+            air_temp,
             as_of,
             wind_direction,
             wind_speed,
