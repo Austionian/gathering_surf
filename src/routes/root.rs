@@ -104,7 +104,21 @@ impl Forecast {
     fn get_wind_direction_data(&self) -> String {
         self.wind_direction
             .iter()
-            .map(|v| format!("{:.2},", v.value))
+            .map(|v| format!("{:.2},", v.value + 180.0))
+            .collect()
+    }
+
+    fn get_wind_gust_data(&self) -> String {
+        self.wind_gust
+            .iter()
+            .map(|v| format!("{:.2},", convert_kilo_meter_to_mile(v.value)))
+            .collect()
+    }
+
+    fn get_wave_period_data(&self) -> String {
+        self.wave_period
+            .iter()
+            .map(|v| format!("{},", v.value))
             .collect()
     }
 
@@ -300,6 +314,8 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             context.insert("wave_height_data", &wave_height_data);
             context.insert("wind_speed_data", &forecast.get_wind_data());
             context.insert("wind_direction_data", &forecast.get_wind_direction_data());
+            context.insert("wind_gust_data", &forecast.get_wind_gust_data());
+            context.insert("wave_period_data", &forecast.get_wave_period_data());
             context.insert("graph_max", &(graph_max + 2));
             context.insert("wave_height_labels", &forecast.get_labels());
             context.insert("current_wave_height", &current_wave_height);

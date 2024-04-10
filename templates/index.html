@@ -5,12 +5,16 @@
     const wave_heights = [{{ wave_height_data }}]
     const wind_speeds = [{{ wind_speed_data }}]
     const wind_directions = [{{ wind_direction_data }}]
+    const wind_gusts = [{{ wind_gust_data }}]
+    const wave_period = [{{ wave_period_data }}]
 
     document.querySelector("#legend").setAttribute("style", "background-color: {{ wave_quality }};")
     document.querySelector("#legend-label").innerText = wave_height_labels[0];
     document.querySelector("#legend-wave-height").innerText = wave_heights[0];
     document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
     document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`)
+    document.querySelector("#legend-wave-period").innerText = wave_period[0];
+    document.querySelector("#legend-wind-gust").innerText = wind_gusts[0];
 
     document.getElementById("wave-quality").setAttribute("style", "background-color: {{ wave_quality }};")
     document.getElementById("wave-quality-text").innerText = "{{ wave_quality_text }}"
@@ -31,6 +35,7 @@
     document.getElementById("as-of-container").classList.remove("animate-pulse")
     document.getElementById("forecast").classList.remove("hidden")
     document.getElementById("wave-quality").classList.remove("hidden")
+    document.getElementById("legend-container").classList.remove("hidden")
 
 const ctx = document.getElementById("forecast");
 
@@ -75,8 +80,6 @@ const plugin = {
     }
   }
 
-console.log(wave_height_labels, wave_heights.length )
-
 new Chart(ctx, {
   type: "line",
   plugins: [plugin],
@@ -101,8 +104,8 @@ new Chart(ctx, {
             // Substitute the appropriate scale IDs
             const x_value = chart.scales.x.getValueForPixel(canvasPosition.x) 
             const x = x_value && x_value > 0 
-                ? x_value > wave_heights.length 
-                    ? wave_heights.length 
+                ? x_value >= wave_heights.length 
+                    ? wave_heights.length - 1
                     : x_value 
                 : 0;
             const color = qualities[x];
@@ -111,7 +114,10 @@ new Chart(ctx, {
             document.querySelector("#legend-wave-height").innerText = wave_heights[x];
             document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
             document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[x]}deg);`)
+            document.querySelector("#legend-wave-period").innerText = wave_period[x];
+            document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
         },
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: false,
