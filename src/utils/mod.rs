@@ -27,6 +27,30 @@ pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     Err(anyhow!("no hour found!"))
 }
 
+fn convert_military_to_standard(time: &str) -> String {
+    let time = time.split(":").next().unwrap();
+
+    let value = time.parse::<u8>().unwrap();
+
+    if value == 12 {
+        return format!("12 PM");
+    }
+    if value == 0 {
+        return format!("12 AM");
+    }
+
+    if value < 12 {
+        return format!("{time} AM");
+    }
+
+    let value = value - 12;
+    if value < 10 {
+        return format!("0{} PM", value);
+    }
+
+    format!("{} PM", value)
+}
+
 pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<String>)> {
     let time = t.strip_prefix("\"").unwrap();
     let time = time.strip_suffix("+00:00").unwrap();
@@ -41,5 +65,8 @@ pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<
 
     let time = rest.split_whitespace().nth(3).unwrap();
 
-    Ok((valid_time, Some(format!("{day} {time}"))))
+    Ok((
+        valid_time,
+        Some(format!("{day} {}", convert_military_to_standard(time))),
+    ))
 }

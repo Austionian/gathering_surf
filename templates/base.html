@@ -243,33 +243,9 @@
           </header>
           <!-- Forecast Chart -->
           <div class="border-t border-white/10 pt-11 px-4 sm:px-6 lg:px-8">
-            <h1 class="mb-10 lg:mb-20 text-2xl font-semibold text-white">Forecast</h1>
-            <div class="flex gap-x-3 sm:gap-x-5 justify-center mb-2">
-              <div class="flex items-center">
-                <div class="flex-none rounded-full p-1">
-                  <div class="h-2 w-2 rounded-full bg-[#0bd674]"></div>
-                </div>
-                <span>Good</span>
-              </div>
-              <div class="flex items-center">
-                <div class="flex-none rounded-full p-1">
-                  <div class="h-2 w-2 rounded-full bg-[#ffcd1e]"></div>
-                </div>
-                <span>Fair</span>
-              </div>
-              <div class="flex items-center">
-                <div class="flex-none rounded-full p-1">
-                  <div class="h-2 w-2 rounded-full bg-[#ff9500]"></div>
-                </div>
-                <span>Poor</span>
-              </div>
-              <div class="flex items-center">
-                <div class="flex-none rounded-full p-1">
-                  <div class="h-2 w-2 rounded-full bg-[#f4496d]"></div>
-                </div>
-                <span class="whitespace-nowrap">Very Poor</span>
-              </div>
-            </div>
+            <h1 class="mb-10 lg:mb-20 text-2xl font-semibold text-white">
+              Forecast
+            </h1>
             <div
               class="loader h-40 animate-pulse bg-slate-700 rounded-xl"
             ></div>
@@ -287,7 +263,7 @@
               >
                 <div class="mx-auto max-w-7xl text-black">
                   <div
-                    class="grid gap-px grid-cols-1 sm:grid-cols-3 lg:grid-cols-5"
+                    class="grid gap-px grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
                   >
                     <div
                       class="grid items-end px-4 py-1 sm:py-6 sm:px-6 lg:px-8 min-w-72"
@@ -300,7 +276,9 @@
                       </p>
                     </div>
 
-                    <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <div class="sm:hidden"></div>
+
+                    <div class="px-4 py-6 sm:px-6 lg:px-8 grid-rows-1">
                       <p class="text-sm font-medium leading-6 text-gray-700">
                         Wave Height
                       </p>
@@ -312,13 +290,13 @@
                         <span class="text-sm text-gray-700">ft</span>
                       </p>
                     </div>
-                    <div class="px-4 py-6 sm:px-6 lg:px-8 min-w-60">
+                    <div class="px-4 py-6 sm:px-6 lg:px-8 grid-rows-1">
                       <p class="text-sm font-medium leading-6 text-gray-700">
                         Wind
                       </p>
                       <div class="mt-2 flex items-baseline gap-x-2">
                         <div
-                          class="w-8 h-8 fill-black mr-2"
+                          class="h-8 min-w-8 fill-black mr-2"
                           id="legend-wind-icon-container"
                         >
                           <svg
@@ -340,9 +318,7 @@
                         <span class="text-sm text-gray-700">mph</span>
                       </div>
                     </div>
-                    <div
-                      class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8 min-w-60"
-                    >
+                    <div class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8">
                       <p class="text-sm font-medium leading-6 text-gray-700">
                         Gusts
                       </p>
@@ -354,9 +330,7 @@
                         <span class="text-sm text-gray-700">mph</span>
                       </p>
                     </div>
-                    <div
-                      class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8 min-w-60"
-                    >
+                    <div class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8">
                       <p class="text-sm font-medium leading-6 text-gray-700">
                         Wave Period
                       </p>
