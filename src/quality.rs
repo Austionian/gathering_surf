@@ -7,32 +7,37 @@ static POOR: Quality = Quality("Poor", "#ff9500");
 static VERY_POOR: Quality = Quality("Very Poor", "#f4496d");
 
 pub fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-    if (180.0..310.0).contains(&wind_direction) {
+    if wind_speed < 5.0 {
+        return &GOOD;
+    }
+
+    // Essentially offshore
+    if (150.0..210.0).contains(&wind_direction) {
+        return &GOOD;
+    }
+
+    if (120.0..330.0).contains(&wind_direction) {
         if wind_speed <= 30.0 {
             return &GOOD;
         }
         return &OK;
     }
 
-    if wind_speed < 5.0 {
-        return &OK;
+    if wind_direction >= 330.0 {
+        if wind_speed <= 30.0 {
+            return &POOR;
+        }
+        return &VERY_POOR;
     }
 
-    if wind_direction > 310.0 {
+    if (80.0..120.0).contains(&wind_direction) {
         if wind_speed <= 30.0 {
             return &OK;
         }
         return &POOR;
     }
 
-    if (120.0..180.0).contains(&wind_direction) {
-        if wind_speed <= 30.0 {
-            return &OK;
-        }
-        return &POOR;
-    }
-
-    if wind_direction < 120.0 {
+    if (0.0..80.0).contains(&wind_direction) {
         if wind_speed <= 30.0 {
             return &POOR;
         }
