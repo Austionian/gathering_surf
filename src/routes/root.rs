@@ -8,14 +8,15 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
+use std::fmt::Write;
 use std::{cmp::Ordering, convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
 
 struct Forecast {
     last_updated: String,
-    probability_of_precipitation: Vec<ForecastValue>,
+    // probability_of_precipitation: Vec<ForecastValue>,
     quality: Option<Vec<String>>,
-    temperature: Vec<ForecastValue>,
+    // temperature: Vec<ForecastValue>,
     wave_height: Vec<ForecastValue>,
     wave_period: Vec<ForecastValue>,
     wave_direction: Vec<ForecastValue>,
@@ -70,8 +71,10 @@ impl Forecast {
     fn get_labels(&mut self) -> String {
         self.wave_height
             .iter_mut()
-            .map(|data| format!("'{}',", data.display_time.take().unwrap()))
-            .collect()
+            .fold(String::new(), |mut acc, data| {
+                let _ = write!(acc, "'{}',", data.display_time.take().unwrap());
+                acc
+            })
     }
 
     fn get_wave_data(&self) -> (String, u8) {
@@ -89,37 +92,42 @@ impl Forecast {
         });
 
         (
-            out.iter().map(|value| format!("{:.3},", value)).collect(),
-            smoothed_data.iter().map(|v| v.clone() as u8).max().unwrap(),
+            out.iter().fold(String::new(), |mut acc, value| {
+                let _ = write!(acc, "{:.3},", value);
+                acc
+            }),
+            smoothed_data.iter().map(|v| *v as u8).max().unwrap(),
         )
     }
 
     fn get_wind_data(&self) -> String {
-        self.wind_speed
-            .iter()
-            .map(|v| format!("{:.2},", convert_kilo_meter_to_mile(v.value)))
-            .collect()
+        self.wind_speed.iter().fold(String::new(), |mut acc, v| {
+            let _ = write!(acc, "{:.2},", convert_kilo_meter_to_mile(v.value));
+            acc
+        })
     }
 
     fn get_wind_direction_data(&self) -> String {
         self.wind_direction
             .iter()
-            .map(|v| format!("{:.2},", v.value + 180.0))
-            .collect()
+            .fold(String::new(), |mut acc, v| {
+                let _ = write!(acc, "{:.2},", v.value + 180.0);
+                acc
+            })
     }
 
     fn get_wind_gust_data(&self) -> String {
-        self.wind_gust
-            .iter()
-            .map(|v| format!("{:.2},", convert_kilo_meter_to_mile(v.value)))
-            .collect()
+        self.wind_gust.iter().fold(String::new(), |mut acc, v| {
+            let _ = write!(acc, "{:.2},", convert_kilo_meter_to_mile(v.value));
+            acc
+        })
     }
 
     fn get_wave_period_data(&self) -> String {
-        self.wave_period
-            .iter()
-            .map(|v| format!("{},", v.value))
-            .collect()
+        self.wave_period.iter().fold(String::new(), |mut acc, v| {
+            let _ = write!(acc, "{},", v.value);
+            acc
+        })
     }
 
     /// Returns the wave height, period and direction from the forecasted
@@ -191,8 +199,7 @@ impl ForecastValue {
             .clone()
             .into_iter()
             .map(ForecastValue::from)
-            .map(|w| ForecastValue::expand_time_ranges(&w).unwrap())
-            .flatten()
+            .flat_map(|w| ForecastValue::expand_time_ranges(&w).unwrap())
             .collect())
     }
 
@@ -203,7 +210,7 @@ impl ForecastValue {
             .ok_or(anyhow!("Unknown period found!"))?;
 
         let mut total = 0;
-        if let Some((day, hour)) = period.split_once("D") {
+        if let Some((day, hour)) = period.split_once('D') {
             total += day.parse::<usize>().unwrap() * 24;
             total += utils::parse_hour(hour).unwrap_or(0);
         } else {
@@ -215,7 +222,7 @@ impl ForecastValue {
         for i in 0..total {
             let (valid_time, display_time) = utils::increment_time(time, i)?;
             out.push(Self {
-                value: self.value.clone(),
+                value: self.value,
                 valid_time,
                 display_time,
             })
@@ -255,14 +262,14 @@ impl From<serde_json::Value> for Forecast {
         let wind_speed = ForecastValue::get(properties, "windSpeed").unwrap();
         let wind_gust = ForecastValue::get(properties, "windGust").unwrap();
         let wind_direction = ForecastValue::get(properties, "windDirection").unwrap();
-        let temperature = ForecastValue::get(properties, "temperature").unwrap();
-        let probability_of_precipitation =
-            ForecastValue::get(properties, "probabilityOfPrecipitation").unwrap();
+        // let temperature = ForecastValue::get(properties, "temperature").unwrap();
+        // let probability_of_precipitation =
+        //     ForecastValue::get(properties, "probabilityOfPrecipitation").unwrap();
 
         Self {
             last_updated,
-            probability_of_precipitation,
-            temperature,
+            // probability_of_precipitation,
+            // temperature,
             wave_height,
             wave_period,
             wave_direction,

@@ -39,7 +39,7 @@ impl Latest {
         let (as_of, measurements) = line.split_at(16);
 
         let as_of = Self::parse_as_of(as_of)?;
-        let mut measurements = measurements.trim().split_whitespace();
+        let mut measurements = measurements.split_whitespace();
         let wind_direction = measurements.next().unwrap().parse().unwrap_or(0);
 
         let wind_speed = convert_meter_to_mile(measurements.next().unwrap());
@@ -58,10 +58,10 @@ impl Latest {
     }
 
     pub fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
-        let as_of = as_of.trim().split(" ").collect::<Vec<_>>();
+        let as_of = as_of.trim().split(' ').collect::<Vec<_>>();
         let as_of = Utc
             .with_ymd_and_hms(
-                as_of.get(0).unwrap().parse::<i32>().unwrap(),
+                as_of.first().unwrap().parse::<i32>().unwrap(),
                 as_of.get(1).unwrap().parse::<u32>().unwrap(),
                 as_of.get(2).unwrap().parse::<u32>().unwrap(),
                 as_of.get(3).unwrap().parse::<u32>().unwrap(),
@@ -77,7 +77,7 @@ impl Latest {
 
     pub fn get_wind_data(&self) -> String {
         if self.wind_speed == self.gusts {
-            return format!("{}", self.wind_speed);
+            return self.wind_speed.to_string();
         }
 
         format!("{}-{}", self.wind_speed, self.gusts)
