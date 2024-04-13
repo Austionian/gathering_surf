@@ -1,4 +1,5 @@
 mod configuration;
+mod forecast;
 mod latest;
 mod quality;
 mod routes;
@@ -11,6 +12,7 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 pub use configuration::get_configuration;
+pub use forecast::*;
 pub use latest::Latest;
 pub use quality::*;
 pub use utils::*;
