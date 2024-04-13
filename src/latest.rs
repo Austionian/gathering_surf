@@ -12,7 +12,7 @@ pub struct Latest {
 }
 
 impl Latest {
-    pub async fn get() -> anyhow::Result<Self> {
+    pub async fn try_get() -> anyhow::Result<Self> {
         let data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt")
             .await?
             .text()

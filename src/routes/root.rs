@@ -1,5 +1,5 @@
 use crate::{convert_kilo_meter_to_mile, quality, utils, AppState, Latest, TEMPLATES};
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use axum::{
     body::Body,
     extract::State,
@@ -26,21 +26,23 @@ struct Forecast {
 }
 
 impl Forecast {
-    async fn get() -> anyhow::Result<Self> {
+    async fn try_get() -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
             .build()
             .unwrap();
 
         // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
-        Ok(Forecast::from(
-            client
-                .get("https://api.weather.gov/gridpoints/MKX/90,67")
-                .send()
-                .await?
-                .json::<serde_json::Value>()
-                .await?,
-        ))
+        let response = client
+            .get("https://api.weather.gov/gridpoints/MKX/90,67")
+            .send()
+            .await?;
+
+        if response.status().as_u16() != 200 {
+            bail!("Non 200 response from NOAA");
+        }
+
+        Forecast::try_from(response.json::<serde_json::Value>().await?)
     }
 
     /// Condenses the forecast to even length vecs.
@@ -198,7 +200,7 @@ impl ForecastValue {
             .ok_or(anyhow!("array not found!"))?
             .clone()
             .into_iter()
-            .map(ForecastValue::from)
+            .filter_map(|value| ForecastValue::try_from(value).ok())
             .flat_map(|w| ForecastValue::expand_time_ranges(&w).unwrap())
             .collect())
     }
@@ -232,41 +234,41 @@ impl ForecastValue {
     }
 }
 
-impl From<serde_json::Value> for Forecast {
-    fn from(value: serde_json::Value) -> Self {
+impl TryFrom<serde_json::Value> for Forecast {
+    type Error = anyhow::Error;
+
+    fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
         let properties = value
             .get("properties")
-            .ok_or(anyhow!("no properties found!"))
-            .unwrap();
+            .ok_or(anyhow!("no properties found!"))?;
 
         let last_updated = properties
             .get("updateTime")
-            .unwrap()
+            .ok_or(anyhow!("no updateTime found"))?
             .as_str()
-            .unwrap()
+            .ok_or(anyhow!("string not found"))?
             .strip_suffix("+00:00")
-            .unwrap()
-            .parse::<NaiveDateTime>()
-            .unwrap();
+            .ok_or(anyhow!("Unidentified suffix"))?
+            .parse::<NaiveDateTime>()?;
 
         let last_updated = Central
             .from_utc_datetime(&last_updated)
             .to_rfc2822()
             .strip_suffix(" -0500")
-            .unwrap()
+            .ok_or(anyhow!("Unidentified suffix"))?
             .to_string();
 
-        let wave_height = ForecastValue::get(properties, "waveHeight").unwrap();
-        let wave_period = ForecastValue::get(properties, "wavePeriod").unwrap();
-        let wave_direction = ForecastValue::get(properties, "waveDirection").unwrap();
-        let wind_speed = ForecastValue::get(properties, "windSpeed").unwrap();
-        let wind_gust = ForecastValue::get(properties, "windGust").unwrap();
-        let wind_direction = ForecastValue::get(properties, "windDirection").unwrap();
+        let wave_height = ForecastValue::get(properties, "waveHeight")?;
+        let wave_period = ForecastValue::get(properties, "wavePeriod")?;
+        let wave_direction = ForecastValue::get(properties, "waveDirection")?;
+        let wind_speed = ForecastValue::get(properties, "windSpeed")?;
+        let wind_gust = ForecastValue::get(properties, "windGust")?;
+        let wind_direction = ForecastValue::get(properties, "windDirection")?;
         // let temperature = ForecastValue::get(properties, "temperature").unwrap();
         // let probability_of_precipitation =
         //     ForecastValue::get(properties, "probabilityOfPrecipitation").unwrap();
 
-        Self {
+        Ok(Self {
             last_updated,
             // probability_of_precipitation,
             // temperature,
@@ -277,20 +279,28 @@ impl From<serde_json::Value> for Forecast {
             wind_gust,
             wind_direction,
             quality: None,
-        }
+        })
     }
 }
 
-impl From<serde_json::Value> for ForecastValue {
-    fn from(v: serde_json::Value) -> Self {
-        let value = v.get("value").unwrap().as_f64().unwrap();
-        let valid_time = v.get("validTime").unwrap().to_string();
+impl TryFrom<serde_json::Value> for ForecastValue {
+    type Error = anyhow::Error;
+    fn try_from(v: serde_json::Value) -> Result<Self, Self::Error> {
+        let value = v
+            .get("value")
+            .ok_or(anyhow!("No value found."))?
+            .as_f64()
+            .ok_or(anyhow!("Not an f64"))?;
+        let valid_time = v
+            .get("validTime")
+            .ok_or(anyhow!("No validTime found."))?
+            .to_string();
 
-        Self {
+        Ok(Self {
             value,
             valid_time,
             display_time: None,
-        }
+        })
     }
 }
 
@@ -305,61 +315,72 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             .await
             .unwrap();
 
-        let latest = Latest::get().await.unwrap();
-        if let Ok(mut forecast) = Forecast::get().await {
-            forecast.condense();
-            forecast.get_quality();
+        match Latest::try_get().await {
+            Ok(latest) => match Forecast::try_get().await {
+                Ok(mut forecast) => {
+                    forecast.condense();
+                    forecast.get_quality();
 
-            let (wave_height_data, graph_max) = forecast.get_wave_data();
-            let (current_wave_height, current_wave_period, current_wave_direction) =
-                forecast.get_current_wave_data();
+                    let (wave_height_data, graph_max) = forecast.get_wave_data();
+                    let (current_wave_height, current_wave_period, current_wave_direction) =
+                        forecast.get_current_wave_data();
 
-            context.insert("title", &state.title);
-            context.insert("as_of", &latest.as_of);
-            context.insert("wind_direction", &latest.wind_direction);
-            context.insert("wind", &latest.get_wind_data());
-            context.insert("wave_height_data", &wave_height_data);
-            context.insert("wind_speed_data", &forecast.get_wind_data());
-            context.insert("wind_direction_data", &forecast.get_wind_direction_data());
-            context.insert("wind_gust_data", &forecast.get_wind_gust_data());
-            context.insert("wave_period_data", &forecast.get_wave_period_data());
-            context.insert("graph_max", &(graph_max + 2));
-            context.insert("wave_height_labels", &forecast.get_labels());
-            context.insert("current_wave_height", &current_wave_height);
-            context.insert("current_wave_period", &current_wave_period);
-            context.insert(
-                "current_wave_direction",
-                &(current_wave_direction.parse::<u32>().unwrap() + 180),
-            );
-            context.insert("wind_icon_direction", &(latest.wind_direction + 180));
-            context.insert("forecast_as_of", &forecast.last_updated);
-            context.insert("current_water_temp", &latest.water_temp);
-            context.insert(
-                "wave_quality_text",
-                quality::get_quality(
-                    latest.wind_speed.parse().unwrap(),
-                    latest.wind_direction as f64,
-                )
-                .0,
-            );
-            context.insert(
-                "wave_quality",
-                quality::get_quality(
-                    latest.wind_speed.parse().unwrap(),
-                    latest.wind_direction as f64,
-                )
-                .1,
-            );
-            context.insert("qualities", &forecast.quality.unwrap());
-            context.insert("current_air_temp", &latest.air_temp);
+                    context.insert("title", &state.title);
+                    context.insert("as_of", &latest.as_of);
+                    context.insert("wind_direction", &latest.wind_direction);
+                    context.insert("wind", &latest.get_wind_data());
+                    context.insert("wave_height_data", &wave_height_data);
+                    context.insert("wind_speed_data", &forecast.get_wind_data());
+                    context.insert("wind_direction_data", &forecast.get_wind_direction_data());
+                    context.insert("wind_gust_data", &forecast.get_wind_gust_data());
+                    context.insert("wave_period_data", &forecast.get_wave_period_data());
+                    context.insert("graph_max", &(graph_max + 2));
+                    context.insert("wave_height_labels", &forecast.get_labels());
+                    context.insert("current_wave_height", &current_wave_height);
+                    context.insert("current_wave_period", &current_wave_period);
+                    context.insert(
+                        "current_wave_direction",
+                        &(current_wave_direction.parse::<u32>().unwrap() + 180),
+                    );
+                    context.insert("wind_icon_direction", &(latest.wind_direction + 180));
+                    context.insert("forecast_as_of", &forecast.last_updated);
+                    context.insert("current_water_temp", &latest.water_temp);
+                    context.insert(
+                        "wave_quality_text",
+                        quality::get_quality(
+                            latest.wind_speed.parse().unwrap(),
+                            latest.wind_direction as f64,
+                        )
+                        .0,
+                    );
+                    context.insert(
+                        "wave_quality",
+                        quality::get_quality(
+                            latest.wind_speed.parse().unwrap(),
+                            latest.wind_direction as f64,
+                        )
+                        .1,
+                    );
+                    context.insert("qualities", &forecast.quality.unwrap());
+                    context.insert("current_air_temp", &latest.air_temp);
 
-            tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
-                .await
-                .unwrap();
-        } else {
-            tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
-                .await
-                .unwrap();
+                    tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
+                        .await
+                        .unwrap();
+                }
+                Err(e) => {
+                    context.insert("error", &e.to_string());
+                    tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                        .await
+                        .unwrap();
+                }
+            },
+            Err(e) => {
+                context.insert("error", &e.to_string());
+                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+            }
         }
     });
 
