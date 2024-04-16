@@ -1,9 +1,9 @@
 <script>
-  document.querySelector("main").remove();
-  document.querySelector("body").innerHTML = `
-    <div class="flex flex-col items-center align-middle justify-center h-screen text-center">
+  document.querySelector("#{{ container }}").classList.add("hidden");
+  document.querySelector("#{{ error_container }}").innerHTML = `
+    <div class="p-12 flex flex-col items-center align-middle justify-center text-center">
       <h2 class="text-xl font-mono">
-        Error - please refresh the page or try again later.
+      Error loading {{ error_type }} data - please refresh the page or try again later.
       </h2>
       <p>{{ error }}</p>
     </div>

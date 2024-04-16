@@ -21,67 +21,80 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             .unwrap();
 
         match Latest::try_get().await {
-            Ok(latest) => match Forecast::try_get().await {
-                Ok(mut forecast) => {
-                    forecast.condense();
-                    forecast.get_quality();
+            Ok(latest) => {
+                context.insert("as_of", &latest.as_of);
+                context.insert("wind_direction", &latest.wind_direction);
+                context.insert("wind", &latest.get_wind_data());
+                context.insert("wind_icon_direction", &(latest.wind_direction + 180));
+                context.insert("current_water_temp", &latest.water_temp);
+                context.insert("current_air_temp", &latest.air_temp);
+                context.insert(
+                    "wave_quality_text",
+                    quality::get_quality(
+                        latest.wind_speed.parse().unwrap(),
+                        latest.wind_direction as f64,
+                    )
+                    .0,
+                );
+                context.insert(
+                    "wave_quality",
+                    quality::get_quality(
+                        latest.wind_speed.parse().unwrap(),
+                        latest.wind_direction as f64,
+                    )
+                    .1,
+                );
 
-                    let (wave_height_data, graph_max) = forecast.get_wave_data();
-                    let (current_wave_height, current_wave_period, current_wave_direction) =
-                        forecast.get_current_wave_data();
-
-                    context.insert("title", &state.title);
-                    context.insert("as_of", &latest.as_of);
-                    context.insert("wind_direction", &latest.wind_direction);
-                    context.insert("wind", &latest.get_wind_data());
-                    context.insert("wave_height_data", &wave_height_data);
-                    context.insert("wind_speed_data", &forecast.get_wind_data());
-                    context.insert("wind_direction_data", &forecast.get_wind_direction_data());
-                    context.insert("wind_gust_data", &forecast.get_wind_gust_data());
-                    context.insert("wave_period_data", &forecast.get_wave_period_data());
-                    context.insert("graph_max", &(graph_max + 2));
-                    context.insert("wave_height_labels", &forecast.get_labels());
-                    context.insert("current_wave_height", &current_wave_height);
-                    context.insert("current_wave_period", &current_wave_period);
-                    context.insert(
-                        "current_wave_direction",
-                        &(current_wave_direction.parse::<u32>().unwrap() + 180),
-                    );
-                    context.insert("wind_icon_direction", &(latest.wind_direction + 180));
-                    context.insert("forecast_as_of", &forecast.last_updated);
-                    context.insert("current_water_temp", &latest.water_temp);
-                    context.insert(
-                        "wave_quality_text",
-                        quality::get_quality(
-                            latest.wind_speed.parse().unwrap(),
-                            latest.wind_direction as f64,
-                        )
-                        .0,
-                    );
-                    context.insert(
-                        "wave_quality",
-                        quality::get_quality(
-                            latest.wind_speed.parse().unwrap(),
-                            latest.wind_direction as f64,
-                        )
-                        .1,
-                    );
-                    context.insert("qualities", &forecast.quality.unwrap());
-                    context.insert("current_air_temp", &latest.air_temp);
-
-                    tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
-                        .await
-                        .unwrap();
-                }
-                Err(e) => {
-                    context.insert("error", &e.to_string());
-                    tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
-                        .await
-                        .unwrap();
-                }
-            },
+                tx.send(Ok(TEMPLATES.render("latest.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+            }
             Err(e) => {
                 context.insert("error", &e.to_string());
+                context.insert("error_type", &"latest");
+                context.insert("container", &"latest-container");
+                context.insert("error_container", &"latest-error");
+                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+            }
+        }
+
+        match Forecast::try_get().await {
+            Ok(mut forecast) => {
+                forecast.condense();
+                forecast.get_quality();
+
+                let (wave_height_data, graph_max) = forecast.get_wave_data();
+                let (current_wave_height, current_wave_period, current_wave_direction) =
+                    forecast.get_current_wave_data();
+
+                context.insert("title", &state.title);
+                context.insert("wave_height_data", &wave_height_data);
+                context.insert("wind_speed_data", &forecast.get_wind_data());
+                context.insert("wind_direction_data", &forecast.get_wind_direction_data());
+                context.insert("wind_gust_data", &forecast.get_wind_gust_data());
+                context.insert("wave_period_data", &forecast.get_wave_period_data());
+                context.insert("graph_max", &(graph_max + 2));
+                context.insert("wave_height_labels", &forecast.get_labels());
+                context.insert("current_wave_height", &current_wave_height);
+                context.insert("current_wave_period", &current_wave_period);
+                context.insert(
+                    "current_wave_direction",
+                    &(current_wave_direction.parse::<u32>().unwrap() + 180),
+                );
+                context.insert("forecast_as_of", &forecast.last_updated);
+                context.insert("qualities", &forecast.quality.unwrap());
+
+                tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+            }
+            Err(e) => {
+                context.insert("error", &e.to_string());
+                context.insert("error_type", &"forecast");
+                context.insert("container", &"forecast-container");
+                context.insert("error_container", &"forecast-error");
                 tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
                     .await
                     .unwrap();

@@ -1,0 +1,29 @@
+<script>
+  document
+    .getElementById("wave-quality")
+    .setAttribute("style", "background-color: {{ wave_quality }};");
+  document.getElementById("wave-quality-text").innerText =
+    "{{ wave_quality_text }}";
+  document
+    .getElementById("wave-quality-text")
+    .setAttribute("style", "color: {{ wave_quality }};");
+  document.getElementById("current-water-temp").innerText =
+    "{{ current_water_temp }}";
+  document.getElementById("current-air-temp").innerText =
+    "{{ current_air_temp }}";
+  document.getElementById("wind").innerText = "{{ wind }}";
+  document.getElementById("as-of").innerText = "Live as of {{ as_of }}";
+  document
+    .getElementById("wind-icon")
+    .setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);");
+
+  document.querySelectorAll(".latest-loader").forEach((e) => e.remove());
+  document.getElementById("wind-icon-container").classList.remove("hidden");
+  document.getElementById("wave-icon-container").classList.remove("hidden");
+  document.getElementById("as-of-container").classList.remove("animate-pulse");
+  document.getElementById("wave-quality").classList.remove("hidden");
+
+  document
+    .querySelector("#legend")
+    .setAttribute("style", "background-color: {{ wave_quality }};");
+</script>

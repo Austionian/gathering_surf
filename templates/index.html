@@ -8,34 +8,27 @@
     const wind_gusts = [{{ wind_gust_data }}]
     const wave_period = [{{ wave_period_data }}]
 
-    document.querySelector("#legend").setAttribute("style", "background-color: {{ wave_quality }};")
+    document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
+    document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
+    document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
+
     document.querySelector("#legend-label").innerText = wave_height_labels[0];
     document.querySelector("#legend-wave-height").innerText = wave_heights[0];
     document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
     document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`)
     document.querySelector("#legend-wave-period").innerText = wave_period[0];
     document.querySelector("#legend-wind-gust").innerText = wind_gusts[0];
-
-    document.getElementById("wave-quality").setAttribute("style", "background-color: {{ wave_quality }};")
-    document.getElementById("wave-quality-text").innerText = "{{ wave_quality_text }}"
-    document.getElementById("wave-quality-text").setAttribute("style", "color: {{ wave_quality }};")
-    document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
-    document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
-    document.getElementById("current-water-temp").innerText = "{{ current_water_temp }}"
-    document.getElementById("current-air-temp").innerText = "{{ current_air_temp }}"
-    document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
-    document.getElementById("wind").innerText = "{{ wind }}"
-    document.getElementById("as-of").innerText = "Live as of {{ as_of }}"
-    document.getElementById("wind-icon").setAttribute("style", "transform: rotate({{ wind_icon_direction }}deg);")
     document.getElementById("forecast-as-of").innerText = "Last updated at {{ forecast_as_of }}"
 
     document.querySelectorAll(".loader").forEach(e => e.remove())
-    document.getElementById("wind-icon-container").classList.remove("hidden")
-    document.getElementById("wave-icon-container").classList.remove("hidden")
-    document.getElementById("as-of-container").classList.remove("animate-pulse")
     document.getElementById("forecast").classList.remove("hidden")
     document.getElementById("wave-quality").classList.remove("hidden")
     document.getElementById("legend-container").classList.remove("hidden")
+
+    const legend = document.querySelector("#legend");
+    if (legend.style.length < 1) {
+        legend.setAttribute("style", `background-color: ${qualities[0]};`);
+    }
 
 const ctx = document.getElementById("forecast");
 
