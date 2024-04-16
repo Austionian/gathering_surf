@@ -25,6 +25,9 @@
     document.getElementById("wave-quality").classList.remove("hidden")
     document.getElementById("legend-container").classList.remove("hidden")
 
+    // The default legend background is the same as the latest wave quality shown
+    // in the header. If that script doesn't happen fallback to the first value in 
+    // the qualities array.
     const legend = document.querySelector("#legend");
     if (legend.style.length < 1) {
         legend.setAttribute("style", `background-color: ${qualities[0]};`);

@@ -86,7 +86,7 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 context.insert("forecast_as_of", &forecast.last_updated);
                 context.insert("qualities", &forecast.quality.unwrap());
 
-                tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
+                tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
                     .await
                     .unwrap();
             }
