@@ -29,9 +29,11 @@ pub async fn root(
         let mut spot = selected_spot.0.spot.unwrap_or("Atwater".to_string());
 
         // Make sure the selected spot is valid, fallback to Atwater if not
-        if !state.breaks.iter().fold(false, |acc, b| {
-            acc || b.name.to_lowercase() == spot.to_lowercase()
-        }) {
+        if !state
+            .breaks
+            .iter()
+            .any(|b| b.name.to_lowercase() == spot.to_lowercase())
+        {
             spot = "Atwater".to_string();
         }
 
