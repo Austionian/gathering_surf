@@ -70,3 +70,10 @@ pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<
         Some(format!("{day} {}", convert_military_to_standard(time))),
     ))
 }
+
+pub fn capitalize(mut s: String) -> String {
+    let first_letter = s.chars().next().unwrap();
+    let rest = s.split_off(1);
+
+    format!("{}{rest}", first_letter.to_uppercase())
+}

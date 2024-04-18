@@ -1,20 +1,42 @@
-use crate::{quality, AppState, Forecast, Latest, TEMPLATES};
+use crate::{capitalize, quality, AppState, Forecast, Latest, TEMPLATES};
 use axum::{
     body::Body,
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde::Deserialize;
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
 
+#[derive(Deserialize, Debug)]
+pub struct Spot {
+    pub spot: Option<String>,
+}
+
 /// Handler to return the website's index
-pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn root(
+    State(state): State<Arc<AppState>>,
+    selected_spot: Query<Spot>,
+) -> impl IntoResponse {
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
     tokio::spawn(async move {
         let mut context = tera::Context::new();
+
+        // Get the selected spot, fallback to Atwater
+        let mut spot = selected_spot.0.spot.unwrap_or("Atwater".to_string());
+
+        // Make sure the selected spot is valid, fallback to Atwater if not
+        if !state.breaks.iter().fold(false, |acc, b| {
+            acc || b.name.to_lowercase() == spot.to_lowercase()
+        }) {
+            spot = "Atwater".to_string();
+        }
+
+        context.insert("spot", &capitalize(spot));
+        context.insert("breaks", &state.breaks);
 
         tx.send(Ok(TEMPLATES.render("base.html", &context).unwrap()))
             .await
@@ -69,7 +91,6 @@ pub async fn root(State(state): State<Arc<AppState>>) -> impl IntoResponse {
                 let (current_wave_height, current_wave_period, current_wave_direction) =
                     forecast.get_current_wave_data();
 
-                context.insert("title", &state.title);
                 context.insert("wave_height_data", &wave_height_data);
                 context.insert("wind_speed_data", &forecast.get_wind_data());
                 context.insert("wind_direction_data", &forecast.get_wind_direction_data());

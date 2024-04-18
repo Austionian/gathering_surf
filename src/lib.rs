@@ -29,15 +29,20 @@ lazy_static! {
     };
 }
 
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize)]
+pub struct Break {
+    name: &'static str,
+}
+
+#[derive(Clone, serde::Serialize)]
 pub struct AppState {
-    title: String,
+    breaks: Vec<Break>,
 }
 
 pub fn startup() -> Result<Router, String> {
     // Create an AppState that is shared across the app.
     let state = AppState {
-        title: String::from("Axum Tailwind Template"),
+        breaks: vec![Break { name: "Atwater" }, Break { name: "Bradford" }],
     };
 
     // Create the Axum router.
