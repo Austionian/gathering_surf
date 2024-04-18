@@ -144,6 +144,18 @@ new Chart(ctx, {
       y: {
         beginAtZero: true,
         max: {{ graph_max }} + 1,
+          ticks: {
+              callback: function(value, index, ticks) {
+                  if (value % 2 !== 0) {
+                      return "";
+                  }
+                  return value;
+              },
+              font: {
+                  size: 18,
+                  weight: "bold",
+              }
+          }
       },
     },
   },

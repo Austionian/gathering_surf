@@ -40,7 +40,7 @@ pub async fn root(
         context.insert("spot", &capitalize(spot));
         context.insert("breaks", &state.breaks);
 
-        tx.send(Ok(TEMPLATES.render("base.html", &context).unwrap()))
+        tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
             .await
             .unwrap();
 
