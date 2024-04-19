@@ -19,6 +19,13 @@ const observer = new MutationObserver(callback);
 // Start observing the target node for configured mutations
 observer.observe(targetNode, config);
 
+const qualityMap = {
+  "#0bd674": "Good",
+  "#ffcd1e": "Fair to Good",
+  "#ff9500": "Poor",
+  "#f4496d": "Very Poor",
+};
+
 /**
  *   @typeof {Object} LatestData
  *   @property {string} quality_color - The hexcode of the quality.
