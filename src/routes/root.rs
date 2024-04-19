@@ -46,28 +46,7 @@ pub async fn root(
 
         match Latest::try_get().await {
             Ok(latest) => {
-                context.insert("as_of", &latest.as_of);
-                context.insert("wind_direction", &latest.wind_direction);
-                context.insert("wind", &latest.get_wind_data());
-                context.insert("wind_icon_direction", &(latest.wind_direction + 180));
-                context.insert("current_water_temp", &latest.water_temp);
-                context.insert("current_air_temp", &latest.air_temp);
-                context.insert(
-                    "wave_quality_text",
-                    quality::get_quality(
-                        latest.wind_speed.parse().unwrap(),
-                        latest.wind_direction as f64,
-                    )
-                    .0,
-                );
-                context.insert(
-                    "wave_quality",
-                    quality::get_quality(
-                        latest.wind_speed.parse().unwrap(),
-                        latest.wind_direction as f64,
-                    )
-                    .1,
-                );
+                context.insert("latest_json", &serde_json::to_string(&latest).unwrap());
 
                 tx.send(Ok(TEMPLATES.render("latest.html", &context).unwrap()))
                     .await
@@ -107,6 +86,7 @@ pub async fn root(
                     &(current_wave_direction.parse::<u32>().unwrap() + 180),
                 );
                 context.insert("forecast_as_of", &forecast.last_updated);
+                context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
                 context.insert("qualities", &forecast.quality.unwrap());
 
                 tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))

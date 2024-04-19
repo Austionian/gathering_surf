@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="application/json">{{ forecast_json | safe }}</script>
 <script>
     const qualities = {{ qualities | safe }}
     const wave_height_labels = [{{ wave_height_labels | safe }}]

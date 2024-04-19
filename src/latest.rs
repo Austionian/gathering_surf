@@ -1,7 +1,11 @@
-use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_mile};
+use crate::{
+    quality,
+    utils::{convert_celsius_to_fahrenheit, convert_meter_to_mile},
+};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
 
+#[derive(serde::Serialize)]
 pub struct Latest {
     pub as_of: String,
     pub wind_direction: u32,
@@ -9,6 +13,8 @@ pub struct Latest {
     pub gusts: String,
     pub water_temp: String,
     pub air_temp: String,
+    pub quality_color: &'static str,
+    pub quality_text: &'static str,
 }
 
 impl Latest {
@@ -47,6 +53,8 @@ impl Latest {
 
         let air_temp = convert_celsius_to_fahrenheit(measurements.nth(5).unwrap());
 
+        let wave_quality = quality::get_quality(wind_speed.parse().unwrap(), wind_direction as f64);
+
         Ok(Self {
             air_temp,
             as_of,
@@ -54,6 +62,8 @@ impl Latest {
             wind_speed,
             gusts,
             water_temp,
+            quality_text: wave_quality.0,
+            quality_color: wave_quality.1,
         })
     }
 
@@ -73,13 +83,5 @@ impl Latest {
         let as_of = as_of.with_timezone(&Central).to_rfc2822();
 
         Ok(as_of.split(" -").next().unwrap().to_string())
-    }
-
-    pub fn get_wind_data(&self) -> String {
-        if self.wind_speed == self.gusts {
-            return self.wind_speed.to_string();
-        }
-
-        format!("{}-{}", self.wind_speed, self.gusts)
     }
 }

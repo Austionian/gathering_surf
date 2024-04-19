@@ -1,7 +1,6 @@
 {% extends "base.html" %} {% block body %}
 <script src="//unpkg.com/alpinejs" defer></script>
 <div x-data="{ open: false }">
-  <!-- Off-canvas menu for mobile, show/hide based on off-canvas menu state. -->
   {% include "includes/nav.html" %}
   <div>
     {% include "includes/header.html" %}
@@ -47,14 +46,14 @@
                   class="latest-loader bg-gray-700 animate-pulse"
                 ></div>
                 <div
-                  class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
-                ></div>
-                <div
                   id="wave-quality"
                   class="hidden w-[6px] h-16 self-center rounded-full mr-[10px]"
                 ></div>
                 <div class="flex flex-col">
                   <div class="flex items-baseline space-x-1">
+                    <div
+                      class="loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                    ></div>
                     <span
                       id="current-wave-height"
                       class="text-4xl font-semibold tracking-tight text-white"
@@ -63,7 +62,7 @@
                     <span class="text-sm text-gray-400">ft</span>
                     <span class="text-sm text-gray-400">@</span>
                     <div
-                      class="latest-loader w-[10px] h-[20px] animate-pulse rounded bg-gray-700"
+                      class="loader w-[10px] h-[20px] animate-pulse rounded bg-gray-700"
                     ></div>
                     <span class="text-gray-400">
                       <span

@@ -5,6 +5,7 @@ use chrono_tz::US::Central;
 use std::cmp::Ordering;
 use std::fmt::Write;
 
+#[derive(serde::Serialize)]
 pub struct Forecast {
     pub last_updated: String,
     // probability_of_precipitation: Vec<ForecastValue>,
@@ -176,6 +177,7 @@ impl Forecast {
     }
 }
 
+#[derive(serde::Serialize)]
 pub struct ForecastValue {
     value: f64,
     valid_time: String,
