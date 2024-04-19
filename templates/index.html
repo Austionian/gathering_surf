@@ -4,7 +4,7 @@
   <!-- Off-canvas menu for mobile, show/hide based on off-canvas menu state. -->
   {% include "includes/nav.html" %}
   <div>
-      {% include "includes/header.html" %}
+    {% include "includes/header.html" %}
     <main>
       <div id="latest-container">
         <header>
@@ -173,7 +173,7 @@
       <!-- Forecast Chart -->
       <div
         id="forecast-container"
-        class="border-t border-white/10 pt-11 px-4 sm:px-6 lg:px-8"
+        class="md:space-y-16 border-t border-white/10 pt-11 px-4 sm:px-6 lg:px-8"
       >
         <h1 class="mb-10 lg:mb-20 text-2xl font-semibold text-white">
           Forecast
@@ -215,7 +215,7 @@
                     <span
                       id="legend-quality"
                       class="text-2xl sm:text-3xl font-medium tracking-tight"
-                      ></span>
+                    ></span>
                   </p>
                 </div>
                 <div class="px-4 py-6 sm:px-6 lg:px-8 grid-rows-1">
@@ -285,9 +285,9 @@
               </div>
             </div>
           </div>
-        </div>
-        <div id="forecast-as-of" class="mt-4 text-sm text-gray-600">
-          _____________________________
+          <div id="forecast-as-of" class="mt-4 text-sm text-gray-600">
+            _____________________________
+          </div>
         </div>
       </div>
       <div id="forecast-error"></div>
