@@ -8,11 +8,19 @@
     const wind_gusts = [{{ wind_gust_data }}]
     const wave_period = [{{ wave_period_data }}]
 
+    const qualityMap = {
+        "#0bd674": "Good",
+        "#ffcd1e": "Fair to Good",
+        "#ff9500": "Poor",
+        "#f4496d": "Very Poor",
+    }
+
     document.getElementById("current-wave-height").innerText = "{{ current_wave_height }}"
     document.getElementById("current-wave-period").innerText = "{{ current_wave_period }}"
     document.getElementById("wave-icon").setAttribute("style", "transform: rotate({{ current_wave_direction }}deg);")
 
     document.querySelector("#legend-label").innerText = wave_height_labels[0];
+    document.querySelector("#legend-quality").innerText = qualities[0];
     document.querySelector("#legend-wave-height").innerText = wave_heights[0];
     document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
     document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`)
@@ -107,6 +115,7 @@ new Chart(ctx, {
             const color = qualities[x];
             document.querySelector("#legend").setAttribute("style", `background-color: ${ color }`);
             document.querySelector("#legend-label").innerText = wave_height_labels[x];
+            document.querySelector("#legend-quality").innerText = qualityMap[color];
             document.querySelector("#legend-wave-height").innerText = wave_heights[x];
             document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
             document.getElementById("legend-wind-icon").setAttribute("style", `transform: rotate(${wind_directions[x]}deg);`)
