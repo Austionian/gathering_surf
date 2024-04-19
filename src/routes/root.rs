@@ -1,4 +1,4 @@
-use crate::{capitalize, quality, AppState, Forecast, Latest, TEMPLATES};
+use crate::{capitalize, AppState, Forecast, Latest, TEMPLATES};
 use axum::{
     body::Body,
     extract::{Query, State},
