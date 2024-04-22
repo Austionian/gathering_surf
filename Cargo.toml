@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.81"
 axum = "0.7"
 chrono = "0.4"
-chrono-tz = "0.8.6"
+chrono-tz = "0.9"
 config = { git = "https://github.com/mehcode/config-rs.git", rev = "e3c1d0b452639478662a44f15ef6d5b6d969bf9b", default-features = false, features = ["yaml"] }
 hyper = { version = "1", features = ["full"] }
 lazy_static = "1"
