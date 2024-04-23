@@ -10,6 +10,9 @@ const callback = (mutationList, _observer) => {
     if (mutation.target.id === "latest-data") {
       parseLatestData(JSON.parse(mutation.target.innerText));
     }
+    if (mutation.target.id === "forecast-data") {
+      parseForecastData(JSON.parse(mutation.target.innerText));
+    }
   }
 };
 
@@ -75,3 +78,200 @@ const getWindData = (data) =>
   data.wind_speed == data.gusts
     ? data.wind_speed
     : `${data.wind_speed}-${data.gusts}`;
+
+let qualities;
+let wave_height_labels;
+let wave_heights;
+let wind_speeds;
+let wind_directions;
+let wind_gusts;
+let wave_period;
+let graph_max;
+
+function parseForecastData(data) {
+  qualities = data.qualities;
+  wave_height_labels = data.wave_height_labels;
+  wave_heights = data.wave_height_data;
+  wind_speeds = data.wind_speed_data;
+  wind_directions = data.wind_direction_data;
+  wind_gusts = data.wind_gust_data;
+  wave_period = data.wave_period_data;
+  graph_max = data.graph_max;
+
+  document.getElementById("current-wave-height").innerText =
+    data.current_wave_height;
+  document.getElementById("current-wave-period").innerText =
+    data.current_wave_period;
+  document
+    .getElementById("wave-icon")
+    .setAttribute(
+      "style",
+      `transform: rotate(${data.current_wave_direction}deg);`,
+    );
+
+  document.querySelector("#legend-label").innerText = wave_height_labels[0];
+  document.querySelector("#legend-quality").innerText =
+    qualityMap[qualities[0]];
+  document.querySelector("#legend-wave-height").innerText = wave_heights[0];
+  document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
+  document
+    .getElementById("legend-wind-icon")
+    .setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`);
+  document.querySelector("#legend-wave-period").innerText = wave_period[0];
+  document.querySelector("#legend-wind-gust").innerText = wind_gusts[0];
+  document.getElementById("forecast-as-of").innerText =
+    "Last updated at {{ forecast_as_of }}";
+
+  document.querySelectorAll(".loader").forEach((e) => e.remove());
+  document.getElementById("forecast").classList.remove("hidden");
+  document.getElementById("wave-quality").classList.remove("hidden");
+  document.getElementById("legend-container").classList.remove("hidden");
+
+  // The default legend background is the same as the latest wave quality shown
+  // in the header. If that script doesn't happen fallback to the first value in
+  // the qualities array.
+  const legend = document.querySelector("#legend");
+  if (legend.style.length < 1) {
+    legend.setAttribute("style", `background-color: ${qualities[0]};`);
+  }
+
+  const ctx = document.getElementById("forecast");
+
+  const quality = (ctx) => qualities[ctx.p0.parsed.x];
+
+  const plugin = {
+    id: "vert",
+    defaults: {
+      width: 1,
+      dash: [3, 3],
+    },
+    afterInit: (chart, args, opts) => {
+      chart.corsair = {
+        x: 0,
+        y: 0,
+      };
+    },
+    afterEvent: (chart, args) => {
+      const { inChartArea } = args;
+      const { type, x, y } = args.event;
+
+      chart.corsair = { x, y, draw: inChartArea };
+      chart.draw();
+    },
+    beforeDatasetsDraw: (chart, args, opts) => {
+      const { ctx } = chart;
+      const { top, bottom, left, right } = chart.chartArea;
+      const { x, draw } = chart.corsair;
+      if (!draw) return;
+
+      ctx.save();
+
+      ctx.beginPath();
+      ctx.lineWidth = opts.width;
+      ctx.strokeStyle = opts.color;
+      ctx.setLineDash(opts.dash);
+      ctx.moveTo(x, bottom);
+      ctx.lineTo(x, top);
+      ctx.stroke();
+
+      ctx.restore();
+    },
+  };
+
+  new Chart(ctx, {
+    type: "line",
+    plugins: [plugin],
+    data: {
+      labels: wave_height_labels,
+      datasets: [
+        {
+          label: "wave height (feet)",
+          data: wave_heights,
+          pointStyle: false,
+          fill: false,
+          segment: {
+            backgroundColor: (ctx) => quality(ctx) || "#4ade80",
+            borderColor: (ctx) => quality(ctx) || "#4ade80",
+          },
+        },
+      ],
+    },
+    options: {
+      onHover: (e, _, chart) => {
+        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+        // Substitute the appropriate scale IDs
+        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
+        const x =
+          x_value && x_value > 0
+            ? x_value >= wave_heights.length
+              ? wave_heights.length - 1
+              : x_value
+            : 0;
+        const color = qualities[x];
+        document
+          .querySelector("#legend")
+          .setAttribute("style", `background-color: ${color}`);
+        document.querySelector("#legend-label").innerText =
+          wave_height_labels[x];
+        document.querySelector("#legend-quality").innerText = qualityMap[color];
+        document.querySelector("#legend-wave-height").innerText =
+          wave_heights[x];
+        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
+        document
+          .getElementById("legend-wind-icon")
+          .setAttribute(
+            "style",
+            `transform: rotate(${wind_directions[x]}deg);`,
+          );
+        document.querySelector("#legend-wave-period").innerText =
+          wave_period[x];
+        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
+      },
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        vert: {
+          color: "white",
+        },
+        tooltip: {
+          enabled: false,
+        },
+      },
+      elements: {
+        line: {
+          tension: 0.4,
+        },
+      },
+      responsive: true,
+      interaction: {
+        intersect: false,
+        axis: "x",
+      },
+      scales: {
+        x: {
+          ticks: {
+            display: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          max: graph_max,
+          ticks: {
+            callback: function (value, index, ticks) {
+              if (value % 2 !== 0) {
+                return "";
+              }
+              return value;
+            },
+            font: {
+              size: 18,
+              weight: "bold",
+            },
+          },
+        },
+      },
+    },
+  });
+}

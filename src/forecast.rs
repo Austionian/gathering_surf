@@ -2,8 +2,8 @@ use crate::{convert_kilo_meter_to_mile, quality, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
+use serde_json::json;
 use std::cmp::Ordering;
-use std::fmt::Write;
 
 #[derive(serde::Serialize)]
 pub struct Forecast {
@@ -64,16 +64,14 @@ impl Forecast {
         let _ = self.wave_height.split_off(*min);
     }
 
-    pub fn get_labels(&mut self) -> String {
+    pub fn get_labels(&mut self) -> Vec<String> {
         self.wave_height
             .iter_mut()
-            .fold(String::new(), |mut acc, data| {
-                let _ = write!(acc, "'{}',", data.display_time.take().unwrap());
-                acc
-            })
+            .map(|v| v.display_time.take().unwrap())
+            .collect()
     }
 
-    pub fn get_wave_data(&self) -> (String, u8) {
+    pub fn get_wave_data(&self) -> (Vec<f64>, u8) {
         let mut smoothed_data = Vec::new();
         let mut out = Vec::new();
         self.wave_height
@@ -88,42 +86,38 @@ impl Forecast {
         });
 
         (
-            out.iter().fold(String::new(), |mut acc, value| {
-                let _ = write!(acc, "{:.3},", value);
-                acc
-            }),
+            out.iter().map(|v| Self::truncc(*v)).collect(),
             smoothed_data.iter().map(|v| *v as u8).max().unwrap(),
         )
     }
 
-    pub fn get_wind_data(&self) -> String {
-        self.wind_speed.iter().fold(String::new(), |mut acc, v| {
-            let _ = write!(acc, "{:.2},", convert_kilo_meter_to_mile(v.value));
-            acc
-        })
+    fn truncc(v: f64) -> f64 {
+        ((v * 100.0).trunc() / 100.0) as f64
     }
 
-    pub fn get_wind_direction_data(&self) -> String {
+    pub fn get_wind_data(&self) -> Vec<f64> {
+        self.wind_speed
+            .iter()
+            .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
+            .collect()
+    }
+
+    pub fn get_wind_direction_data(&self) -> Vec<f64> {
         self.wind_direction
             .iter()
-            .fold(String::new(), |mut acc, v| {
-                let _ = write!(acc, "{:.2},", v.value + 180.0);
-                acc
-            })
+            .map(|v| Self::truncc(v.value) + 180.0)
+            .collect()
     }
 
-    pub fn get_wind_gust_data(&self) -> String {
-        self.wind_gust.iter().fold(String::new(), |mut acc, v| {
-            let _ = write!(acc, "{:.2},", convert_kilo_meter_to_mile(v.value));
-            acc
-        })
+    pub fn get_wind_gust_data(&self) -> Vec<f64> {
+        self.wind_gust
+            .iter()
+            .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
+            .collect()
     }
 
-    pub fn get_wave_period_data(&self) -> String {
-        self.wave_period.iter().fold(String::new(), |mut acc, v| {
-            let _ = write!(acc, "{},", v.value);
-            acc
-        })
+    pub fn get_wave_period_data(&self) -> Vec<f64> {
+        self.wave_period.iter().map(|v| v.value as f64).collect()
     }
 
     /// Returns the wave height, period and direction from the forecasted
@@ -168,12 +162,34 @@ impl Forecast {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
         for (wind_direction, wind_speed) in self.wind_direction.iter().zip(self.wind_speed.iter()) {
             qualities.push(format!(
-                "'{}'",
+                "{}",
                 quality::get_quality(wind_speed.value, wind_direction.value).1
             ));
         }
 
         self.quality = Some(qualities)
+    }
+
+    pub fn to_json(mut self) -> String {
+        let (wave_height_data, graph_max) = self.get_wave_data();
+        let (current_wave_height, current_wave_period, current_wave_direction) =
+            self.get_current_wave_data();
+
+        serde_json::to_string(&json!({
+            "graph_max": graph_max + 2,
+            "wave_height_data": wave_height_data,
+            "current_wave_height": current_wave_height,
+            "current_wave_direction": current_wave_direction.parse::<u32>().unwrap() + 180,
+            "current_wave_period": current_wave_period,
+            "wind_speed_data": self.get_wind_data(),
+            "wind_direction_data": self.get_wind_direction_data(),
+            "wind_gust_data": self.get_wind_gust_data(),
+            "wave_period_data": self.get_wave_period_data(),
+            "wave_height_labels": self.get_labels(),
+            "forecast_as_of": self.last_updated,
+            "qualities": self.quality.unwrap(),
+        }))
+        .unwrap()
     }
 }
 
@@ -195,8 +211,8 @@ impl ForecastValue {
             .ok_or(anyhow!("array not found!"))?
             .clone()
             .into_iter()
-            .filter_map(|value| ForecastValue::try_from(value).ok())
-            .flat_map(|w| ForecastValue::expand_time_ranges(&w).unwrap())
+            .filter_map(|value| Self::try_from(value).ok())
+            .flat_map(|w| Self::expand_time_ranges(&w).unwrap())
             .collect())
     }
 
@@ -259,14 +275,9 @@ impl TryFrom<serde_json::Value> for Forecast {
         let wind_speed = ForecastValue::get(properties, "windSpeed")?;
         let wind_gust = ForecastValue::get(properties, "windGust")?;
         let wind_direction = ForecastValue::get(properties, "windDirection")?;
-        // let temperature = ForecastValue::get(properties, "temperature").unwrap();
-        // let probability_of_precipitation =
-        //     ForecastValue::get(properties, "probabilityOfPrecipitation").unwrap();
 
         Ok(Self {
             last_updated,
-            // probability_of_precipitation,
-            // temperature,
             wave_height,
             wave_period,
             wave_direction,
@@ -280,6 +291,7 @@ impl TryFrom<serde_json::Value> for Forecast {
 
 impl TryFrom<serde_json::Value> for ForecastValue {
     type Error = anyhow::Error;
+
     fn try_from(v: serde_json::Value) -> Result<Self, Self::Error> {
         let value = v
             .get("value")

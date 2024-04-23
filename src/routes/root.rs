@@ -67,27 +67,7 @@ pub async fn root(
             Ok(mut forecast) => {
                 forecast.condense();
                 forecast.get_quality();
-
-                let (wave_height_data, graph_max) = forecast.get_wave_data();
-                let (current_wave_height, current_wave_period, current_wave_direction) =
-                    forecast.get_current_wave_data();
-
-                context.insert("wave_height_data", &wave_height_data);
-                context.insert("wind_speed_data", &forecast.get_wind_data());
-                context.insert("wind_direction_data", &forecast.get_wind_direction_data());
-                context.insert("wind_gust_data", &forecast.get_wind_gust_data());
-                context.insert("wave_period_data", &forecast.get_wave_period_data());
-                context.insert("graph_max", &(graph_max + 2));
-                context.insert("wave_height_labels", &forecast.get_labels());
-                context.insert("current_wave_height", &current_wave_height);
-                context.insert("current_wave_period", &current_wave_period);
-                context.insert(
-                    "current_wave_direction",
-                    &(current_wave_direction.parse::<u32>().unwrap() + 180),
-                );
-                context.insert("forecast_as_of", &forecast.last_updated);
-                context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
-                context.insert("qualities", &forecast.quality.unwrap());
+                context.insert("forecast_json", &forecast.to_json());
 
                 tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
                     .await
