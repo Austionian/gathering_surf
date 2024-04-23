@@ -92,7 +92,7 @@ impl Forecast {
     }
 
     fn truncc(v: f64) -> f64 {
-        ((v * 100.0).trunc() / 100.0) as f64
+        (v * 100.0).trunc() / 100.0
     }
 
     pub fn get_wind_data(&self) -> Vec<f64> {
@@ -117,7 +117,7 @@ impl Forecast {
     }
 
     pub fn get_wave_period_data(&self) -> Vec<f64> {
-        self.wave_period.iter().map(|v| v.value as f64).collect()
+        self.wave_period.iter().map(|v| v.value).collect()
     }
 
     /// Returns the wave height, period and direction from the forecasted
@@ -161,10 +161,11 @@ impl Forecast {
     pub fn get_quality(&mut self) {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
         for (wind_direction, wind_speed) in self.wind_direction.iter().zip(self.wind_speed.iter()) {
-            qualities.push(format!(
-                "{}",
-                quality::get_quality(wind_speed.value, wind_direction.value).1
-            ));
+            qualities.push(
+                quality::get_quality(wind_speed.value, wind_direction.value)
+                    .1
+                    .to_string(),
+            );
         }
 
         self.quality = Some(qualities)

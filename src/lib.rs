@@ -45,6 +45,8 @@ pub fn startup() -> Result<Router, String> {
         breaks: vec![Break { name: "Atwater" }, Break { name: "Bradford" }],
     };
 
+    let api = Router::new().route("/latest", get(routes::latest));
+
     // Create the Axum router.
     Ok(Router::new()
         // this will serve everything in /assets, including your minified stylesheet, e.g.
@@ -52,6 +54,7 @@ pub fn startup() -> Result<Router, String> {
         .nest_service("/assets", ServeDir::new("assets"))
         // attaches the root route to the root.
         .route("/", get(routes::root))
+        .nest("/api", api)
         .fallback(routes::handle_404)
         // binds the telemetry.
         .layer(TraceLayer::new_for_http())
