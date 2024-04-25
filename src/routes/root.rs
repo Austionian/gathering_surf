@@ -14,6 +14,22 @@ pub struct Spot {
     pub spot: Option<String>,
 }
 
+pub fn get_spot(selected_spot: Query<Spot>, state: &AppState) -> String {
+    // Get the selected spot, fallback to Atwater
+    let mut spot = selected_spot.0.spot.unwrap_or("Atwater".to_string());
+
+    // Make sure the selected spot is valid, fallback to Atwater if not
+    if !state
+        .breaks
+        .iter()
+        .any(|b| b.name.to_lowercase() == spot.to_lowercase())
+    {
+        spot = "Atwater".to_string();
+    }
+
+    spot
+}
+
 /// Handler to return the website's index
 pub async fn root(
     State(state): State<Arc<AppState>>,
@@ -25,19 +41,9 @@ pub async fn root(
     tokio::spawn(async move {
         let mut context = tera::Context::new();
 
-        // Get the selected spot, fallback to Atwater
-        let mut spot = selected_spot.0.spot.unwrap_or("Atwater".to_string());
+        let spot = get_spot(selected_spot, &state);
 
-        // Make sure the selected spot is valid, fallback to Atwater if not
-        if !state
-            .breaks
-            .iter()
-            .any(|b| b.name.to_lowercase() == spot.to_lowercase())
-        {
-            spot = "Atwater".to_string();
-        }
-
-        context.insert("spot", &capitalize(spot));
+        context.insert("spot", &capitalize(&spot));
         context.insert("breaks", &state.breaks);
 
         tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
@@ -63,7 +69,7 @@ pub async fn root(
             }
         }
 
-        match Forecast::try_get().await {
+        match Forecast::try_get(&spot).await {
             Ok(mut forecast) => {
                 forecast.condense();
                 forecast.get_quality();

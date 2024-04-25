@@ -8,4 +8,4 @@ pub use forecast::forecast;
 pub use handle_404::handle_404;
 pub use health_check::health_check;
 pub use latest::latest;
-pub use root::root;
+pub use root::*;

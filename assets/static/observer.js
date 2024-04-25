@@ -120,7 +120,7 @@ function parseForecastData(data) {
   document.querySelector("#legend-wave-period").innerText = wave_period[0];
   document.querySelector("#legend-wind-gust").innerText = wind_gusts[0];
   document.getElementById("forecast-as-of").innerText =
-    "Last updated at {{ forecast_as_of }}";
+    `Last updated at ${data.forecast_as_of}`;
 
   document.querySelectorAll(".loader").forEach((e) => e.remove());
   document.getElementById("forecast").classList.remove("hidden");

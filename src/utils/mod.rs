@@ -71,7 +71,8 @@ pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<
     ))
 }
 
-pub fn capitalize(mut s: String) -> String {
+pub fn capitalize(s: &str) -> String {
+    let mut s = s.to_string();
     let first_letter = s.chars().next().unwrap();
     let rest = s.split_off(1);
 
