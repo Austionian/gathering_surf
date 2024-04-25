@@ -45,7 +45,9 @@ pub fn startup() -> Result<Router, String> {
         breaks: vec![Break { name: "Atwater" }, Break { name: "Bradford" }],
     };
 
-    let api = Router::new().route("/latest", get(routes::latest));
+    let api = Router::new()
+        .route("/latest", get(routes::latest))
+        .route("/forecast", get(routes::forecast));
 
     // Create the Axum router.
     Ok(Router::new()
