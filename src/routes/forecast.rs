@@ -1,23 +1,15 @@
-use crate::{AppState, Forecast};
+use crate::{Forecast, SpotParam};
 use axum::{
-    extract::{Query, State},
+    extract::Query,
     http::{header, HeaderMap},
     response::IntoResponse,
 };
-use std::sync::Arc;
 
-use super::{get_spot, Spot};
-
-pub async fn forecast(
-    State(state): State<Arc<AppState>>,
-    selected_spot: Query<Spot>,
-) -> impl IntoResponse {
+pub async fn forecast(selected_spot: Query<SpotParam>) -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
 
-    let forecast = Forecast::try_get(&get_spot(selected_spot, &state))
-        .await
-        .unwrap();
+    let forecast = Forecast::try_get(&selected_spot.0.into()).await.unwrap();
 
     (headers, forecast.to_json())
 }

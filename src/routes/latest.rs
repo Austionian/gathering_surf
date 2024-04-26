@@ -1,19 +1,11 @@
-use crate::{AppState, Latest};
+use crate::{Latest, SpotParam};
 use axum::{
-    extract::{Query, State},
+    extract::Query,
     response::{IntoResponse, Json},
 };
-use std::sync::Arc;
 
-use super::{get_spot, Spot};
-
-pub async fn latest(
-    State(state): State<Arc<AppState>>,
-    selected_spot: Query<Spot>,
-) -> impl IntoResponse {
-    let latest = Latest::try_get(&get_spot(selected_spot, &state))
-        .await
-        .unwrap();
+pub async fn latest(selected_spot: Query<SpotParam>) -> impl IntoResponse {
+    let latest = Latest::try_get(&selected_spot.0.into()).await.unwrap();
 
     Json(latest)
 }

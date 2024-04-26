@@ -1,9 +1,8 @@
-use crate::{
-    quality,
-    utils::{convert_celsius_to_fahrenheit, convert_meter_to_mile},
-};
+use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_mile};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
+
+use super::Spot;
 
 #[derive(serde::Serialize)]
 pub struct Latest {
@@ -17,12 +16,9 @@ pub struct Latest {
     pub quality_text: &'static str,
 }
 
-static ATWATER: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
-static BRADFORD: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
-
 impl Latest {
-    pub async fn try_get(spot: &str) -> anyhow::Result<Self> {
-        let data = reqwest::get(Self::get_url(spot)).await?.text().await?;
+    pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
+        let data = reqwest::get(spot.latest_url).await?.text().await?;
 
         let bouy_data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/45214.txt")
             .await?
@@ -53,7 +49,9 @@ impl Latest {
 
         let air_temp = convert_celsius_to_fahrenheit(measurements.nth(5).unwrap());
 
-        let wave_quality = quality::get_quality(wind_speed.parse().unwrap(), wind_direction as f64);
+        let wave_quality = spot
+            .location
+            .get_quality(wind_speed.parse().unwrap(), wind_direction as f64);
 
         Ok(Self {
             air_temp,
@@ -65,14 +63,6 @@ impl Latest {
             quality_text: wave_quality.0,
             quality_color: wave_quality.1,
         })
-    }
-
-    fn get_url(spot: &str) -> &'static str {
-        match spot.to_lowercase().as_str() {
-            "atwater" => ATWATER,
-            "bradford" => BRADFORD,
-            _ => ATWATER,
-        }
     }
 
     pub fn parse_as_of(as_of: &str) -> anyhow::Result<String> {

@@ -3,6 +3,7 @@ mod forecast;
 mod latest;
 mod quality;
 mod routes;
+mod spot;
 mod utils;
 
 use axum::{routing::get, Router};
@@ -15,6 +16,7 @@ pub use configuration::get_configuration;
 pub use forecast::*;
 pub use latest::Latest;
 pub use quality::*;
+pub use spot::*;
 pub use utils::*;
 
 lazy_static! {
@@ -36,13 +38,13 @@ pub struct Break {
 
 #[derive(Clone, serde::Serialize)]
 pub struct AppState {
-    breaks: Vec<Break>,
+    breaks: [Break; 2],
 }
 
 pub fn startup() -> Result<Router, String> {
     // Create an AppState that is shared across the app.
     let state = AppState {
-        breaks: vec![Break { name: "Atwater" }, Break { name: "Bradford" }],
+        breaks: [Break { name: "Atwater" }, Break { name: "Bradford" }],
     };
 
     let api = Router::new()

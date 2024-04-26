@@ -1,39 +1,17 @@
-use crate::{capitalize, AppState, Forecast, Latest, TEMPLATES};
+use crate::{AppState, Forecast, Latest, Spot, SpotParam, TEMPLATES};
 use axum::{
     body::Body,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
-
-#[derive(Deserialize, Debug)]
-pub struct Spot {
-    pub spot: Option<String>,
-}
-
-pub fn get_spot(selected_spot: Query<Spot>, state: &AppState) -> String {
-    // Get the selected spot, fallback to Atwater
-    let mut spot = selected_spot.0.spot.unwrap_or("Atwater".to_string());
-
-    // Make sure the selected spot is valid, fallback to Atwater if not
-    if !state
-        .breaks
-        .iter()
-        .any(|b| b.name.to_lowercase() == spot.to_lowercase())
-    {
-        spot = "Atwater".to_string();
-    }
-
-    spot
-}
 
 /// Handler to return the website's index
 pub async fn root(
     State(state): State<Arc<AppState>>,
-    selected_spot: Query<Spot>,
+    selected_spot: Query<SpotParam>,
 ) -> impl IntoResponse {
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
@@ -41,9 +19,9 @@ pub async fn root(
     tokio::spawn(async move {
         let mut context = tera::Context::new();
 
-        let spot = get_spot(selected_spot, &state);
+        let spot: Spot = selected_spot.0.into();
 
-        context.insert("spot", &capitalize(&spot));
+        context.insert("spot", &spot.to_string());
         context.insert("breaks", &state.breaks);
 
         tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))

@@ -1,11 +1,12 @@
-use crate::{convert_kilo_meter_to_mile, quality, utils};
+use crate::{convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
 use serde_json::json;
 use std::cmp::Ordering;
 
-#[derive(serde::Serialize)]
+use super::{Location, Spot};
+
 pub struct Forecast {
     pub last_updated: String,
     // probability_of_precipitation: Vec<ForecastValue>,
@@ -19,35 +20,25 @@ pub struct Forecast {
     pub wind_direction: Vec<ForecastValue>,
 }
 
-static ATWATER: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
-static BRADFORD: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
-
 impl Forecast {
-    pub async fn try_get(spot: &str) -> anyhow::Result<Self> {
+    pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
             .build()
             .unwrap();
 
-        let response = client.get(Self::get_url(spot)).send().await?;
+        let response = client.get(spot.forecast_url).send().await?;
 
         if response.status().as_u16() != 200 {
             bail!("Non 200 response from NOAA");
         }
 
-        let mut forecast = Forecast::try_from(response.json::<serde_json::Value>().await?)?;
+        let mut forecast: Self = (response.json::<serde_json::Value>().await?).try_into()?;
+
         forecast.condense();
-        forecast.get_quality();
+        forecast.get_quality(&spot.location);
 
         Ok(forecast)
-    }
-
-    fn get_url(spot: &str) -> &'static str {
-        match spot.to_lowercase().as_str() {
-            "atwater" => ATWATER,
-            "bradford" => BRADFORD,
-            _ => ATWATER,
-        }
     }
 
     /// Condenses the forecast to even length vecs.
@@ -169,11 +160,12 @@ impl Forecast {
         ("Flat".to_string(), String::default(), String::default())
     }
 
-    pub fn get_quality(&mut self) {
+    pub fn get_quality(&mut self, location: &Location) {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
         for (wind_direction, wind_speed) in self.wind_direction.iter().zip(self.wind_speed.iter()) {
             qualities.push(
-                quality::get_quality(wind_speed.value, wind_direction.value)
+                location
+                    .get_quality(wind_speed.value, wind_direction.value)
                     .1
                     .to_string(),
             );
