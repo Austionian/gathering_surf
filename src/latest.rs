@@ -17,12 +17,12 @@ pub struct Latest {
     pub quality_text: &'static str,
 }
 
+static ATWATER: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
+static BRADFORD: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
+
 impl Latest {
-    pub async fn try_get() -> anyhow::Result<Self> {
-        let data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt")
-            .await?
-            .text()
-            .await?;
+    pub async fn try_get(spot: &str) -> anyhow::Result<Self> {
+        let data = reqwest::get(Self::get_url(spot)).await?.text().await?;
 
         let bouy_data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/45214.txt")
             .await?
@@ -65,6 +65,14 @@ impl Latest {
             quality_text: wave_quality.0,
             quality_color: wave_quality.1,
         })
+    }
+
+    fn get_url(spot: &str) -> &'static str {
+        match spot.to_lowercase().as_str() {
+            "atwater" => ATWATER,
+            "bradford" => BRADFORD,
+            _ => ATWATER,
+        }
     }
 
     pub fn parse_as_of(as_of: &str) -> anyhow::Result<String> {

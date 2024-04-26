@@ -19,24 +19,35 @@ pub struct Forecast {
     pub wind_direction: Vec<ForecastValue>,
 }
 
+static ATWATER: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
+static BRADFORD: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
+
 impl Forecast {
-    pub async fn try_get(_spot: &str) -> anyhow::Result<Self> {
+    pub async fn try_get(spot: &str) -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
             .build()
             .unwrap();
 
-        // milwauke = "https://api.weather.gov/gridpoints/MKX/91,67"
-        let response = client
-            .get("https://api.weather.gov/gridpoints/MKX/90,67")
-            .send()
-            .await?;
+        let response = client.get(Self::get_url(spot)).send().await?;
 
         if response.status().as_u16() != 200 {
             bail!("Non 200 response from NOAA");
         }
 
-        Forecast::try_from(response.json::<serde_json::Value>().await?)
+        let mut forecast = Forecast::try_from(response.json::<serde_json::Value>().await?)?;
+        forecast.condense();
+        forecast.get_quality();
+
+        Ok(forecast)
+    }
+
+    fn get_url(spot: &str) -> &'static str {
+        match spot.to_lowercase().as_str() {
+            "atwater" => ATWATER,
+            "bradford" => BRADFORD,
+            _ => ATWATER,
+        }
     }
 
     /// Condenses the forecast to even length vecs.

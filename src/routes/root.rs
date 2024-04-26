@@ -50,7 +50,7 @@ pub async fn root(
             .await
             .unwrap();
 
-        match Latest::try_get().await {
+        match Latest::try_get(&spot).await {
             Ok(latest) => {
                 context.insert("latest_json", &serde_json::to_string(&latest).unwrap());
 
@@ -70,9 +70,7 @@ pub async fn root(
         }
 
         match Forecast::try_get(&spot).await {
-            Ok(mut forecast) => {
-                forecast.condense();
-                forecast.get_quality();
+            Ok(forecast) => {
                 context.insert("forecast_json", &forecast.to_json());
 
                 tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
