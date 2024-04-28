@@ -18,12 +18,16 @@ pub struct Latest {
 
 impl Latest {
     pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
+        static MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         let data = reqwest::get(spot.latest_url).await?.text().await?;
 
-        let bouy_data = reqwest::get("https://www.ndbc.noaa.gov/data/realtime2/45214.txt")
-            .await?
-            .text()
-            .await?;
+        let bouy_url = if let Some(bouy_url) = spot.bouy_url {
+            bouy_url
+        } else {
+            MID_LAKE_BOUY
+        };
+
+        let bouy_data = reqwest::get(bouy_url).await?.text().await?;
 
         let water_temp = convert_celsius_to_fahrenheit(
             bouy_data

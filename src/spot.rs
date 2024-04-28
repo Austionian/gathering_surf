@@ -17,6 +17,7 @@ impl SpotParam {
 pub struct Spot {
     pub forecast_url: &'static str,
     pub latest_url: &'static str,
+    pub bouy_url: Option<&'static str>,
     pub location: Location,
 }
 
@@ -28,22 +29,22 @@ impl Display for Spot {
 
 impl From<SpotParam> for Spot {
     fn from(mut val: SpotParam) -> Self {
+        let atwater = Spot {
+            forecast_url: ATWATER_URL,
+            latest_url: ATWATER_LATEST_URL,
+            bouy_url: Some("https://www.ndbc.noaa.gov/data/realtime2/45013.txt"),
+            location: Location::Atwater(Atwater),
+        };
+
         match val.get_spot().to_lowercase().as_str() {
             "bradford" => Spot {
                 forecast_url: BRADFORD_URL,
                 latest_url: BRADFORD_LATEST_URL,
+                bouy_url: None,
                 location: Location::Bradford(Bradford),
             },
-            "atwater" => Spot {
-                forecast_url: ATWATER_URL,
-                latest_url: ATWATER_LATEST_URL,
-                location: Location::Atwater(Atwater),
-            },
-            _ => Spot {
-                forecast_url: ATWATER_URL,
-                latest_url: ATWATER_LATEST_URL,
-                location: Location::Atwater(Atwater),
-            },
+            "atwater" => atwater,
+            _ => atwater,
         }
     }
 }
