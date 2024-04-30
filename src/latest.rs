@@ -37,9 +37,11 @@ impl Latest {
         let wind_speed = convert_meter_to_mile(measurements.next().unwrap());
         let gusts = convert_meter_to_mile(measurements.next().unwrap());
 
-        let wave_height = Self::parse_wave_height(measurements.next().unwrap());
+        let wave_height = Self::parse_wave_height(measurements.next().unwrap_or(""));
         let wave_period = measurements.next().unwrap().parse().ok();
+
         let _ = measurements.next();
+
         let wave_direction = measurements.next().unwrap().parse().ok();
 
         let _ = measurements.next();
