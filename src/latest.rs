@@ -1,4 +1,4 @@
-use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_mile};
+use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
 
@@ -14,30 +14,16 @@ pub struct Latest {
     pub air_temp: String,
     pub quality_color: &'static str,
     pub quality_text: &'static str,
+    pub wave_height: Option<String>,
+    pub wave_period: Option<u8>,
+    pub wave_direction: Option<u16>,
 }
 
 impl Latest {
     pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
         static MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
+
         let data = reqwest::get(spot.latest_url).await?.text().await?;
-
-        let bouy_url = if let Some(bouy_url) = spot.bouy_url {
-            bouy_url
-        } else {
-            MID_LAKE_BOUY
-        };
-
-        let bouy_data = reqwest::get(bouy_url).await?.text().await?;
-
-        let water_temp = convert_celsius_to_fahrenheit(
-            bouy_data
-                .lines()
-                .nth(2)
-                .unwrap()
-                .split_whitespace()
-                .nth(14)
-                .unwrap(),
-        );
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -51,7 +37,31 @@ impl Latest {
         let wind_speed = convert_meter_to_mile(measurements.next().unwrap());
         let gusts = convert_meter_to_mile(measurements.next().unwrap());
 
-        let air_temp = convert_celsius_to_fahrenheit(measurements.nth(5).unwrap());
+        let wave_height = Self::parse_wave_height(measurements.next().unwrap());
+        let wave_period = measurements.next().unwrap().parse().ok();
+        let _ = measurements.next();
+        let wave_direction = measurements.next().unwrap().parse().ok();
+
+        let _ = measurements.next();
+
+        let air_temp = convert_celsius_to_fahrenheit(measurements.next().unwrap());
+
+        let raw_water_temp = measurements.next().unwrap_or("MM");
+
+        let water_temp = if raw_water_temp == "MM" {
+            let bouy_data = reqwest::get(MID_LAKE_BOUY).await?.text().await?;
+            convert_celsius_to_fahrenheit(
+                bouy_data
+                    .lines()
+                    .nth(2)
+                    .unwrap()
+                    .split_whitespace()
+                    .nth(14)
+                    .unwrap(),
+            )
+        } else {
+            convert_celsius_to_fahrenheit(&raw_water_temp)
+        };
 
         let wave_quality = spot
             .location
@@ -66,10 +76,21 @@ impl Latest {
             water_temp,
             quality_text: wave_quality.0,
             quality_color: wave_quality.1,
+            wave_height,
+            wave_period,
+            wave_direction,
         })
     }
 
-    pub fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
+    fn parse_wave_height(wave_height: &str) -> Option<String> {
+        if let Ok(v) = wave_height.parse::<f64>() {
+            Some(format!("{:.2}", convert_meter_to_feet(v)))
+        } else {
+            None
+        }
+    }
+
+    fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
         let as_of = as_of.trim().split(' ').collect::<Vec<_>>();
         let as_of = Utc
             .with_ymd_and_hms(

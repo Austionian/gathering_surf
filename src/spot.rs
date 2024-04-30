@@ -17,7 +17,6 @@ impl SpotParam {
 pub struct Spot {
     pub forecast_url: &'static str,
     pub latest_url: &'static str,
-    pub bouy_url: Option<&'static str>,
     pub location: Location,
 }
 
@@ -32,7 +31,6 @@ impl From<SpotParam> for Spot {
         let atwater = Spot {
             forecast_url: ATWATER_URL,
             latest_url: ATWATER_LATEST_URL,
-            bouy_url: Some("https://www.ndbc.noaa.gov/data/realtime2/45013.txt"),
             location: Location::Atwater(Atwater),
         };
 
@@ -40,7 +38,6 @@ impl From<SpotParam> for Spot {
             "bradford" => Spot {
                 forecast_url: BRADFORD_URL,
                 latest_url: BRADFORD_LATEST_URL,
-                bouy_url: None,
                 location: Location::Bradford(Bradford),
             },
             "atwater" => atwater,
@@ -52,7 +49,7 @@ impl From<SpotParam> for Spot {
 static ATWATER_URL: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
 static BRADFORD_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
 
-static ATWATER_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
+static ATWATER_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
 static BRADFORD_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
 
 pub struct Atwater;

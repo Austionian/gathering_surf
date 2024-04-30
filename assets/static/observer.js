@@ -30,13 +30,16 @@ const qualityMap = {
 };
 
 /**
- *   @typeof {Object} LatestData
- *   @property {string} quality_color - The hexcode of the quality.
- *   @property {string} quality_text - The computed text of the quality.
- *   @property {string} water_temp - The latest water temperature.
- *   @property {number} wind_direction - The current wind direction.
- *   @property {string} wind_speed - The current wind speed.
- *   @property {string} gusts - The current wind gust.
+ * @typeof {Object} LatestData
+ * @property {string} quality_color - The hexcode of the quality.
+ * @property {string} quality_text - The computed text of the quality.
+ * @property {string} water_temp - The latest water temperature.
+ * @property {number} wind_direction - The current wind direction.
+ * @property {string} wind_speed - The current wind speed.
+ * @property {string} gusts - The current wind gust.
+ * @property {?string} wave_height
+ * @property {?string} wave_direction
+ * @property {?string} wave_period
  */
 
 /**
@@ -45,6 +48,16 @@ const qualityMap = {
  * @param {LatestData} data
  */
 function parseLatestData(data) {
+  if (data.wave_height) {
+    document.getElementById("current-wave-height").innerText = data.wave_height;
+    document.getElementById("current-wave-period").innerText = data.wave_period;
+    document
+      .getElementById("wave-icon")
+      .setAttribute("style", `transform: rotate(${data.wave_direction}deg);`);
+
+    document.querySelectorAll(".wavey").forEach((e) => e.remove());
+  }
+
   document
     .getElementById("wave-quality")
     .setAttribute("style", `background-color: ${data.quality_color};`);
@@ -98,16 +111,20 @@ function parseForecastData(data) {
   wave_period = data.wave_period_data;
   graph_max = data.graph_max;
 
-  document.getElementById("current-wave-height").innerText =
-    data.current_wave_height;
-  document.getElementById("current-wave-period").innerText =
-    data.current_wave_period;
-  document
-    .getElementById("wave-icon")
-    .setAttribute(
-      "style",
-      `transform: rotate(${data.current_wave_direction}deg);`,
-    );
+  const wave_height_container = document.getElementById("current-wave-height");
+  const wave_period_container = document.getElementById("current-wave-period");
+  if (wave_height_container.innerText === "") {
+    wave_height_container.innerText = data.current_wave_height;
+    wave_period_container.innerText = data.current_wave_period;
+    document
+      .getElementById("wave-icon")
+      .setAttribute(
+        "style",
+        `transform: rotate(${data.current_wave_direction}deg);`,
+      );
+
+    document.querySelectorAll(".wavey").forEach((e) => e.remove());
+  }
 
   document.querySelector("#legend-label").innerText = wave_height_labels[0];
   document.querySelector("#legend-quality").innerText =
@@ -145,7 +162,7 @@ function parseForecastData(data) {
       width: 1,
       dash: [3, 3],
     },
-    afterInit: (chart, args, opts) => {
+    afterInit: (chart, _args, _opts) => {
       chart.corsair = {
         x: 0,
         y: 0,
@@ -153,14 +170,14 @@ function parseForecastData(data) {
     },
     afterEvent: (chart, args) => {
       const { inChartArea } = args;
-      const { type, x, y } = args.event;
+      const { x, y } = args.event;
 
       chart.corsair = { x, y, draw: inChartArea };
       chart.draw();
     },
-    beforeDatasetsDraw: (chart, args, opts) => {
+    beforeDatasetsDraw: (chart, _args, opts) => {
       const { ctx } = chart;
-      const { top, bottom, left, right } = chart.chartArea;
+      const { top, bottom } = chart.chartArea;
       const { x, draw } = chart.corsair;
       if (!draw) return;
 
@@ -259,7 +276,7 @@ function parseForecastData(data) {
           beginAtZero: true,
           max: graph_max,
           ticks: {
-            callback: function (value, index, ticks) {
+            callback: function (value, _index, _ticks) {
               if (value % 2 !== 0) {
                 return "";
               }
