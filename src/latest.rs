@@ -62,7 +62,7 @@ impl Latest {
                     .unwrap(),
             )
         } else {
-            convert_celsius_to_fahrenheit(&raw_water_temp)
+            convert_celsius_to_fahrenheit(raw_water_temp)
         };
 
         let wave_quality = spot
