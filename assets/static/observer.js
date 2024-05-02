@@ -11,7 +11,9 @@ const callback = (mutationList, _observer) => {
       parseLatestData(JSON.parse(mutation.target.innerText));
     }
     if (mutation.target.id === "forecast-data") {
-      parseForecastData(JSON.parse(mutation.target.innerText));
+      setTimeout(() => {
+        parseForecastData(JSON.parse(mutation.target.innerText));
+      }, 100);
     }
   }
 };
