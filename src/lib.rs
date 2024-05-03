@@ -38,13 +38,21 @@ pub struct Break {
 
 #[derive(Clone, serde::Serialize)]
 pub struct AppState {
-    breaks: [Break; 2],
+    breaks: [Break; 5],
 }
 
 pub fn startup() -> Result<Router, String> {
     // Create an AppState that is shared across the app.
     let state = AppState {
-        breaks: [Break { name: "Atwater" }, Break { name: "Bradford" }],
+        breaks: [
+            Break { name: "Atwater" },
+            Break { name: "Bradford" },
+            Break { name: "Sheboygan" },
+            Break {
+                name: "Port Washington",
+            },
+            Break { name: "Racine" },
+        ],
     };
 
     let api = Router::new()

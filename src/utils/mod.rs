@@ -56,7 +56,7 @@ pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<
     let time = time.strip_suffix("+00:00").unwrap();
     let mut time = time.parse::<NaiveDateTime>().unwrap();
     time += std::time::Duration::from_secs(amount as u64 * 3_600);
-    let time: DateTime<_> = Central.from_local_datetime(&time).unwrap();
+    let time: DateTime<_> = Central.from_utc_datetime(&time);
 
     let valid_time = time.to_rfc3339();
     let time = time.to_rfc2822();
