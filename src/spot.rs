@@ -36,7 +36,6 @@ impl From<SpotParam> for Spot {
             location: Location::Atwater(Atwater),
         };
 
-        println!("{:?}", val.spot);
         match val.get_spot().to_lowercase().as_str() {
             "bradford" => Spot {
                 forecast_url: BRADFORD_URL,

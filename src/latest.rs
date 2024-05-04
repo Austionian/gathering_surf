@@ -23,7 +23,7 @@ impl Latest {
     pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
         static MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
 
-        let data = reqwest::get(spot.latest_url).await?.text().await?;
+        let data = Self::get_latest_data(spot).await?;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -82,6 +82,18 @@ impl Latest {
             wave_period,
             wave_direction,
         })
+    }
+
+    async fn get_latest_data(spot: &Spot) -> Result<String, reqwest::Error> {
+        let response = reqwest::get(spot.latest_url).await?;
+
+        if response.status().as_u16() != 200 {
+            if let Some(fallback_url) = spot.fallback_latest_url {
+                return reqwest::get(fallback_url).await?.text().await;
+            }
+        }
+
+        response.text().await
     }
 
     fn parse_wave_height(wave_height: &str) -> Option<String> {

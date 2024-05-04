@@ -52,12 +52,16 @@ const qualityMap = {
 function parseLatestData(data) {
   if (data.wave_height) {
     document.getElementById("current-wave-height").innerText = data.wave_height;
-    document.getElementById("current-wave-period").innerText = data.wave_period;
     document
       .getElementById("wave-icon")
       .setAttribute("style", `transform: rotate(${data.wave_direction}deg);`);
 
     document.querySelectorAll(".wavey").forEach((e) => e.remove());
+  }
+
+  if (data.wave_period) {
+    document.getElementById("current-wave-period").innerText = data.wave_period;
+    document.getElementById("wavey-period-loader").remove();
   }
 
   document
@@ -114,10 +118,8 @@ function parseForecastData(data) {
   graph_max = data.graph_max;
 
   const wave_height_container = document.getElementById("current-wave-height");
-  const wave_period_container = document.getElementById("current-wave-period");
   if (wave_height_container.innerText === "") {
     wave_height_container.innerText = data.current_wave_height;
-    wave_period_container.innerText = data.current_wave_period;
     document
       .getElementById("wave-icon")
       .setAttribute(
@@ -126,6 +128,14 @@ function parseForecastData(data) {
       );
 
     document.querySelectorAll(".wavey").forEach((e) => e.remove());
+  }
+
+  // The period can be undefined separate from the wave height
+  const wave_period_container = document.getElementById("current-wave-period");
+  if (wave_period_container.innerText === "") {
+    console.log(wave_period_container.innerText === "");
+    wave_period_container.innerText = data.current_wave_period;
+    document.getElementById("wavey-period-loader")?.remove();
   }
 
   document.querySelector("#legend-label").innerText = wave_height_labels[0];
