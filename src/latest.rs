@@ -42,7 +42,12 @@ impl Latest {
 
         let _ = measurements.next();
 
-        let wave_direction = measurements.next().unwrap().parse().ok();
+        let wave_direction = measurements
+            .next()
+            .unwrap()
+            .parse::<u16>()
+            .ok()
+            .map(|v| v + 180);
 
         let _ = measurements.next();
 
