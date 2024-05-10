@@ -20,6 +20,7 @@ pub struct Forecast {
     pub wind_direction: Vec<ForecastValue>,
     pub dewpoint: Vec<ForecastValue>,
     pub cloud_cover: Vec<ForecastValue>,
+    pub probability_of_thunder: Vec<ForecastValue>,
 }
 
 impl Forecast {
@@ -150,6 +151,13 @@ impl Forecast {
         self.cloud_cover.iter().map(|v| v.value as u8).collect()
     }
 
+    fn get_probability_of_thunder(&self) -> Vec<u8> {
+        self.probability_of_thunder
+            .iter()
+            .map(|v| v.value as u8)
+            .collect()
+    }
+
     /// Returns the wave height, period and direction from the forecasted
     /// data relative to the time of request.
     fn get_current_wave_data(&self) -> (String, String, String) {
@@ -223,6 +231,7 @@ impl Forecast {
             "probability_of_precipitation": self.get_probability_of_precipitation(),
             "dewpoint": self.get_dewpoint(),
             "cloud_cover": self.get_cloud_cover(),
+            "probability_of_thunder": self.get_probability_of_thunder(),
             "qualities": self.quality.unwrap(),
         }))
         .unwrap()
@@ -316,6 +325,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             ForecastValue::get(properties, "probabilityOfPrecipitation")?;
         let dewpoint = ForecastValue::get(properties, "dewpoint")?;
         let cloud_cover = ForecastValue::get(properties, "skyCover")?;
+        let probability_of_thunder = ForecastValue::get(properties, "probabilityOfThunder")?;
 
         Ok(Self {
             last_updated,
@@ -330,6 +340,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             probability_of_precipitation,
             dewpoint,
             cloud_cover,
+            probability_of_thunder,
         })
     }
 }

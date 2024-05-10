@@ -110,6 +110,7 @@ let temperature;
 let dewpoint;
 let cloud_cover;
 let probability_of_precipitation;
+let probability_of_thunder;
 
 function parseForecastData(data) {
   qualities = data.qualities;
@@ -124,7 +125,9 @@ function parseForecastData(data) {
   dewpoint = data.dewpoint;
   cloud_cover = data.cloud_cover;
   probability_of_precipitation = data.probability_of_precipitation;
+  probability_of_thunder = data.probability_of_thunder;
 
+  // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
   if (wave_height_container.innerText === "") {
     wave_height_container.innerText = data.current_wave_height;
@@ -164,6 +167,7 @@ function parseForecastData(data) {
   document.getElementById("wave-quality").classList.remove("hidden");
   document.getElementById("legend-container").classList.remove("hidden");
 
+  // -- Init temperature legend --
   document
     .getElementById("temperature-legend-container")
     .classList.remove("hidden");
@@ -174,6 +178,7 @@ function parseForecastData(data) {
   document.getElementById("temperature-legend-dewpoint").innerText =
     dewpoint[0];
 
+  // -- Init precipitation legend --
   document
     .getElementById("precipitation-legend-container")
     .classList.remove("hidden");
@@ -181,6 +186,8 @@ function parseForecastData(data) {
     wave_height_labels[0];
   document.getElementById("precipitation-legend-precipitation").innerText =
     probability_of_precipitation[0];
+  document.getElementById("precipitation-legend-thunder").innerText =
+    probability_of_thunder[0];
   document.getElementById("precipitation-legend-cloud-cover").innerText =
     cloud_cover[0];
 
@@ -265,6 +272,8 @@ function parseForecastData(data) {
       wave_height_labels[x];
     document.getElementById("precipitation-legend-precipitation").innerText =
       probability_of_precipitation[x];
+    document.getElementById("precipitation-legend-thunder").innerText =
+      probability_of_thunder[x];
     document.getElementById("precipitation-legend-cloud-cover").innerText =
       cloud_cover[x];
   };
@@ -279,7 +288,6 @@ function parseForecastData(data) {
           label: "wave height (feet)",
           data: wave_heights,
           pointStyle: false,
-          fill: false,
           segment: {
             backgroundColor: (ctx) => quality(ctx) || "#4ade80",
             borderColor: (ctx) => quality(ctx) || "#4ade80",
@@ -311,7 +319,8 @@ function parseForecastData(data) {
       scales: {
         x: {
           ticks: {
-            display: false,
+            callback: (_value, i, _ticks) =>
+              i % 48 === 0 ? wave_height_labels[i] : null,
           },
         },
         y: {
@@ -378,7 +387,8 @@ function parseForecastData(data) {
       scales: {
         x: {
           ticks: {
-            display: false,
+            callback: (_value, i, _ticks) =>
+              i % 48 === 0 ? wave_height_labels[i] : null,
           },
         },
         y: {
@@ -404,7 +414,7 @@ function parseForecastData(data) {
       datasets: [
         {
           label: "%",
-          data: data.probability_of_precipitation,
+          data: probability_of_precipitation,
           pointStyle: false,
           fill: false,
         },
@@ -434,7 +444,8 @@ function parseForecastData(data) {
       scales: {
         x: {
           ticks: {
-            display: false,
+            callback: (_value, i, _ticks) =>
+              i % 48 === 0 ? wave_height_labels[i] : null,
           },
         },
         y: {

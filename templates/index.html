@@ -176,7 +176,7 @@
         class="md:space-y-16 border-t border-white/10 pt-11 px-4 sm:px-6 lg:px-8"
       >
         <div>
-          <h1 class="mb-10 text-2xl font-semibold text-white select-none">
+          <h1 class="sticky top-[64px] bg-black/10 mb-10 text-2xl font-semibold text-white select-none">
             Forecast
           </h1>
           <h2 class="text-lg text-gray-500 font-bold select-none">Waves</h2>
@@ -188,7 +188,7 @@
           </div>
           {% include "includes/forecastLegend.html" %}
         </div>
-        <div class="mb-4">
+        <div>
           <h2 class="text-lg text-gray-500 font-bold my-8 select-none">
             Temperature
           </h2>
@@ -202,7 +202,7 @@
         </div>
         <div class="mb-20">
           <h2 class="text-lg text-gray-500 font-bold my-8 select-none">
-            Chance of Rain
+            Precipitation
           </h2>
           <div class="loader h-40 animate-pulse bg-slate-700 rounded-xl"></div>
           <div
