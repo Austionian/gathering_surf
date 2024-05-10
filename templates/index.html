@@ -176,9 +176,7 @@
         class="md:space-y-16 border-t border-white/10 pt-11 px-4 sm:px-6 lg:px-8"
       >
         <div>
-          <h1
-            class="mb-10 text-2xl font-semibold text-white select-none"
-          >
+          <h1 class="mb-10 text-2xl font-semibold text-white select-none">
             Forecast
           </h1>
           <h2 class="text-lg text-gray-500 font-bold select-none">Waves</h2>
@@ -188,110 +186,7 @@
           >
             <canvas class="hidden" id="forecast"></canvas>
           </div>
-          <div
-            class="loader mt-2 h-40 sm:h-20 animate-pulse bg-slate-700 rounded-xl"
-          ></div>
-          <div id="legend-container" class="hidden mt-10">
-            <div
-              id="legend"
-              class="rounded text-white pointer-events-none transition flex justify-center text-lg m-auto"
-              style="display: hidden"
-            >
-              <div class="mx-auto max-w-7xl text-black">
-                <div
-                  class="grid gap-px grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
-                >
-                  <div
-                    class="grid items-end px-4 py-1 sm:py-6 sm:px-6 lg:px-8 min-w-72"
-                  >
-                    <p class="mt-2 flex items-baseline gap-x-2">
-                      <span
-                        class="text-2xl sm:text-3xl font-medium tracking-tight"
-                        id="legend-label"
-                      ></span>
-                    </p>
-                  </div>
-
-                  <div class="sm:hidden"></div>
-
-                  <div
-                    class="hidden lg:grid items-end px-4 py-1 sm:py-6 sm:px-6 lg:px-8 min-w-72"
-                  >
-                    <p class="mt-2 flex items-baseline gap-x-2">
-                      <span
-                        id="legend-quality"
-                        class="text-2xl sm:text-3xl font-medium tracking-tight"
-                      ></span>
-                    </p>
-                  </div>
-                  <div class="px-4 py-6 sm:px-6 lg:px-8 grid-rows-1">
-                    <p class="text-sm font-medium leading-6 text-gray-700">
-                      Wave Height
-                    </p>
-                    <p class="mt-2 flex items-baseline gap-x-2">
-                      <span
-                        class="text-3xl font-semibold tracking-tight"
-                        id="legend-wave-height"
-                      ></span>
-                      <span class="text-sm text-gray-700">ft</span>
-                    </p>
-                  </div>
-                  <div class="px-4 py-6 sm:px-6 lg:px-8 grid-rows-1">
-                    <p class="text-sm font-medium leading-6 text-gray-700">
-                      Wind
-                    </p>
-                    <div class="mt-2 flex items-baseline gap-x-2">
-                      <div
-                        class="h-8 min-w-8 fill-black mr-2"
-                        id="legend-wind-icon-container"
-                      >
-                        <svg
-                          id="legend-wind-icon"
-                          class="transition"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 32 32"
-                        >
-                          <title>wind direction</title>
-                          <path
-                            d="M26.71,10.29l-10-10a1,1,0,0,0-1.41,0l-10,10,1.41,1.41L15,3.41V32h2V3.41l8.29,8.29Z"
-                          />
-                        </svg>
-                      </div>
-                      <span
-                        id="legend-wind-speed"
-                        class="text-3xl font-semibold tracking-tight"
-                      ></span>
-                      <span class="text-sm text-gray-700">mph</span>
-                    </div>
-                  </div>
-                  <div class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8">
-                    <p class="text-sm font-medium leading-6 text-gray-700">
-                      Gusts
-                    </p>
-                    <p class="mt-2 flex items-baseline gap-x-2">
-                      <span
-                        id="legend-wind-gust"
-                        class="text-3xl font-semibold tracking-tight"
-                      ></span>
-                      <span class="text-sm text-gray-700">mph</span>
-                    </p>
-                  </div>
-                  <div class="hidden lg:block px-4 py-6 sm:px-6 lg:px-8">
-                    <p class="text-sm font-medium leading-6 text-gray-700">
-                      Wave Period
-                    </p>
-                    <p class="mt-2 flex items-baseline gap-x-2">
-                      <span
-                        id="legend-wave-period"
-                        class="text-3xl font-semibold tracking-tight"
-                      ></span>
-                      <span class="text-sm text-gray-700">s</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {% include "includes/forecastLegend.html" %}
         </div>
         <div class="mb-4">
           <h2 class="text-lg text-gray-500 font-bold my-8 select-none">
@@ -303,6 +198,7 @@
           >
             <canvas class="hidden" id="temperature-forecast"></canvas>
           </div>
+          {% include "includes/temperatureLegend.html" %}
         </div>
         <div class="mb-20">
           <h2 class="text-lg text-gray-500 font-bold my-8 select-none">
@@ -314,6 +210,7 @@
           >
             <canvas class="hidden" id="precipitation-forecast"></canvas>
           </div>
+          {% include "includes/precipitationLegend.html" %}
         </div>
         <div id="forecast-as-of" class="mt-4 text-sm text-gray-600">
           _____________________________

@@ -106,6 +106,10 @@ let wind_directions;
 let wind_gusts;
 let wave_period;
 let graph_max;
+let temperature;
+let dewpoint;
+let cloud_cover;
+let probability_of_precipitation;
 
 function parseForecastData(data) {
   qualities = data.qualities;
@@ -116,6 +120,10 @@ function parseForecastData(data) {
   wind_gusts = data.wind_gust_data;
   wave_period = data.wave_period_data;
   graph_max = data.graph_max;
+  temperature = data.temperature;
+  dewpoint = data.dewpoint;
+  cloud_cover = data.cloud_cover;
+  probability_of_precipitation = data.probability_of_precipitation;
 
   const wave_height_container = document.getElementById("current-wave-height");
   if (wave_height_container.innerText === "") {
@@ -138,16 +146,16 @@ function parseForecastData(data) {
     document.getElementById("wavey-period-loader")?.remove();
   }
 
-  document.querySelector("#legend-label").innerText = wave_height_labels[0];
-  document.querySelector("#legend-quality").innerText =
+  document.getElementById("legend-label").innerText = wave_height_labels[0];
+  document.getElementById("legend-quality").innerText =
     qualityMap[qualities[0]];
-  document.querySelector("#legend-wave-height").innerText = wave_heights[0];
-  document.querySelector("#legend-wind-speed").innerText = wind_speeds[0];
+  document.getElementById("legend-wave-height").innerText = wave_heights[0];
+  document.getElementById("legend-wind-speed").innerText = wind_speeds[0];
   document
     .getElementById("legend-wind-icon")
     .setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`);
-  document.querySelector("#legend-wave-period").innerText = wave_period[0];
-  document.querySelector("#legend-wind-gust").innerText = wind_gusts[0];
+  document.getElementById("legend-wave-period").innerText = wave_period[0];
+  document.getElementById("legend-wind-gust").innerText = wind_gusts[0];
   document.getElementById("forecast-as-of").innerText =
     `Last updated at ${data.forecast_as_of}`;
 
@@ -155,6 +163,26 @@ function parseForecastData(data) {
   document.getElementById("forecast").classList.remove("hidden");
   document.getElementById("wave-quality").classList.remove("hidden");
   document.getElementById("legend-container").classList.remove("hidden");
+
+  document
+    .getElementById("temperature-legend-container")
+    .classList.remove("hidden");
+  document.getElementById("temperature-legend-label").innerText =
+    wave_height_labels[0];
+  document.getElementById("temperature-legend-temperature").innerText =
+    temperature[0];
+  document.getElementById("temperature-legend-dewpoint").innerText =
+    dewpoint[0];
+
+  document
+    .getElementById("precipitation-legend-container")
+    .classList.remove("hidden");
+  document.getElementById("precipitation-legend-label").innerText =
+    wave_height_labels[0];
+  document.getElementById("precipitation-legend-precipitation").innerText =
+    probability_of_precipitation[0];
+  document.getElementById("precipitation-legend-cloud-cover").innerText =
+    cloud_cover[0];
 
   // The default legend background is the same as the latest wave quality shown
   // in the header. If that script doesn't happen fallback to the first value in
@@ -198,6 +226,49 @@ function parseForecastData(data) {
     },
   };
 
+  const onHover = (e, _, chart) => {
+    const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+    // Substitute the appropriate scale IDs
+    const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
+    const x =
+      x_value && x_value > 0
+        ? x_value >= wave_heights.length
+          ? wave_heights.length - 1
+          : x_value
+        : 0;
+    const color = qualities[x];
+
+    // Update wave legend
+    document
+      .getElementById("legend")
+      .setAttribute("style", `background-color: ${color}`);
+    document.getElementById("legend-label").innerText = wave_height_labels[x];
+    document.getElementById("legend-quality").innerText = qualityMap[color];
+    document.getElementById("legend-wave-height").innerText = wave_heights[x];
+    document.getElementById("legend-wind-speed").innerText = wind_speeds[x];
+    document
+      .getElementById("legend-wind-icon")
+      .setAttribute("style", `transform: rotate(${wind_directions[x]}deg);`);
+    document.getElementById("legend-wave-period").innerText = wave_period[x];
+    document.getElementById("legend-wind-gust").innerText = wind_gusts[x];
+
+    // Update temperature legend
+    document.getElementById("temperature-legend-label").innerText =
+      wave_height_labels[x];
+    document.getElementById("temperature-legend-temperature").innerText =
+      temperature[x];
+    document.getElementById("temperature-legend-dewpoint").innerText =
+      dewpoint[x];
+
+    // Update precipitation legend
+    document.getElementById("precipitation-legend-label").innerText =
+      wave_height_labels[x];
+    document.getElementById("precipitation-legend-precipitation").innerText =
+      probability_of_precipitation[x];
+    document.getElementById("precipitation-legend-cloud-cover").innerText =
+      cloud_cover[x];
+  };
+
   const waveForecast = new Chart(ctx, {
     type: "line",
     plugins: [plugin],
@@ -217,43 +288,11 @@ function parseForecastData(data) {
       ],
     },
     options: {
-      onHover: (e, _, chart) => {
-        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
-        // Substitute the appropriate scale IDs
-        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
-        const x =
-          x_value && x_value > 0
-            ? x_value >= wave_heights.length
-              ? wave_heights.length - 1
-              : x_value
-            : 0;
-        const color = qualities[x];
-        document
-          .querySelector("#legend")
-          .setAttribute("style", `background-color: ${color}`);
-        document.querySelector("#legend-label").innerText =
-          wave_height_labels[x];
-        document.querySelector("#legend-quality").innerText = qualityMap[color];
-        document.querySelector("#legend-wave-height").innerText =
-          wave_heights[x];
-        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
-        document
-          .getElementById("legend-wind-icon")
-          .setAttribute(
-            "style",
-            `transform: rotate(${wind_directions[x]}deg);`,
-          );
-        document.querySelector("#legend-wave-period").innerText =
-          wave_period[x];
-        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
-      },
+      onHover,
       maintainAspectRatio: false,
       plugins: {
         legend: {
           display: false,
-        },
-        vert: {
-          color: "white",
         },
         tooltip: {
           enabled: false,
@@ -305,7 +344,7 @@ function parseForecastData(data) {
       datasets: [
         {
           label: "temperature (f)",
-          data: data.temperature,
+          data: temperature,
           pointStyle: false,
           fill: false,
           segment: {
@@ -316,46 +355,14 @@ function parseForecastData(data) {
       ],
     },
     options: {
-      onHover: (e, _, chart) => {
-        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
-        // Substitute the appropriate scale IDs
-        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
-        const x =
-          x_value && x_value > 0
-            ? x_value >= wave_heights.length
-              ? wave_heights.length - 1
-              : x_value
-            : 0;
-        const color = qualities[x];
-        document
-          .querySelector("#legend")
-          .setAttribute("style", `background-color: ${color}`);
-        document.querySelector("#legend-label").innerText =
-          wave_height_labels[x];
-        document.querySelector("#legend-quality").innerText = qualityMap[color];
-        document.querySelector("#legend-wave-height").innerText =
-          wave_heights[x];
-        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
-        document
-          .getElementById("legend-wind-icon")
-          .setAttribute(
-            "style",
-            `transform: rotate(${wind_directions[x]}deg);`,
-          );
-        document.querySelector("#legend-wave-period").innerText =
-          wave_period[x];
-        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
-      },
+      onHover,
       maintainAspectRatio: false,
       plugins: {
         legend: {
           display: false,
         },
-        vert: {
-          color: "white",
-        },
         tooltip: {
-          enabled: true,
+          enabled: false,
         },
       },
       elements: {
@@ -404,46 +411,14 @@ function parseForecastData(data) {
       ],
     },
     options: {
-      onHover: (e, _, chart) => {
-        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
-        // Substitute the appropriate scale IDs
-        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
-        const x =
-          x_value && x_value > 0
-            ? x_value >= wave_heights.length
-              ? wave_heights.length - 1
-              : x_value
-            : 0;
-        const color = qualities[x];
-        document
-          .querySelector("#legend")
-          .setAttribute("style", `background-color: ${color}`);
-        document.querySelector("#legend-label").innerText =
-          wave_height_labels[x];
-        document.querySelector("#legend-quality").innerText = qualityMap[color];
-        document.querySelector("#legend-wave-height").innerText =
-          wave_heights[x];
-        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
-        document
-          .getElementById("legend-wind-icon")
-          .setAttribute(
-            "style",
-            `transform: rotate(${wind_directions[x]}deg);`,
-          );
-        document.querySelector("#legend-wave-period").innerText =
-          wave_period[x];
-        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
-      },
+      onHover,
       maintainAspectRatio: false,
       plugins: {
         legend: {
           display: false,
         },
-        vert: {
-          color: "white",
-        },
         tooltip: {
-          enabled: true,
+          enabled: false,
         },
       },
       elements: {
