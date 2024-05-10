@@ -32,27 +32,14 @@ lazy_static! {
 }
 
 #[derive(Clone, serde::Serialize)]
-pub struct Break {
-    name: &'static str,
-}
-
-#[derive(Clone, serde::Serialize)]
 pub struct AppState {
-    breaks: [Break; 5],
+    breaks: Vec<String>,
 }
 
 pub fn startup() -> Result<Router, String> {
     // Create an AppState that is shared across the app.
     let state = AppState {
-        breaks: [
-            Break { name: "Atwater" },
-            Break { name: "Bradford" },
-            Break { name: "Sheboygan" },
-            Break {
-                name: "Port Washington",
-            },
-            Break { name: "Racine" },
-        ],
+        breaks: Location::get_all(),
     };
 
     let api = Router::new()

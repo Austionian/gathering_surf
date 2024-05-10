@@ -1,5 +1,4 @@
 use super::{GetQuality, Quality};
-use crate::{GOOD, OK, POOR, VERY_POOR};
 use std::fmt::Display;
 
 #[derive(serde::Deserialize, Debug)]
@@ -129,243 +128,71 @@ pub enum Location {
     Racine(Racine),
 }
 
-impl Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Location {
+    pub fn get_all() -> Vec<String> {
+        Self::into_iter().map(|v| v.to_string()).collect()
+    }
+
+    fn into_iter() -> core::array::IntoIter<Self, 5> {
+        [
+            Self::Atwater(Atwater),
+            Self::Bradford(Bradford),
+            Self::Sheboygan(Sheboygan),
+            Self::PortWashington(PortWashington),
+            Self::Racine(Racine),
+        ]
+        .into_iter()
+    }
+
+    pub fn get_quality(&self, wind_speed: f64, wind_direction: f64) -> &'static Quality {
         match self {
-            Self::Atwater(Atwater) => write!(f, "{}", Atwater),
-            Self::Bradford(Bradford) => write!(f, "{}", Bradford),
-            Self::Sheboygan(Sheboygan) => write!(f, "{}", Sheboygan),
-            Self::PortWashington(PortWashington) => write!(f, "{}", PortWashington),
-            Self::Racine(Racine) => write!(f, "{}", Racine),
+            Self::Atwater(_) => Atwater::get_quality(wind_speed, wind_direction),
+            Self::Bradford(_) => Bradford::get_quality(wind_speed, wind_direction),
+            Self::Sheboygan(_) => Sheboygan::get_quality(wind_speed, wind_direction),
+            Self::PortWashington(_) => PortWashington::get_quality(wind_speed, wind_direction),
+            Self::Racine(_) => Racine::get_quality(wind_speed, wind_direction),
         }
     }
 }
 
-impl Location {
-    pub fn get_quality(&self, wind_speed: f64, wind_direction: f64) -> &'static Quality {
+impl Display for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Atwater(Atwater) => Atwater::get_quality(wind_speed, wind_direction),
-            Self::Bradford(Bradford) => Bradford::get_quality(wind_speed, wind_direction),
-            Self::Sheboygan(Sheboygan) => Sheboygan::get_quality(wind_speed, wind_direction),
-            Self::PortWashington(PortWashington) => {
-                PortWashington::get_quality(wind_speed, wind_direction)
-            }
-            Self::Racine(Racine) => Racine::get_quality(wind_speed, wind_direction),
+            Self::Atwater(_) => write!(f, "{}", Atwater),
+            Self::Bradford(_) => write!(f, "{}", Bradford),
+            Self::Sheboygan(_) => write!(f, "{}", Sheboygan),
+            Self::PortWashington(_) => write!(f, "{}", PortWashington),
+            Self::Racine(_) => write!(f, "{}", Racine),
         }
     }
 }
 
 impl GetQuality for Bradford {
     fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        if wind_speed < 5.0 {
-            return &GOOD;
-        }
-
-        // Essentially offshore
-        if (150.0..210.0).contains(&wind_direction) {
-            return &GOOD;
-        }
-
-        if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &GOOD;
-            }
-            return &OK;
-        }
-
-        if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &OK;
-            }
-            return &POOR;
-        }
-
-        if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        &POOR
+        Quality::south(wind_speed, wind_direction)
     }
 }
 
 impl GetQuality for Atwater {
     fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        if wind_speed < 5.0 {
-            return &GOOD;
-        }
-
-        // Essentially offshore
-        if (240.0..310.0).contains(&wind_direction) {
-            return &GOOD;
-        }
-
-        if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &GOOD;
-            }
-            return &OK;
-        }
-
-        if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &OK;
-            }
-            return &POOR;
-        }
-
-        if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        &POOR
+        Quality::south(wind_speed, wind_direction)
     }
 }
 
 impl GetQuality for Sheboygan {
     fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        if wind_speed < 5.0 {
-            return &GOOD;
-        }
-
-        // Essentially offshore
-        if (150.0..210.0).contains(&wind_direction) {
-            return &GOOD;
-        }
-
-        if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &GOOD;
-            }
-            return &OK;
-        }
-
-        if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &OK;
-            }
-            return &POOR;
-        }
-
-        if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        &POOR
+        Quality::south(wind_speed, wind_direction)
     }
 }
 
 impl GetQuality for PortWashington {
     fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        if wind_speed < 5.0 {
-            return &GOOD;
-        }
-
-        // Essentially offshore
-        if (150.0..210.0).contains(&wind_direction) {
-            return &GOOD;
-        }
-
-        if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &GOOD;
-            }
-            return &OK;
-        }
-
-        if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &OK;
-            }
-            return &POOR;
-        }
-
-        if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        &POOR
+        Quality::north(wind_speed, wind_direction)
     }
 }
 
 impl GetQuality for Racine {
     fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        if wind_speed < 5.0 {
-            return &GOOD;
-        }
-
-        // Essentially offshore
-        if (150.0..210.0).contains(&wind_direction) {
-            return &GOOD;
-        }
-
-        if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &GOOD;
-            }
-            return &OK;
-        }
-
-        if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &OK;
-            }
-            return &POOR;
-        }
-
-        if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
-                return &POOR;
-            }
-            return &VERY_POOR;
-        }
-
-        &POOR
+        Quality::north(wind_speed, wind_direction)
     }
 }
