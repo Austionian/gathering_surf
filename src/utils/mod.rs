@@ -14,8 +14,8 @@ pub fn convert_meter_to_mile(value: &str) -> String {
     format!("{:.0}", value.parse().unwrap_or(0.0) * 2.2369)
 }
 
-pub fn convert_celsius_to_fahrenheit(value: &str) -> String {
-    format!("{:.0}", value.parse().unwrap_or(0.0) * 1.8 + 32.0)
+pub fn convert_celsius_to_fahrenheit(value: f64) -> String {
+    format!("{:.0}", value * 1.8 + 32.0)
 }
 
 pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
@@ -25,6 +25,30 @@ pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     };
 
     Err(anyhow!("no hour found!"))
+}
+
+pub fn convert_military_to_standard_full(time: &str) -> String {
+    let (hour, min) = time.split_once(':').unwrap();
+
+    let hour = hour.parse::<u8>().unwrap();
+
+    if hour == 12 {
+        return format!("12:{min} PM");
+    }
+    if hour == 0 {
+        return format!("12:{min} AM");
+    }
+
+    if hour < 12 {
+        return format!("{time}:{min} AM");
+    }
+
+    let hour = hour - 12;
+    if hour < 10 {
+        return format!("0{hour}:{min} PM");
+    }
+
+    format!("{hour}:{min} PM")
 }
 
 fn convert_military_to_standard(time: &str) -> String {

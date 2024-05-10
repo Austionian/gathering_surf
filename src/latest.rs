@@ -51,7 +51,8 @@ impl Latest {
 
         let _ = measurements.next();
 
-        let air_temp = convert_celsius_to_fahrenheit(measurements.next().unwrap());
+        let air_temp =
+            convert_celsius_to_fahrenheit(measurements.next().unwrap().parse().unwrap_or(0.0));
 
         let raw_water_temp = measurements.next().unwrap_or("MM");
 
@@ -64,10 +65,12 @@ impl Latest {
                     .unwrap()
                     .split_whitespace()
                     .nth(14)
-                    .unwrap(),
+                    .unwrap()
+                    .parse()
+                    .unwrap_or(0.0),
             )
         } else {
-            convert_celsius_to_fahrenheit(raw_water_temp)
+            convert_celsius_to_fahrenheit(raw_water_temp.parse().unwrap_or(0.0))
         };
 
         let wave_quality = spot

@@ -180,34 +180,25 @@ function parseForecastData(data) {
         y: 0,
       };
     },
-    afterEvent: (chart, args) => {
-      const { inChartArea } = args;
-      const { x, y } = args.event;
-
-      chart.corsair = { x, y, draw: inChartArea };
-      chart.draw();
-    },
-    beforeDatasetsDraw: (chart, _args, opts) => {
-      const { ctx } = chart;
-      const { top, bottom } = chart.chartArea;
-      const { x, draw } = chart.corsair;
-      if (!draw) return;
-
-      ctx.save();
-
-      ctx.beginPath();
-      ctx.lineWidth = opts.width;
-      ctx.strokeStyle = opts.color;
-      ctx.setLineDash(opts.dash);
-      ctx.moveTo(x, bottom);
-      ctx.lineTo(x, top);
-      ctx.stroke();
-
-      ctx.restore();
+    afterDraw: (chart, _args, opts) => {
+      if (chart.tooltip?._active?.length) {
+        let x = chart.tooltip._active[0].element.x;
+        let yAxis = chart.scales.y;
+        let ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, yAxis.top);
+        ctx.lineTo(x, yAxis.bottom);
+        ctx.lineWidth = 1;
+        ctx.setLineDash(opts.dash);
+        ctx.strokeStyle = "#fff";
+        ctx.stroke();
+        ctx.restore();
+      }
     },
   };
 
-  new Chart(ctx, {
+  const waveForecast = new Chart(ctx, {
     type: "line",
     plugins: [plugin],
     data: {
@@ -303,4 +294,347 @@ function parseForecastData(data) {
       },
     },
   });
+
+  const ctxTemp = document.getElementById("temperature-forecast");
+
+  const temperatureForecast = new Chart(ctxTemp, {
+    type: "line",
+    plugins: [plugin],
+    data: {
+      labels: wave_height_labels,
+      datasets: [
+        {
+          label: "temperature (f)",
+          data: data.temperature,
+          pointStyle: false,
+          fill: false,
+          segment: {
+            backgroundColor: "pink",
+            borderColor: "pink",
+          },
+        },
+      ],
+    },
+    options: {
+      onHover: (e, _, chart) => {
+        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+        // Substitute the appropriate scale IDs
+        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
+        const x =
+          x_value && x_value > 0
+            ? x_value >= wave_heights.length
+              ? wave_heights.length - 1
+              : x_value
+            : 0;
+        const color = qualities[x];
+        document
+          .querySelector("#legend")
+          .setAttribute("style", `background-color: ${color}`);
+        document.querySelector("#legend-label").innerText =
+          wave_height_labels[x];
+        document.querySelector("#legend-quality").innerText = qualityMap[color];
+        document.querySelector("#legend-wave-height").innerText =
+          wave_heights[x];
+        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
+        document
+          .getElementById("legend-wind-icon")
+          .setAttribute(
+            "style",
+            `transform: rotate(${wind_directions[x]}deg);`,
+          );
+        document.querySelector("#legend-wave-period").innerText =
+          wave_period[x];
+        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
+      },
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        vert: {
+          color: "white",
+        },
+        tooltip: {
+          enabled: true,
+        },
+      },
+      elements: {
+        line: {
+          tension: 0.4,
+        },
+      },
+      responsive: true,
+      interaction: {
+        intersect: false,
+        axis: "x",
+      },
+      scales: {
+        x: {
+          ticks: {
+            display: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: {
+              size: 18,
+              weight: "bold",
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const precipitationCanvas = document.getElementById("precipitation-forecast");
+
+  const precipitationForecast = new Chart(precipitationCanvas, {
+    type: "line",
+    plugins: [plugin],
+    data: {
+      labels: wave_height_labels,
+      datasets: [
+        {
+          label: "%",
+          data: data.probability_of_precipitation,
+          pointStyle: false,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      onHover: (e, _, chart) => {
+        const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+        // Substitute the appropriate scale IDs
+        const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
+        const x =
+          x_value && x_value > 0
+            ? x_value >= wave_heights.length
+              ? wave_heights.length - 1
+              : x_value
+            : 0;
+        const color = qualities[x];
+        document
+          .querySelector("#legend")
+          .setAttribute("style", `background-color: ${color}`);
+        document.querySelector("#legend-label").innerText =
+          wave_height_labels[x];
+        document.querySelector("#legend-quality").innerText = qualityMap[color];
+        document.querySelector("#legend-wave-height").innerText =
+          wave_heights[x];
+        document.querySelector("#legend-wind-speed").innerText = wind_speeds[x];
+        document
+          .getElementById("legend-wind-icon")
+          .setAttribute(
+            "style",
+            `transform: rotate(${wind_directions[x]}deg);`,
+          );
+        document.querySelector("#legend-wave-period").innerText =
+          wave_period[x];
+        document.querySelector("#legend-wind-gust").innerText = wind_gusts[x];
+      },
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        vert: {
+          color: "white",
+        },
+        tooltip: {
+          enabled: true,
+        },
+      },
+      elements: {
+        line: {
+          tension: 0.4,
+        },
+      },
+      responsive: true,
+      interaction: {
+        intersect: false,
+        axis: "x",
+      },
+      scales: {
+        x: {
+          ticks: {
+            display: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            font: {
+              size: 18,
+              weight: "bold",
+            },
+          },
+        },
+      },
+    },
+  });
+
+  function waveHover(e) {
+    const points = waveForecast.getElementsAtEventForMode(
+      e,
+      "nearest",
+      {
+        axis: "x",
+        intersect: false,
+      },
+      true,
+    );
+    if (points[0]) {
+      const datasetIndex = points[0].datasetIndex;
+      const index = points[0].index;
+
+      temperatureForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      temperatureForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      temperatureForecast.update();
+
+      precipitationForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+
+      precipitationForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      precipitationForecast.update();
+    } else {
+      temperatureForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      temperatureForecast.setActiveElements([], { x: 0, y: 0 });
+      temperatureForecast.update();
+
+      precipitationForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      precipitationForecast.setActiveElements([], { x: 0, y: 0 });
+      precipitationForecast.update();
+    }
+  }
+
+  function tempHover(e) {
+    const points = temperatureForecast.getElementsAtEventForMode(
+      e,
+      "nearest",
+      {
+        axis: "x",
+        intersect: false,
+      },
+      true,
+    );
+    if (points[0]) {
+      const datasetIndex = points[0].datasetIndex;
+      const index = points[0].index;
+
+      waveForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      waveForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      waveForecast.update();
+
+      precipitationForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+
+      precipitationForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      precipitationForecast.update();
+    } else {
+      waveForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      waveForecast.setActiveElements([], { x: 0, y: 0 });
+      waveForecast.update();
+
+      precipitationForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      precipitationForecast.setActiveElements([], { x: 0, y: 0 });
+      precipitationForecast.update();
+    }
+  }
+
+  function precipitationHover(e) {
+    const points = precipitationForecast.getElementsAtEventForMode(
+      e,
+      "nearest",
+      {
+        axis: "x",
+        intersect: false,
+      },
+      true,
+    );
+    if (points[0]) {
+      const datasetIndex = points[0].datasetIndex;
+      const index = points[0].index;
+
+      temperatureForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      temperatureForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      temperatureForecast.update();
+
+      waveForecast.tooltip.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+
+      waveForecast.setActiveElements([
+        {
+          datasetIndex,
+          index,
+        },
+      ]);
+      waveForecast.update();
+    } else {
+      temperatureForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      temperatureForecast.setActiveElements([], { x: 0, y: 0 });
+      temperatureForecast.update();
+
+      waveForecast.tooltip.setActiveElements([], { x: 0, y: 0 });
+      waveForecast.setActiveElements([], { x: 0, y: 0 });
+      waveForecast.update();
+    }
+  }
+  waveForecast.canvas.onmousemove = waveHover;
+  temperatureForecast.canvas.onmousemove = tempHover;
+  precipitationForecast.canvas.onmousemove = precipitationHover;
 }

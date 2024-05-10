@@ -1,4 +1,4 @@
-use crate::{convert_kilo_meter_to_mile, utils};
+use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
@@ -9,15 +9,17 @@ use super::{Location, Spot};
 
 pub struct Forecast {
     pub last_updated: String,
-    // probability_of_precipitation: Vec<ForecastValue>,
+    pub probability_of_precipitation: Vec<ForecastValue>,
     pub quality: Option<Vec<String>>,
-    // temperature: Vec<ForecastValue>,
+    pub temperature: Vec<ForecastValue>,
     pub wave_height: Vec<ForecastValue>,
     pub wave_period: Vec<ForecastValue>,
     pub wave_direction: Vec<ForecastValue>,
     pub wind_speed: Vec<ForecastValue>,
     pub wind_gust: Vec<ForecastValue>,
     pub wind_direction: Vec<ForecastValue>,
+    pub dewpoint: Vec<ForecastValue>,
+    pub cloud_cover: Vec<ForecastValue>,
 }
 
 impl Forecast {
@@ -48,7 +50,7 @@ impl Forecast {
     ///
     /// TODO - Might not be necessary. Prone to future bug. No way
     /// to ensure all relevent fields are taken into account.
-    pub fn condense(&mut self) {
+    fn condense(&mut self) {
         let lengths = [
             self.wave_period.len(),
             self.wave_height.len(),
@@ -66,14 +68,14 @@ impl Forecast {
         let _ = self.wave_height.split_off(*min);
     }
 
-    pub fn get_labels(&mut self) -> Vec<String> {
+    fn get_labels(&mut self) -> Vec<String> {
         self.wave_height
             .iter_mut()
             .map(|v| v.display_time.take().unwrap())
             .collect()
     }
 
-    pub fn get_wave_data(&self) -> (Vec<f64>, u8) {
+    fn get_wave_data(&self) -> (Vec<f64>, u8) {
         let mut smoothed_data = Vec::new();
         let mut out = Vec::new();
         self.wave_height
@@ -93,38 +95,64 @@ impl Forecast {
         )
     }
 
+    /// Limits the f64 to two decimal points
     fn truncc(v: f64) -> f64 {
         (v * 100.0).trunc() / 100.0
     }
 
-    pub fn get_wind_data(&self) -> Vec<f64> {
+    fn get_wind_data(&self) -> Vec<f64> {
         self.wind_speed
             .iter()
             .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
             .collect()
     }
 
-    pub fn get_wind_direction_data(&self) -> Vec<f64> {
+    fn get_wind_direction_data(&self) -> Vec<f64> {
         self.wind_direction
             .iter()
             .map(|v| Self::truncc(v.value) + 180.0)
             .collect()
     }
 
-    pub fn get_wind_gust_data(&self) -> Vec<f64> {
+    fn get_wind_gust_data(&self) -> Vec<f64> {
         self.wind_gust
             .iter()
             .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
             .collect()
     }
 
-    pub fn get_wave_period_data(&self) -> Vec<f64> {
+    fn get_temperature(&self) -> Vec<u8> {
+        self.temperature
+            .iter()
+            .filter_map(|v| convert_celsius_to_fahrenheit(v.value).parse().ok())
+            .collect()
+    }
+
+    fn get_probability_of_precipitation(&self) -> Vec<u8> {
+        self.probability_of_precipitation
+            .iter()
+            .map(|v| v.value as u8)
+            .collect()
+    }
+
+    fn get_wave_period_data(&self) -> Vec<f64> {
         self.wave_period.iter().map(|v| v.value).collect()
+    }
+
+    fn get_dewpoint(&self) -> Vec<String> {
+        self.dewpoint
+            .iter()
+            .map(|v| convert_celsius_to_fahrenheit(v.value))
+            .collect()
+    }
+
+    fn get_cloud_cover(&self) -> Vec<u8> {
+        self.cloud_cover.iter().map(|v| v.value as u8).collect()
     }
 
     /// Returns the wave height, period and direction from the forecasted
     /// data relative to the time of request.
-    pub fn get_current_wave_data(&self) -> (String, String, String) {
+    fn get_current_wave_data(&self) -> (String, String, String) {
         for (i, wave_height) in self.wave_height.iter().enumerate() {
             if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Utc::now() {
                 let height = utils::convert_meter_to_feet(wave_height.value);
@@ -191,6 +219,10 @@ impl Forecast {
             "wave_period_data": self.get_wave_period_data(),
             "wave_height_labels": self.get_labels(),
             "forecast_as_of": self.last_updated,
+            "temperature": self.get_temperature(),
+            "probability_of_precipitation": self.get_probability_of_precipitation(),
+            "dewpoint": self.get_dewpoint(),
+            "cloud_cover": self.get_cloud_cover(),
             "qualities": self.quality.unwrap(),
         }))
         .unwrap()
@@ -279,6 +311,11 @@ impl TryFrom<serde_json::Value> for Forecast {
         let wind_speed = ForecastValue::get(properties, "windSpeed")?;
         let wind_gust = ForecastValue::get(properties, "windGust")?;
         let wind_direction = ForecastValue::get(properties, "windDirection")?;
+        let temperature = ForecastValue::get(properties, "temperature")?;
+        let probability_of_precipitation =
+            ForecastValue::get(properties, "probabilityOfPrecipitation")?;
+        let dewpoint = ForecastValue::get(properties, "dewpoint")?;
+        let cloud_cover = ForecastValue::get(properties, "skyCover")?;
 
         Ok(Self {
             last_updated,
@@ -289,6 +326,10 @@ impl TryFrom<serde_json::Value> for Forecast {
             wind_gust,
             wind_direction,
             quality: None,
+            temperature,
+            probability_of_precipitation,
+            dewpoint,
+            cloud_cover,
         })
     }
 }
