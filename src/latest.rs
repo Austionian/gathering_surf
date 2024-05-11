@@ -21,7 +21,7 @@ pub struct Latest {
 
 impl Latest {
     pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
-        static MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
+        const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
 
         let data = Self::get_latest_data(spot).await?;
 

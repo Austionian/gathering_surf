@@ -66,22 +66,22 @@ impl From<SpotParam> for Spot {
     }
 }
 
-static ATWATER_URL: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
-static BRADFORD_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
-static SHEBOYGAN_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,98";
-static PORT_WASHINGTON_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,80";
-static RACINE_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,52";
+const ATWATER_URL: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
+const BRADFORD_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
+const SHEBOYGAN_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,98";
+const PORT_WASHINGTON_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,80";
+const RACINE_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,52";
 
-static ATWATER_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
-static SHEBOYGAN_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45218.txt";
-static RACINE_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45199.txt";
+const ATWATER_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
+const SHEBOYGAN_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45218.txt";
+const RACINE_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45199.txt";
 
 // -- These are all land based weather stations --
-static BRADFORD_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
-static PORT_WASHINGTON_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/PWAW3.txt";
+const BRADFORD_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
+const PORT_WASHINGTON_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/PWAW3.txt";
 
-static SHEBOYGAN_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/SGNW3.txt";
-static RACINE_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/KNSW3.txt";
+const SHEBOYGAN_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/SGNW3.txt";
+const RACINE_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/KNSW3.txt";
 // -- --
 
 pub struct Atwater;
