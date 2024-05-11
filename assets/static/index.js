@@ -278,6 +278,9 @@ function parseForecastData(data) {
       cloud_cover[x];
   };
 
+  const xTicksCallback = (_value, i, _ticks) =>
+    i % 48 === 0 ? wave_height_labels[i] : null;
+
   const waveForecast = new Chart(ctx, {
     type: "line",
     plugins: [plugin],
@@ -319,8 +322,7 @@ function parseForecastData(data) {
       scales: {
         x: {
           ticks: {
-            callback: (_value, i, _ticks) =>
-              i % 48 === 0 ? wave_height_labels[i] : null,
+            callback: xTicksCallback,
           },
         },
         y: {
@@ -343,23 +345,22 @@ function parseForecastData(data) {
     },
   });
 
-  const ctxTemp = document.getElementById("temperature-forecast");
-
-  const temperatureForecast = new Chart(ctxTemp, {
+  const getConfig = (data, color, label, max) => ({
     type: "line",
     plugins: [plugin],
     data: {
       labels: wave_height_labels,
       datasets: [
         {
-          label: "temperature (f)",
-          data: temperature,
+          label,
+          data,
           pointStyle: false,
-          fill: false,
-          segment: {
-            backgroundColor: "pink",
-            borderColor: "pink",
-          },
+          segment: color
+            ? {
+                backgroundColor: color,
+                borderColor: color,
+              }
+            : {},
         },
       ],
     },
@@ -387,12 +388,12 @@ function parseForecastData(data) {
       scales: {
         x: {
           ticks: {
-            callback: (_value, i, _ticks) =>
-              i % 48 === 0 ? wave_height_labels[i] : null,
+            callback: xTicksCallback,
           },
         },
         y: {
           beginAtZero: true,
+          max,
           ticks: {
             font: {
               size: 18,
@@ -403,64 +404,18 @@ function parseForecastData(data) {
       },
     },
   });
+
+  const temperatureCanvas = document.getElementById("temperature-forecast");
+  const temperatureForecast = new Chart(
+    temperatureCanvas,
+    getConfig(temperature, "pink", "F", null),
+  );
 
   const precipitationCanvas = document.getElementById("precipitation-forecast");
-
-  const precipitationForecast = new Chart(precipitationCanvas, {
-    type: "line",
-    plugins: [plugin],
-    data: {
-      labels: wave_height_labels,
-      datasets: [
-        {
-          label: "%",
-          data: probability_of_precipitation,
-          pointStyle: false,
-          fill: false,
-        },
-      ],
-    },
-    options: {
-      onHover,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          enabled: false,
-        },
-      },
-      elements: {
-        line: {
-          tension: 0.4,
-        },
-      },
-      responsive: true,
-      interaction: {
-        intersect: false,
-        axis: "x",
-      },
-      scales: {
-        x: {
-          ticks: {
-            callback: (_value, i, _ticks) =>
-              i % 48 === 0 ? wave_height_labels[i] : null,
-          },
-        },
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            font: {
-              size: 18,
-              weight: "bold",
-            },
-          },
-        },
-      },
-    },
-  });
+  const precipitationForecast = new Chart(
+    precipitationCanvas,
+    getConfig(probability_of_precipitation, null, "%", 100),
+  );
 
   function waveHover(e) {
     const points = waveForecast.getElementsAtEventForMode(
@@ -620,6 +575,7 @@ function parseForecastData(data) {
       waveForecast.update();
     }
   }
+
   waveForecast.canvas.onmousemove = waveHover;
   temperatureForecast.canvas.onmousemove = tempHover;
   precipitationForecast.canvas.onmousemove = precipitationHover;
