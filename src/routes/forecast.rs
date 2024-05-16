@@ -4,6 +4,7 @@ use axum::{
     http::{header, HeaderMap},
     response::IntoResponse,
 };
+use serde_json::to_string;
 
 pub async fn forecast(selected_spot: Query<SpotParam>) -> impl IntoResponse {
     let mut headers = HeaderMap::new();
@@ -11,5 +12,5 @@ pub async fn forecast(selected_spot: Query<SpotParam>) -> impl IntoResponse {
 
     let forecast = Forecast::try_get(&selected_spot.0.into()).await.unwrap();
 
-    (headers, forecast.to_json())
+    (headers, to_string(&forecast).unwrap())
 }

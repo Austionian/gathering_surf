@@ -2,7 +2,7 @@ use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
-use serde_json::json;
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::cmp::Ordering;
 
 use super::{Location, Spot};
@@ -69,10 +69,10 @@ impl Forecast {
         let _ = self.wave_height.split_off(*min);
     }
 
-    fn get_labels(&mut self) -> Vec<String> {
+    fn get_labels(&self) -> Vec<String> {
         self.wave_height
-            .iter_mut()
-            .map(|v| v.display_time.take().unwrap())
+            .iter()
+            .map(|v| v.display_time.clone().unwrap_or(String::default()))
             .collect()
     }
 
@@ -209,32 +209,39 @@ impl Forecast {
 
         self.quality = Some(qualities)
     }
+}
 
-    pub fn to_json(mut self) -> String {
+impl Serialize for Forecast {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let (wave_height_data, graph_max) = self.get_wave_data();
         let (current_wave_height, current_wave_period, current_wave_direction) =
             self.get_current_wave_data();
 
-        serde_json::to_string(&json!({
-            "graph_max": graph_max + 2,
-            "wave_height_data": wave_height_data,
-            "current_wave_height": current_wave_height,
-            "current_wave_direction": current_wave_direction.parse::<u32>().unwrap() + 180,
-            "current_wave_period": current_wave_period,
-            "wind_speed_data": self.get_wind_data(),
-            "wind_direction_data": self.get_wind_direction_data(),
-            "wind_gust_data": self.get_wind_gust_data(),
-            "wave_period_data": self.get_wave_period_data(),
-            "wave_height_labels": self.get_labels(),
-            "forecast_as_of": self.last_updated,
-            "temperature": self.get_temperature(),
-            "probability_of_precipitation": self.get_probability_of_precipitation(),
-            "dewpoint": self.get_dewpoint(),
-            "cloud_cover": self.get_cloud_cover(),
-            "probability_of_thunder": self.get_probability_of_thunder(),
-            "qualities": self.quality.unwrap(),
-        }))
-        .unwrap()
+        let mut state = serializer.serialize_struct("Forecast", 17)?;
+        state.serialize_field("forecast_as_of", &self.last_updated)?;
+        state.serialize_field("graph_max", &(graph_max + 2))?;
+        state.serialize_field("wave_height_data", &wave_height_data)?;
+        state.serialize_field("current_wave_height", &current_wave_height)?;
+        state.serialize_field("current_wave_direction", &current_wave_direction)?;
+        state.serialize_field("current_wave_period", &current_wave_period)?;
+        state.serialize_field("wind_speed_data", &self.get_wind_data())?;
+        state.serialize_field("wind_direction_data", &self.get_wind_direction_data())?;
+        state.serialize_field("wind_gust_data", &self.get_wind_gust_data())?;
+        state.serialize_field("wave_period_data", &self.get_wave_period_data())?;
+        state.serialize_field("wave_height_labels", &self.get_labels())?;
+        state.serialize_field("temperature", &self.get_temperature())?;
+        state.serialize_field(
+            "probability_of_precipitation",
+            &self.get_probability_of_precipitation(),
+        )?;
+        state.serialize_field("dewpoint", &self.get_dewpoint())?;
+        state.serialize_field("cloud_cover", &self.get_cloud_cover())?;
+        state.serialize_field("probability_of_thunder", &self.get_probability_of_thunder())?;
+        state.serialize_field("qualities", &self.quality.clone().unwrap())?;
+        state.end()
     }
 }
 

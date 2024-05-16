@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde_json::to_string;
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
 
@@ -49,7 +50,7 @@ pub async fn root(
 
         match Forecast::try_get(&spot).await {
             Ok(forecast) => {
-                context.insert("forecast_json", &forecast.to_json());
+                context.insert("forecast_json", &to_string(&forecast).unwrap());
 
                 tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
                     .await
