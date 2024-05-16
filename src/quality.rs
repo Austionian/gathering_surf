@@ -6,10 +6,6 @@ pub const OK: Quality = Quality("Fair to Good", "#ffcd1e");
 pub const POOR: Quality = Quality("Poor", "#ff9500");
 pub const VERY_POOR: Quality = Quality("Very Poor", "#f4496d");
 
-pub trait GetQuality {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality;
-}
-
 impl Quality {
     pub fn north(wind_speed: f64, wind_direction: f64) -> &'static Self {
         if wind_speed < 5.0 {

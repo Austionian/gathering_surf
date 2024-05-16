@@ -1,4 +1,4 @@
-use super::{GetQuality, Quality};
+use super::Quality;
 use std::fmt::Display;
 
 #[derive(serde::Deserialize, Debug)]
@@ -146,11 +146,10 @@ impl Location {
 
     pub fn get_quality(&self, wind_speed: f64, wind_direction: f64) -> &'static Quality {
         match self {
-            Self::Atwater(_) => Atwater::get_quality(wind_speed, wind_direction),
-            Self::Bradford(_) => Bradford::get_quality(wind_speed, wind_direction),
-            Self::Sheboygan(_) => Sheboygan::get_quality(wind_speed, wind_direction),
-            Self::PortWashington(_) => PortWashington::get_quality(wind_speed, wind_direction),
-            Self::Racine(_) => Racine::get_quality(wind_speed, wind_direction),
+            Self::Atwater(_) | Self::Bradford(_) | Self::Sheboygan(_) => {
+                Quality::south(wind_speed, wind_direction)
+            }
+            Self::PortWashington(_) | Self::Racine(_) => Quality::north(wind_speed, wind_direction),
         }
     }
 }
@@ -164,35 +163,5 @@ impl Display for Location {
             Self::PortWashington(_) => write!(f, "{}", PortWashington),
             Self::Racine(_) => write!(f, "{}", Racine),
         }
-    }
-}
-
-impl GetQuality for Bradford {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        Quality::south(wind_speed, wind_direction)
-    }
-}
-
-impl GetQuality for Atwater {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        Quality::south(wind_speed, wind_direction)
-    }
-}
-
-impl GetQuality for Sheboygan {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        Quality::south(wind_speed, wind_direction)
-    }
-}
-
-impl GetQuality for PortWashington {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        Quality::north(wind_speed, wind_direction)
-    }
-}
-
-impl GetQuality for Racine {
-    fn get_quality(wind_speed: f64, wind_direction: f64) -> &'static Quality {
-        Quality::north(wind_speed, wind_direction)
     }
 }
