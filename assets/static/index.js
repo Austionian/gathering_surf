@@ -1,11 +1,15 @@
 // Select the node that will be observed for mutations
-const targetNode = document.querySelector("body");
+const targetNode = /** @type {HTMLElement} */ (document.querySelector("body"));
 
 // Options for the observer (which mutations to observe)
 const config = { attributes: true, childList: true, subtree: true };
 
-// Callback function to execute when mutations are observed
-const callback = (mutationList, _observer) => {
+/**
+ * Callback function to execute when mutations are observed
+ *
+ * @param {MutationRecord[]} mutationList
+ */
+const observerCallback = (mutationList) => {
   for (const mutation of mutationList) {
     if (mutation.target.id === "latest-data") {
       parseLatestData(JSON.parse(mutation.target.innerText));
@@ -19,7 +23,7 @@ const callback = (mutationList, _observer) => {
 };
 
 // Create an observer instance linked to the callback function
-const observer = new MutationObserver(callback);
+const observer = new MutationObserver(observerCallback);
 
 // Start observing the target node for configured mutations
 observer.observe(targetNode, config);
@@ -32,16 +36,31 @@ const qualityMap = {
 };
 
 /**
- * @typeof {Object} LatestData
+ * Convenient non-null assertion helper function allows asserting that something is not
+ * null or undefined without having to write a JSDoc type cast that has to
+ * explicitly know the non-null type (which is error prone).
+ *
+ * @template {any} T
+ * @param {T} item
+ */
+function NonNull(item) {
+  if (item === null || item === undefined) throw "item is null or undefined";
+  return item;
+}
+
+/**
+ * @typedef {Object} LatestData
  * @property {string} quality_color - The hexcode of the quality.
  * @property {string} quality_text - The computed text of the quality.
  * @property {string} water_temp - The latest water temperature.
  * @property {number} wind_direction - The current wind direction.
  * @property {string} wind_speed - The current wind speed.
  * @property {string} gusts - The current wind gust.
+ * @property {string} air_temp
  * @property {?string} wave_height
  * @property {?string} wave_direction
  * @property {?string} wave_period
+ * @property {string} as_of
  */
 
 /**
@@ -51,48 +70,61 @@ const qualityMap = {
  */
 function parseLatestData(data) {
   if (data.wave_height) {
-    document.getElementById("current-wave-height").innerText = data.wave_height;
+    NonNull(document.getElementById("current-wave-height")).innerText =
+      data.wave_height;
     document
       .getElementById("wave-icon")
-      .setAttribute("style", `transform: rotate(${data.wave_direction}deg);`);
+      ?.setAttribute("style", `transform: rotate(${data.wave_direction}deg);`);
 
     document.querySelectorAll(".wavey").forEach((e) => e.remove());
   }
 
   if (data.wave_period) {
-    document.getElementById("current-wave-period").innerText = data.wave_period;
-    document.getElementById("wavey-period-loader").remove();
+    NonNull(document.getElementById("current-wave-period")).innerText =
+      data.wave_period;
+    document.getElementById("wavey-period-loader")?.remove();
   }
 
-  document
-    .getElementById("wave-quality")
-    .setAttribute("style", `background-color: ${data.quality_color};`);
-  document.getElementById("wave-quality-text").innerText = data.quality_text;
-  document
-    .getElementById("wave-quality-text")
-    .setAttribute("style", `color: ${data.quality_color}`);
-  document.getElementById("current-water-temp").innerText = data.water_temp;
-  document.getElementById("current-air-temp").innerText = data.air_temp;
-  document.getElementById("wind").innerText = getWindData(data);
-  document.getElementById("as-of").innerText = `Live as of ${data.as_of}`;
+  NonNull(document.getElementById("wave-quality")).setAttribute(
+    "style",
+    `background-color: ${data.quality_color};`,
+  );
+  NonNull(document.getElementById("wave-quality-text")).innerText =
+    data.quality_text;
+  NonNull(document.getElementById("wave-quality-text")).setAttribute(
+    "style",
+    `color: ${data.quality_color}`,
+  );
+  NonNull(document.getElementById("current-water-temp")).innerText =
+    data.water_temp;
+  NonNull(document.getElementById("current-air-temp")).innerText =
+    data.air_temp;
+  NonNull(document.getElementById("wind")).innerText = getWindData(data);
+  NonNull(document.getElementById("as-of")).innerText =
+    `Live as of ${data.as_of}`;
   document
     .getElementById("wind-icon")
-    .setAttribute(
+    ?.setAttribute(
       "style",
       `transform: rotate(${data.wind_direction + 180}deg);`,
     );
 
   document
-    .querySelector("#legend")
-    .setAttribute("style", `background-color: ${data.quality_color};`);
+    .getElementById("legend")
+    ?.setAttribute("style", `background-color: ${data.quality_color};`);
 
   document.querySelectorAll(".latest-loader").forEach((e) => e.remove());
-  document.getElementById("wind-icon-container").classList.remove("hidden");
-  document.getElementById("wave-icon-container").classList.remove("hidden");
-  document.getElementById("as-of-container").classList.remove("animate-pulse");
-  document.getElementById("wave-quality").classList.remove("hidden");
+  document.getElementById("wind-icon-container")?.classList.remove("hidden");
+  document.getElementById("wave-icon-container")?.classList.remove("hidden");
+  document.getElementById("as-of-container")?.classList.remove("animate-pulse");
+  document.getElementById("wave-quality")?.classList.remove("hidden");
 }
 
+/**
+ * Takes the latest data JSON and creates the wind string
+ *
+ * @param {LatestData} data
+ */
 const getWindData = (data) =>
   data.wind_speed == data.gusts
     ? data.wind_speed
@@ -112,6 +144,32 @@ let cloud_cover;
 let probability_of_precipitation;
 let probability_of_thunder;
 
+/**
+ * @typedef {Object} ForecastData
+ * @property {string[]} graph_max
+ * @property {string[]} wave_height_data
+ * @property {string} current_wave_height
+ * @property {string} current_wave_direction
+ * @property {string} current_wave_period
+ * @property {string[]} wind_speed_data
+ * @property {string[]} wind_direction_data
+ * @property {string[]} wind_gust_data
+ * @property {string[]} wave_period_data
+ * @property {string[]} wave_height_labels
+ * @property {string[]} forecast_as_of
+ * @property {string[]} temperature
+ * @property {string[]} probability_of_precipitation
+ * @property {string[]} dewpoint
+ * @property {string[]} cloud_cover
+ * @property {string[]} probability_of_thunder
+ * @property {string[]} qualities
+ */
+
+/**
+ * Takes the forecast data JSON and updates the HTML
+ *
+ * @param {ForecastData} data
+ */
 function parseForecastData(data) {
   qualities = data.qualities;
   wave_height_labels = data.wave_height_labels;
@@ -129,11 +187,11 @@ function parseForecastData(data) {
 
   // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
-  if (wave_height_container.innerText === "") {
+  if (wave_height_container?.innerText === "") {
     wave_height_container.innerText = data.current_wave_height;
     document
       .getElementById("wave-icon")
-      .setAttribute(
+      ?.setAttribute(
         "style",
         `transform: rotate(${data.current_wave_direction}deg);`,
       );
@@ -143,60 +201,67 @@ function parseForecastData(data) {
 
   // The period can be undefined separate from the wave height
   const wave_period_container = document.getElementById("current-wave-period");
-  if (wave_period_container.innerText === "") {
-    console.log(wave_period_container.innerText === "");
+  if (wave_period_container?.innerText === "") {
     wave_period_container.innerText = data.current_wave_period;
     document.getElementById("wavey-period-loader")?.remove();
   }
 
-  document.getElementById("legend-label").innerText = wave_height_labels[0];
-  document.getElementById("legend-quality").innerText =
+  NonNull(document.getElementById("legend-label")).innerText =
+    wave_height_labels[0];
+  NonNull(document.getElementById("legend-quality")).innerText =
     qualityMap[qualities[0]];
-  document.getElementById("legend-wave-height").innerText = wave_heights[0];
-  document.getElementById("legend-wind-speed").innerText = wind_speeds[0];
-  document
-    .getElementById("legend-wind-icon")
-    .setAttribute("style", `transform: rotate(${wind_directions[0]}deg);`);
-  document.getElementById("legend-wave-period").innerText = wave_period[0];
-  document.getElementById("legend-wind-gust").innerText = wind_gusts[0];
-  document.getElementById("forecast-as-of").innerText =
+  NonNull(document.getElementById("legend-wave-height")).innerText =
+    wave_heights[0];
+  NonNull(document.getElementById("legend-wind-speed")).innerText =
+    wind_speeds[0];
+  NonNull(document.getElementById("legend-wind-icon")).setAttribute(
+    "style",
+    `transform: rotate(${wind_directions[0]}deg);`,
+  );
+  NonNull(document.getElementById("legend-wave-period")).innerText =
+    wave_period[0];
+  NonNull(document.getElementById("legend-wind-gust")).innerText =
+    wind_gusts[0];
+  NonNull(document.getElementById("forecast-as-of")).innerText =
     `Last updated at ${data.forecast_as_of}`;
 
   document.querySelectorAll(".loader").forEach((e) => e.remove());
-  document.getElementById("forecast").classList.remove("hidden");
-  document.getElementById("wave-quality").classList.remove("hidden");
-  document.getElementById("legend-container").classList.remove("hidden");
+  document.getElementById("forecast")?.classList.remove("hidden");
+  document.getElementById("wave-quality")?.classList.remove("hidden");
+  document.getElementById("legend-container")?.classList.remove("hidden");
 
   // -- Init temperature legend --
   document
     .getElementById("temperature-legend-container")
-    .classList.remove("hidden");
-  document.getElementById("temperature-legend-label").innerText =
+    ?.classList.remove("hidden");
+  NonNull(document.getElementById("temperature-legend-label")).innerText =
     wave_height_labels[0];
-  document.getElementById("temperature-legend-temperature").innerText =
+  NonNull(document.getElementById("temperature-legend-temperature")).innerText =
     temperature[0];
-  document.getElementById("temperature-legend-dewpoint").innerText =
+  NonNull(document.getElementById("temperature-legend-dewpoint")).innerText =
     dewpoint[0];
 
   // -- Init precipitation legend --
   document
     .getElementById("precipitation-legend-container")
-    .classList.remove("hidden");
-  document.getElementById("precipitation-legend-label").innerText =
+    ?.classList.remove("hidden");
+  NonNull(document.getElementById("precipitation-legend-label")).innerText =
     wave_height_labels[0];
-  document.getElementById("precipitation-legend-precipitation").innerText =
-    probability_of_precipitation[0];
-  document.getElementById("precipitation-legend-thunder").innerText =
+  NonNull(
+    document.getElementById("precipitation-legend-precipitation"),
+  ).innerText = probability_of_precipitation[0];
+  NonNull(document.getElementById("precipitation-legend-thunder")).innerText =
     probability_of_thunder[0];
-  document.getElementById("precipitation-legend-cloud-cover").innerText =
-    cloud_cover[0];
+  NonNull(
+    document.getElementById("precipitation-legend-cloud-cover"),
+  ).innerText = cloud_cover[0];
 
   // The default legend background is the same as the latest wave quality shown
   // in the header. If that script doesn't happen fallback to the first value in
   // the qualities array.
-  const legend = document.querySelector("#legend");
-  if (legend.style.length < 1) {
-    legend.setAttribute("style", `background-color: ${qualities[0]};`);
+  const legend = document.getElementById("legend");
+  if (legend?.style.length && legend?.style.length < 1) {
+    legend?.setAttribute("style", `background-color: ${qualities[0]};`);
   }
 
   const ctx = document.getElementById("forecast");
@@ -246,36 +311,47 @@ function parseForecastData(data) {
     const color = qualities[x];
 
     // Update wave legend
-    document
-      .getElementById("legend")
-      .setAttribute("style", `background-color: ${color}`);
-    document.getElementById("legend-label").innerText = wave_height_labels[x];
-    document.getElementById("legend-quality").innerText = qualityMap[color];
-    document.getElementById("legend-wave-height").innerText = wave_heights[x];
-    document.getElementById("legend-wind-speed").innerText = wind_speeds[x];
-    document
-      .getElementById("legend-wind-icon")
-      .setAttribute("style", `transform: rotate(${wind_directions[x]}deg);`);
-    document.getElementById("legend-wave-period").innerText = wave_period[x];
-    document.getElementById("legend-wind-gust").innerText = wind_gusts[x];
+    NonNull(document.getElementById("legend")).setAttribute(
+      "style",
+      `background-color: ${color}`,
+    );
+    NonNull(document.getElementById("legend-label")).innerText =
+      wave_height_labels[x];
+    NonNull(document.getElementById("legend-quality")).innerText =
+      qualityMap[color];
+    NonNull(document.getElementById("legend-wave-height")).innerText =
+      wave_heights[x];
+    NonNull(document.getElementById("legend-wind-speed")).innerText =
+      wind_speeds[x];
+    NonNull(document.getElementById("legend-wind-icon")).setAttribute(
+      "style",
+      `transform: rotate(${wind_directions[x]}deg);`,
+    );
+    NonNull(document.getElementById("legend-wave-period")).innerText =
+      wave_period[x];
+    NonNull(document.getElementById("legend-wind-gust")).innerText =
+      wind_gusts[x];
 
     // Update temperature legend
-    document.getElementById("temperature-legend-label").innerText =
+    NonNull(document.getElementById("temperature-legend-label")).innerText =
       wave_height_labels[x];
-    document.getElementById("temperature-legend-temperature").innerText =
-      temperature[x];
-    document.getElementById("temperature-legend-dewpoint").innerText =
+    NonNull(
+      document.getElementById("temperature-legend-temperature"),
+    ).innerText = temperature[x];
+    NonNull(document.getElementById("temperature-legend-dewpoint")).innerText =
       dewpoint[x];
 
     // Update precipitation legend
-    document.getElementById("precipitation-legend-label").innerText =
+    NonNull(document.getElementById("precipitation-legend-label")).innerText =
       wave_height_labels[x];
-    document.getElementById("precipitation-legend-precipitation").innerText =
-      probability_of_precipitation[x];
-    document.getElementById("precipitation-legend-thunder").innerText =
+    NonNull(
+      document.getElementById("precipitation-legend-precipitation"),
+    ).innerText = probability_of_precipitation[x];
+    NonNull(document.getElementById("precipitation-legend-thunder")).innerText =
       probability_of_thunder[x];
-    document.getElementById("precipitation-legend-cloud-cover").innerText =
-      cloud_cover[x];
+    NonNull(
+      document.getElementById("precipitation-legend-cloud-cover"),
+    ).innerText = cloud_cover[x];
   };
 
   const xTicksCallback = (_value, i, _ticks) =>
