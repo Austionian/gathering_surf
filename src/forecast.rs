@@ -72,7 +72,7 @@ impl Forecast {
     fn get_labels(&self) -> Vec<String> {
         self.wave_height
             .iter()
-            .map(|v| v.display_time.clone().unwrap_or(String::default()))
+            .map(|v| v.display_time.clone().unwrap_or_default())
             .collect()
     }
 
