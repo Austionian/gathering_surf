@@ -655,4 +655,8 @@ function parseForecastData(data) {
   waveForecast.canvas.onmousemove = waveHover;
   temperatureForecast.canvas.onmousemove = tempHover;
   precipitationForecast.canvas.onmousemove = precipitationHover;
+
+  waveForecast.canvas.ontouchmove = waveHover;
+  temperatureForecast.canvas.ontouchmove = tempHover;
+  precipitationForecast.canvas.ontouchmove = precipitationHover;
 }
