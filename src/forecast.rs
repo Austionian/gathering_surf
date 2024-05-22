@@ -90,10 +90,20 @@ impl Forecast {
             _ => panic!("what dafuq is this?"),
         });
 
-        (
-            out.iter().map(|v| Self::truncc(*v)).collect(),
-            smoothed_data.iter().map(|v| *v as u8).max().unwrap(),
-        )
+        let graph_max = if let Some(mut v) = smoothed_data.iter().map(|v| *v as u8).max() {
+            if (v & 1) == 0 {
+                println!("{v}");
+                v += 2;
+            } else {
+                println!("{v}");
+                v += 1;
+            }
+            v
+        } else {
+            4
+        };
+
+        (out.iter().map(|v| Self::truncc(*v)).collect(), graph_max)
     }
 
     /// Limits the f64 to two decimal points
@@ -222,7 +232,7 @@ impl Serialize for Forecast {
 
         let mut state = serializer.serialize_struct("Forecast", 17)?;
         state.serialize_field("forecast_as_of", &self.last_updated)?;
-        state.serialize_field("graph_max", &(graph_max + 2))?;
+        state.serialize_field("graph_max", &(graph_max))?;
         state.serialize_field("wave_height_data", &wave_height_data)?;
         state.serialize_field("current_wave_height", &current_wave_height)?;
         state.serialize_field("current_wave_direction", &current_wave_direction)?;
