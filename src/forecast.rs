@@ -90,12 +90,12 @@ impl Forecast {
             _ => panic!("what dafuq is this?"),
         });
 
+        // Make sure the graph max is always an even number. Otherwise the graph
+        // won't display the y axis labels correctly
         let graph_max = if let Some(mut v) = smoothed_data.iter().map(|v| *v as u8).max() {
             if (v & 1) == 0 {
-                println!("{v}");
                 v += 2;
             } else {
-                println!("{v}");
                 v += 1;
             }
             v
