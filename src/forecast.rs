@@ -29,10 +29,15 @@ impl Forecast {
             .build()
             .unwrap();
 
-        let response = client.get(spot.forecast_url).send().await?;
+        let mut response = client.get(spot.forecast_url).send().await?;
 
+        // Retry once if non 200 from NOAA
         if response.status().as_u16() != 200 {
-            bail!("Non 200 response from NOAA");
+            response = client.get(spot.forecast_url).send().await?;
+
+            if response.status().as_u16() != 200 {
+                bail!("Non 200 response from NOAA");
+            }
         }
 
         let mut forecast: Self = (response.json::<serde_json::Value>().await?).try_into()?;
