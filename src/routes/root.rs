@@ -1,11 +1,11 @@
 use crate::{AppState, Forecast, Latest, Spot, SpotParam, TEMPLATES};
+use anyhow::anyhow;
 use axum::{
     body::Body,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde_json::to_string;
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc;
 
@@ -13,7 +13,7 @@ use tokio::sync::mpsc;
 pub async fn root(
     State(state): State<Arc<AppState>>,
     selected_spot: Query<SpotParam>,
-) -> impl IntoResponse {
+) -> Result<Response, AppError> {
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
@@ -25,45 +25,44 @@ pub async fn root(
         context.insert("spot", &spot.to_string());
         context.insert("breaks", &state.breaks);
 
-        tx.send(Ok(TEMPLATES.render("index.html", &context).unwrap()))
-            .await
-            .unwrap();
+        tx.send(Ok(TEMPLATES.render("index.html", &context)?))
+            .await?;
 
         match Latest::try_get(&spot).await {
             Ok(latest) => {
-                context.insert("latest_json", &serde_json::to_string(&latest).unwrap());
+                context.insert("latest_json", &serde_json::to_string(&latest)?);
 
-                tx.send(Ok(TEMPLATES.render("latest.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                tx.send(Ok(TEMPLATES.render("latest.html", &context)?))
+                    .await?;
             }
             Err(e) => {
                 context.insert("error", &e.to_string());
                 context.insert("error_type", &"latest");
                 context.insert("container", &"latest-container");
                 context.insert("error_container", &"latest-error");
-                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                tx.send(Ok(TEMPLATES.render("error.html", &context)?))
+                    .await?;
             }
         }
 
         match Forecast::try_get(&spot).await {
             Ok(forecast) => {
-                context.insert("forecast_json", &to_string(&forecast).unwrap());
+                context.insert("forecast_json", &serde_json::to_string(&forecast)?);
 
-                tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                tx.send(Ok(TEMPLATES.render("forecast.html", &context)?))
+                    .await?;
+
+                Ok(())
             }
             Err(e) => {
                 context.insert("error", &e.to_string());
                 context.insert("error_type", &"forecast");
                 context.insert("container", &"forecast-container");
                 context.insert("error_container", &"forecast-error");
-                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                tx.send(Ok(TEMPLATES.render("error.html", &context)?))
+                    .await?;
+
+                Err(AppError(anyhow!("Failed to load forecast.")))
             }
         }
     });
@@ -71,13 +70,12 @@ pub async fn root(
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
     let body = Body::from_stream(stream);
 
-    Response::builder()
+    Ok(Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "text/html; charset=UTF-8")
         .header("X-Content-Type-Options", "nosniff")
         .header("content-encoding", "")
-        .body(body)
-        .unwrap()
+        .body(body)?)
 }
 
 // Make our own error that wraps `anyhow::Error`.

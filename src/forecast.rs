@@ -1,11 +1,10 @@
+use super::{Location, Spot};
 use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::cmp::Ordering;
-
-use super::{Location, Spot};
 
 pub struct Forecast {
     pub last_updated: String,
