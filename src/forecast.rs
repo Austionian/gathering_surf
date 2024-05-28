@@ -3,8 +3,10 @@ use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
+use reqwest::{Client, Response};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::cmp::Ordering;
+use tracing::{error, info, warn};
 
 pub struct Forecast {
     pub last_updated: String,
@@ -29,23 +31,29 @@ impl Forecast {
             .build()
             .unwrap();
 
-        let mut response = client.get(spot.forecast_url).send().await?;
+        let data = Self::fetch_data(&client, spot).await?;
 
-        // Retry once if non 200 from NOAA
-        if response.status().as_u16() != 200 {
-            response = client.get(spot.forecast_url).send().await?;
-
-            if response.status().as_u16() != 200 {
-                bail!("Non 200 response from NOAA");
-            }
-        }
-
-        let mut forecast: Self = (response.json::<serde_json::Value>().await?).try_into()?;
+        let mut forecast: Self = (data.json::<serde_json::Value>().await?).try_into()?;
 
         forecast.condense();
         forecast.get_quality(&spot.location);
 
         Ok(forecast)
+    }
+
+    async fn fetch_data(client: &Client, spot: &Spot) -> anyhow::Result<Response> {
+        const RETRY: u8 = 1;
+        for _ in 0..RETRY {
+            let response = client.get(spot.forecast_url).send().await?;
+            if response.status().as_u16() == 200 {
+                info!("NOAA 200 success.");
+                return Ok(response);
+            }
+            warn!("NOAA non-200, retrying.");
+        }
+
+        error!("Non 200 response from NOAA");
+        bail!("Non 200 response from NOAA");
     }
 
     /// Condenses the forecast to even length vecs.
