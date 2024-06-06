@@ -28,11 +28,14 @@ const observer = new MutationObserver(observerCallback);
 // Start observing the target node for configured mutations
 observer.observe(targetNode, config);
 
+const FLAT_COLOR = "#a8a29e";
+
 const qualityMap = {
   "#0bd674": "Good",
   "#ffcd1e": "Fair to Good",
   "#ff9500": "Poor",
   "#f4496d": "Very Poor",
+  "#a8a29e": "Flat",
 };
 
 /**
@@ -109,10 +112,10 @@ function parseLatestData(data) {
       `transform: rotate(${data.wind_direction + 180}deg);`,
     );
 
-  document
-    .getElementById("legend")
-    ?.setAttribute("style", `background-color: ${data.quality_color};`);
-
+  // document
+  //   .getElementById("legend")
+  //   ?.setAttribute("style", `background-color: ${data.quality_color};`);
+  //
   document.querySelectorAll(".latest-loader").forEach((e) => e.remove());
   document.getElementById("wind-icon-container")?.classList.remove("hidden");
   document.getElementById("wave-icon-container")?.classList.remove("hidden");
@@ -126,9 +129,11 @@ function parseLatestData(data) {
  * @param {LatestData} data
  */
 const getWindData = (data) =>
-  data.wind_speed == data.gusts
+  data.wind_speed === data.gusts
     ? data.wind_speed
-    : `${data.wind_speed}-${data.gusts}`;
+    : data.gusts === "0"
+      ? data.wind_speed
+      : `${data.wind_speed}-${data.gusts}`;
 
 let qualities;
 let wave_height_labels;
@@ -163,6 +168,7 @@ let probability_of_thunder;
  * @property {string[]} cloud_cover
  * @property {string[]} probability_of_thunder
  * @property {string[]} qualities
+ * @property {string} starting_at
  */
 
 /**
@@ -185,10 +191,27 @@ function parseForecastData(data) {
   probability_of_precipitation = data.probability_of_precipitation;
   probability_of_thunder = data.probability_of_thunder;
 
+  const startingAt =
+    new Date().getHours() - new Date(data.starting_at).getHours();
+
   // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
   if (wave_height_container?.innerText === "") {
     wave_height_container.innerText = data.current_wave_height;
+
+    // if the current wave height data is under a foot, update the
+    // quality to be Flat
+    if (data.current_wave_height == "0") {
+      NonNull(document.getElementById("wave-quality"))?.setAttribute(
+        "style",
+        `background-color: ${FLAT_COLOR}`,
+      );
+
+      const text = NonNull(document.getElementById("wave-quality-text"));
+      text.innerText = qualityMap[FLAT_COLOR];
+      text.setAttribute("style", `color: ${FLAT_COLOR}`);
+    }
+
     document
       .getElementById("wave-icon")
       ?.setAttribute(
@@ -207,21 +230,21 @@ function parseForecastData(data) {
   }
 
   NonNull(document.getElementById("legend-label")).innerText =
-    wave_height_labels[0];
+    wave_height_labels[startingAt];
   NonNull(document.getElementById("legend-quality")).innerText =
-    qualityMap[qualities[0]];
+    qualityMap[qualities[startingAt]];
   NonNull(document.getElementById("legend-wave-height")).innerText =
-    wave_heights[0];
+    wave_heights[startingAt];
   NonNull(document.getElementById("legend-wind-speed")).innerText =
-    wind_speeds[0];
+    wind_speeds[startingAt];
   NonNull(document.getElementById("legend-wind-icon")).setAttribute(
     "style",
-    `transform: rotate(${wind_directions[0]}deg);`,
+    `transform: rotate(${wind_directions[startingAt]}deg);`,
   );
   NonNull(document.getElementById("legend-wave-period")).innerText =
-    wave_period[0];
+    wave_period[startingAt];
   NonNull(document.getElementById("legend-wind-gust")).innerText =
-    wind_gusts[0];
+    wind_gusts[startingAt];
   NonNull(document.getElementById("forecast-as-of")).innerText =
     `Last updated at ${data.forecast_as_of}`;
 
@@ -235,34 +258,31 @@ function parseForecastData(data) {
     .getElementById("temperature-legend-container")
     ?.classList.remove("hidden");
   NonNull(document.getElementById("temperature-legend-label")).innerText =
-    wave_height_labels[0];
+    wave_height_labels[startingAt];
   NonNull(document.getElementById("temperature-legend-temperature")).innerText =
-    temperature[0];
+    temperature[startingAt];
   NonNull(document.getElementById("temperature-legend-dewpoint")).innerText =
-    dewpoint[0];
+    dewpoint[startingAt];
 
   // -- Init precipitation legend --
   document
     .getElementById("precipitation-legend-container")
     ?.classList.remove("hidden");
   NonNull(document.getElementById("precipitation-legend-label")).innerText =
-    wave_height_labels[0];
+    wave_height_labels[startingAt];
   NonNull(
     document.getElementById("precipitation-legend-precipitation"),
-  ).innerText = probability_of_precipitation[0];
+  ).innerText = probability_of_precipitation[startingAt];
   NonNull(document.getElementById("precipitation-legend-thunder")).innerText =
-    probability_of_thunder[0];
+    probability_of_thunder[startingAt];
   NonNull(
     document.getElementById("precipitation-legend-cloud-cover"),
-  ).innerText = cloud_cover[0];
+  ).innerText = cloud_cover[startingAt];
 
-  // The default legend background is the same as the latest wave quality shown
-  // in the header. If that script doesn't happen fallback to the first value in
-  // the qualities array.
-  const legend = document.getElementById("legend");
-  if (legend?.style.length && legend?.style.length < 1) {
-    legend?.setAttribute("style", `background-color: ${qualities[0]};`);
-  }
+  NonNull(document.getElementById("legend")).setAttribute(
+    "style",
+    `background-color: ${qualities[startingAt]};`,
+  );
 
   const ctx = document.getElementById("forecast");
 

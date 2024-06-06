@@ -5,9 +5,22 @@ pub const GOOD: Quality = Quality("Good", "#0bd674");
 pub const OK: Quality = Quality("Fair to Good", "#ffcd1e");
 pub const POOR: Quality = Quality("Poor", "#ff9500");
 pub const VERY_POOR: Quality = Quality("Very Poor", "#f4496d");
+pub const FLAT: Quality = Quality("Flat", "#a8a29e");
 
 impl Quality {
-    pub fn north(wind_speed: f64, wind_direction: f64) -> &'static Self {
+    fn basic_wave_check(wave_height: f64) -> Option<&'static Self> {
+        if wave_height < 0.98 {
+            return Some(&FLAT);
+        }
+
+        None
+    }
+
+    pub fn north(wave_height: f64, wind_speed: f64, wind_direction: f64) -> &'static Self {
+        if let Some(quality) = Self::basic_wave_check(wave_height) {
+            return quality;
+        }
+
         if wind_speed < 5.0 {
             return &GOOD;
         }
@@ -42,7 +55,11 @@ impl Quality {
         &POOR
     }
 
-    pub fn south(wind_speed: f64, wind_direction: f64) -> &'static Self {
+    pub fn south(wave_height: f64, wind_speed: f64, wind_direction: f64) -> &'static Self {
+        if let Some(quality) = Self::basic_wave_check(wave_height) {
+            return quality;
+        }
+
         if wind_speed < 5.0 {
             return &GOOD;
         }

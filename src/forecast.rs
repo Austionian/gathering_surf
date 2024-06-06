@@ -22,6 +22,7 @@ pub struct Forecast {
     pub dewpoint: Vec<ForecastValue>,
     pub cloud_cover: Vec<ForecastValue>,
     pub probability_of_thunder: Vec<ForecastValue>,
+    pub starting_at: Option<String>,
 }
 
 impl Forecast {
@@ -79,6 +80,8 @@ impl Forecast {
         let _ = self.wind_gust.split_off(*min);
         let _ = self.wind_direction.split_off(*min);
         let _ = self.wave_height.split_off(*min);
+
+        self.starting_at = Some(self.wave_height.first().unwrap().valid_time.clone())
     }
 
     fn get_labels(&self) -> Vec<String> {
@@ -89,8 +92,8 @@ impl Forecast {
     }
 
     fn get_wave_data(&self) -> (Vec<f64>, u8) {
-        let mut smoothed_data = Vec::new();
-        let mut out = Vec::new();
+        let mut smoothed_data = Vec::with_capacity(self.wave_height.len());
+        let mut out = Vec::with_capacity(self.wave_height.len());
         self.wave_height
             .iter()
             .for_each(|data| smoothed_data.push(utils::convert_meter_to_feet(data.value)));
@@ -190,7 +193,7 @@ impl Forecast {
                 let direction = self.wave_direction.get(i).unwrap().value.to_string();
 
                 if height < 1.0 {
-                    return ("Flat".to_string(), period, direction);
+                    return ("0".to_string(), period, direction);
                 }
 
                 // Try to get range of current surf
@@ -215,15 +218,24 @@ impl Forecast {
             }
         }
 
-        ("Flat".to_string(), String::default(), String::default())
+        ("0".to_string(), String::default(), String::default())
     }
 
     pub fn get_quality(&mut self, location: &Location) {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
-        for (wind_direction, wind_speed) in self.wind_direction.iter().zip(self.wind_speed.iter()) {
+        for ((wind_direction, wind_speed), wave_height) in self
+            .wind_direction
+            .iter()
+            .zip(self.wind_speed.iter())
+            .zip(self.wave_height.iter())
+        {
             qualities.push(
                 location
-                    .get_quality(wind_speed.value, wind_direction.value)
+                    .get_quality(
+                        utils::convert_meter_to_feet(wave_height.value),
+                        wind_speed.value,
+                        wind_direction.value,
+                    )
                     .1
                     .to_string(),
             );
@@ -262,6 +274,7 @@ impl Serialize for Forecast {
         state.serialize_field("dewpoint", &self.get_dewpoint())?;
         state.serialize_field("cloud_cover", &self.get_cloud_cover())?;
         state.serialize_field("probability_of_thunder", &self.get_probability_of_thunder())?;
+        state.serialize_field("starting_at", &self.starting_at)?;
         state.serialize_field("qualities", &self.quality.clone().unwrap())?;
         state.end()
     }
@@ -370,6 +383,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             dewpoint,
             cloud_cover,
             probability_of_thunder,
+            starting_at: None,
         })
     }
 }

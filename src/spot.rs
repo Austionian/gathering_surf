@@ -144,12 +144,19 @@ impl Location {
         .into_iter()
     }
 
-    pub fn get_quality(&self, wind_speed: f64, wind_direction: f64) -> &'static Quality {
+    pub fn get_quality(
+        &self,
+        wave_height: f64,
+        wind_speed: f64,
+        wind_direction: f64,
+    ) -> &'static Quality {
         match self {
             Self::Atwater(_) | Self::Bradford(_) | Self::Sheboygan(_) => {
-                Quality::south(wind_speed, wind_direction)
+                Quality::south(wave_height, wind_speed, wind_direction)
             }
-            Self::PortWashington(_) | Self::Racine(_) => Quality::north(wind_speed, wind_direction),
+            Self::PortWashington(_) | Self::Racine(_) => {
+                Quality::north(wave_height, wind_speed, wind_direction)
+            }
         }
     }
 }

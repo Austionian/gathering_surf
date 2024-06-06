@@ -21,7 +21,10 @@ pub struct Latest {
 
 impl Latest {
     pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
-        const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
+        // MID Lake bouy is in the water yeat round
+        // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
+        // Fallback to Atwater bouy for now.
+        const FALLBACK_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
 
         let data = Self::get_latest_data(spot).await?;
 
@@ -57,7 +60,7 @@ impl Latest {
         let raw_water_temp = measurements.next().unwrap_or("MM");
 
         let water_temp = if raw_water_temp == "MM" {
-            let bouy_data = reqwest::get(MID_LAKE_BOUY).await?.text().await?;
+            let bouy_data = reqwest::get(FALLBACK_BOUY).await?.text().await?;
             convert_celsius_to_fahrenheit(
                 bouy_data
                     .lines()
@@ -73,9 +76,15 @@ impl Latest {
             convert_celsius_to_fahrenheit(raw_water_temp.parse().unwrap_or(0.0))
         };
 
-        let wave_quality = spot
-            .location
-            .get_quality(wind_speed.parse().unwrap(), wind_direction as f64);
+        let wave_quality = spot.location.get_quality(
+            wave_height
+                .clone()
+                .unwrap_or("99.0".to_string())
+                .parse()
+                .unwrap(),
+            wind_speed.parse().unwrap(),
+            wind_direction as f64,
+        );
 
         Ok(Self {
             air_temp,
