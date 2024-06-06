@@ -53,6 +53,7 @@ pub fn startup() -> Result<Router, String> {
         .nest_service("/assets", ServeDir::new("assets"))
         // attaches the root route to the root.
         .route("/", get(routes::root))
+        .route("/glimpse", get(routes::glimpse))
         .nest("/api", api)
         .fallback(routes::handle_404)
         // binds the telemetry.
