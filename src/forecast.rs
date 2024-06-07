@@ -23,6 +23,8 @@ pub struct Forecast {
     pub cloud_cover: Vec<ForecastValue>,
     pub probability_of_thunder: Vec<ForecastValue>,
     pub starting_at: Option<String>,
+    pub waves: Option<Vec<f64>>,
+    pub graph_max: Option<u8>,
 }
 
 impl Forecast {
@@ -36,8 +38,7 @@ impl Forecast {
 
         let mut forecast: Self = (data.json::<serde_json::Value>().await?).try_into()?;
 
-        forecast.condense();
-        forecast.get_quality(&spot.location);
+        forecast.compute_and_condense(&spot.location);
 
         Ok(forecast)
     }
@@ -55,6 +56,11 @@ impl Forecast {
 
         error!("Non 200 response from NOAA");
         bail!("Non 200 response from NOAA");
+    }
+
+    fn compute_and_condense(&mut self, location: &Location) {
+        self.condense();
+        self.get_wave_data(location);
     }
 
     /// Condenses the forecast to even length vecs.
@@ -91,7 +97,7 @@ impl Forecast {
             .collect()
     }
 
-    fn get_wave_data(&self) -> (Vec<f64>, u8) {
+    fn get_wave_data(&mut self, location: &Location) {
         let mut smoothed_data = Vec::with_capacity(self.wave_height.len());
         let mut out = Vec::with_capacity(self.wave_height.len());
         self.wave_height
@@ -107,18 +113,22 @@ impl Forecast {
 
         // Make sure the graph max is always an even number. Otherwise the graph
         // won't display the y axis labels correctly
-        let graph_max = if let Some(mut v) = smoothed_data.iter().map(|v| *v as u8).max() {
+        self.graph_max = if let Some(mut v) = smoothed_data.iter().map(|v| *v as u8).max() {
             if (v & 1) == 0 {
                 v += 2;
             } else {
                 v += 1;
             }
-            v
+            Some(v)
         } else {
-            4
+            Some(4)
         };
 
-        (out.iter().map(|v| Self::truncc(*v)).collect(), graph_max)
+        for (forecast, computed) in self.wave_height.iter_mut().zip(out.iter()) {
+            forecast.value = Self::truncc(*computed);
+        }
+
+        self.compute_quality(location);
     }
 
     /// Limits the f64 to two decimal points
@@ -183,28 +193,31 @@ impl Forecast {
             .collect()
     }
 
+    fn get_waves(&self) -> Vec<f64> {
+        self.wave_height.iter().map(|v| v.value).collect()
+    }
+
     /// Returns the wave height, period and direction from the forecasted
     /// data relative to the time of request.
     fn get_current_wave_data(&self) -> (String, String, String) {
         for (i, wave_height) in self.wave_height.iter().enumerate() {
             if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Utc::now() {
-                let height = utils::convert_meter_to_feet(wave_height.value);
+                let height = wave_height.value as u8;
                 let period = self.wave_period.get(i).unwrap().value.to_string();
                 let direction = self.wave_direction.get(i).unwrap().value.to_string();
 
-                if height < 1.0 {
-                    return ("0".to_string(), period, direction);
-                }
-
                 // Try to get range of current surf
                 if let Some(last_hour) = self.wave_height.get(i - 1) {
-                    let last_hour_height = utils::convert_meter_to_feet(last_hour.value);
+                    let last_hour_height = last_hour.value as u8;
                     return match height.partial_cmp(&last_hour_height) {
-                        Some(Ordering::Less) => (
-                            format!("{:.0}-{:.0}", height, last_hour_height),
-                            period,
-                            direction,
-                        ),
+                        Some(Ordering::Less) => {
+                            println!("{}, {}", height, last_hour_height);
+                            (
+                                format!("{:.0}-{:.0}", height, last_hour_height),
+                                period,
+                                direction,
+                            )
+                        }
                         Some(Ordering::Greater) => (
                             format!("{:.0}-{:.0}+", last_hour_height, height),
                             period,
@@ -221,7 +234,7 @@ impl Forecast {
         ("0".to_string(), String::default(), String::default())
     }
 
-    pub fn get_quality(&mut self, location: &Location) {
+    pub fn compute_quality(&mut self, location: &Location) {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
         for ((wind_direction, wind_speed), wave_height) in self
             .wind_direction
@@ -231,11 +244,7 @@ impl Forecast {
         {
             qualities.push(
                 location
-                    .get_quality(
-                        utils::convert_meter_to_feet(wave_height.value),
-                        wind_speed.value,
-                        wind_direction.value,
-                    )
+                    .get_quality(wave_height.value, wind_speed.value, wind_direction.value)
                     .1
                     .to_string(),
             );
@@ -250,14 +259,13 @@ impl Serialize for Forecast {
     where
         S: Serializer,
     {
-        let (wave_height_data, graph_max) = self.get_wave_data();
         let (current_wave_height, current_wave_period, current_wave_direction) =
             self.get_current_wave_data();
 
         let mut state = serializer.serialize_struct("Forecast", 17)?;
         state.serialize_field("forecast_as_of", &self.last_updated)?;
-        state.serialize_field("graph_max", &(graph_max))?;
-        state.serialize_field("wave_height_data", &wave_height_data)?;
+        state.serialize_field("graph_max", &self.graph_max)?;
+        state.serialize_field("wave_height_data", &self.get_waves())?;
         state.serialize_field("current_wave_height", &current_wave_height)?;
         state.serialize_field("current_wave_direction", &current_wave_direction)?;
         state.serialize_field("current_wave_period", &current_wave_period)?;
@@ -384,6 +392,8 @@ impl TryFrom<serde_json::Value> for Forecast {
             cloud_cover,
             probability_of_thunder,
             starting_at: None,
+            waves: None,
+            graph_max: None,
         })
     }
 }
