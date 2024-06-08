@@ -191,8 +191,12 @@ function parseForecastData(data) {
   probability_of_precipitation = data.probability_of_precipitation;
   probability_of_thunder = data.probability_of_thunder;
 
-  const startingAt =
+  let startingAt =
     new Date().getHours() - new Date(data.starting_at).getHours();
+
+  // If the forecast starting_at time hasn't been updated in a while, it will show
+  // a PM time the follow morning.
+  startingAt = startingAt < 0 ? new Date().getHours() : startingAt;
 
   // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
