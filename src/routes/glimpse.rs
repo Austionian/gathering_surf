@@ -31,7 +31,6 @@ pub async fn glimpse(
             context.insert("wave_height", &latest.wave_height);
             context.insert("quality", &latest.quality_text);
             context.insert("quality_color", &latest.quality_color);
-            context.insert("wave_period", &latest.wave_period);
         }
         Err(e) => {
             context.insert("error", &e.to_string());
