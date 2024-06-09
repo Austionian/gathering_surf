@@ -65,8 +65,25 @@
                 </div>
               </div>
             </div>
+            <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
+              <div>
+                <p class="text-sm font-medium leading-6 text-gray-400">
+                  Water Temp
+                </p>
+                <div
+                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                >
+                  <span id="current-water-temp">{{ water_temp }}</span>
+                  <span
+                    class="text-sm tracking-tight font-semibold text-gray-400"
+                    >°F</span
+                  >
+                </div>
+              </div>
+            </div>
             <div
-              class="border-t border-white/5 py-6 px-1 sm:px-6 lg:px-8 sm:border-l"
+              class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+              style="min-width: 220px;"
             >
               <p class="text-sm font-medium leading-6 text-gray-400">Wind</p>
               <div
@@ -92,38 +109,6 @@
                 <span id="wind">{{ wind_speed }}</span>
                 {% endif %}
                 <span class="text-sm text-gray-400">mph</span>
-              </div>
-            </div>
-            <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
-              <div>
-                <p class="text-sm font-medium leading-6 text-gray-400">
-                  Water Temp
-                </p>
-                <div
-                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
-                >
-                  <span id="current-water-temp">{{ water_temp }}</span>
-                  <span
-                    class="text-sm tracking-tight font-semibold text-gray-400"
-                    >°F</span
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="border-t border-white/5 py-6 px-1 sm:px-6 lg:px-8">
-              <div>
-                <p class="text-sm font-medium leading-6 text-gray-400">
-                  Air Temp
-                </p>
-                <div
-                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
-                >
-                  <span id="current-air-temp">{{ air_temp }}</span>
-                  <span
-                    class="text-sm tracking-tight font-semibold text-gray-400"
-                    >°F</span
-                  >
-                </div>
               </div>
             </div>
           </div>
