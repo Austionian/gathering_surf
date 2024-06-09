@@ -1,5 +1,5 @@
 use super::AppError;
-use crate::{AppState, Forecast, Latest, Spot, SpotParam, TEMPLATES};
+use crate::{AppState, Latest, Spot, SpotParam, TEMPLATES};
 use axum::{
     extract::{Query, State},
     response::Html,
@@ -20,18 +20,27 @@ pub async fn glimpse(
     context.insert("spot", &spot.to_string());
     context.insert("breaks", &state.breaks);
 
-    // match Latest::try_get(&spot).await {
-    //     Ok(latest) => {
-    //         context.insert("latest_json", &serde_json::to_string(&latest)?);
-    //     }
-    //     Err(e) => {
-    //         context.insert("error", &e.to_string());
-    //         context.insert("error_type", &"latest");
-    //         context.insert("container", &"latest-container");
-    //         context.insert("error_container", &"latest-error");
-    //     }
-    // }
-    //
+    match Latest::try_get(&spot).await {
+        Ok(latest) => {
+            context.insert("as_of", &latest.as_of);
+            context.insert("wind_direction", &latest.wind_direction);
+            context.insert("wind_speed", &latest.wind_speed);
+            context.insert("wind_gust", &latest.gusts);
+            context.insert("water_temp", &latest.water_temp);
+            context.insert("air_temp", &latest.air_temp);
+            context.insert("wave_height", &latest.wave_height);
+            context.insert("quality", &latest.quality_text);
+            context.insert("quality_color", &latest.quality_color);
+            context.insert("wave_period", &latest.wave_period);
+        }
+        Err(e) => {
+            context.insert("error", &e.to_string());
+            context.insert("error_type", &"latest");
+            context.insert("container", &"latest-container");
+            context.insert("error_container", &"latest-error");
+        }
+    }
+
     match TEMPLATES.render("glimpse.html", &context) {
         Ok(s) => Ok(Html(s)),
         Err(e) => {
@@ -39,23 +48,4 @@ pub async fn glimpse(
             Ok(Html("<html>error</html>".to_string()))
         }
     }
-
-    // Ok(Html(TEMPLATES.render("glimpse.html", &context)?))
-    //
-    // match Forecast::try_get(&spot).await {
-    //     Ok(forecast) => {
-    //         context.insert("forecast_json", &serde_json::to_string(&forecast)?);
-    //     }
-    //     Err(e) => {
-    //         context.insert("error", &e.to_string());
-    //         context.insert("error_type", &"forecast");
-    //         context.insert("container", &"forecast-container");
-    //         context.insert("error_container", &"forecast-error");
-    //     }
-    // }
-
-    // match TEMPLATES.render("glimpse.html", &context) {
-    //     Ok(s) => Ok(Html(s)),
-    //     Err(e) => Ok(Html(format!("{e}"))),
-    // }
 }
