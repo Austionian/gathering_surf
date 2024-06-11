@@ -34,12 +34,14 @@ lazy_static! {
 #[derive(Clone, serde::Serialize)]
 pub struct AppState {
     breaks: Vec<String>,
+    noaa_api: String,
 }
 
-pub fn startup() -> Result<Router, String> {
+pub fn startup(noaa_api: String) -> Result<Router, String> {
     // Create an AppState that is shared across the app.
     let state = AppState {
         breaks: Location::get_all(),
+        noaa_api,
     };
 
     let api = Router::new()

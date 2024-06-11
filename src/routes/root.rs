@@ -45,7 +45,7 @@ pub async fn root(
             }
         }
 
-        match Forecast::try_get(&spot).await {
+        match Forecast::try_get(&spot, &state.noaa_api).await {
             Ok(forecast) => {
                 context.insert("forecast_json", &serde_json::to_string(&forecast)?);
 

@@ -3,6 +3,12 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub application: ApplicationSettings,
+    pub noaa_api: NoaaAPI,
+}
+
+#[derive(serde::Deserialize)]
+pub struct NoaaAPI {
+    pub base_url: String,
 }
 
 #[derive(serde::Deserialize)]

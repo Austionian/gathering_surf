@@ -1,9 +1,17 @@
 use gathering_surf::startup;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+use wiremock::MockServer;
 
-pub async fn start_test_app() -> Result<SocketAddr, String> {
-    let app = startup().expect("Unable to start the server.");
+pub(crate) struct TestApp {
+    pub(crate) addr: SocketAddr,
+    pub(crate) noaa_client: MockServer,
+}
+
+pub async fn start_test_app() -> Result<TestApp, String> {
+    let noaa_client = MockServer::start().await;
+
+    let app = startup(noaa_client.uri()).expect("Unable to start the server.");
     let listener = TcpListener::bind("127.0.0.1:0".parse::<SocketAddr>().unwrap())
         .await
         .unwrap();
@@ -15,5 +23,5 @@ pub async fn start_test_app() -> Result<SocketAddr, String> {
             .unwrap();
     });
 
-    Ok(addr)
+    Ok(TestApp { addr, noaa_client })
 }

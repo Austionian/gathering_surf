@@ -28,13 +28,13 @@ pub struct Forecast {
 }
 
 impl Forecast {
-    pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
+    pub async fn try_get(spot: &Spot, noaa_url: &str) -> anyhow::Result<Self> {
         let client = reqwest::Client::builder()
             .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
             .build()
             .unwrap();
 
-        let data = Self::fetch_data(&client, spot).await?;
+        let data = Self::fetch_data(&client, spot, noaa_url).await?;
 
         let mut forecast: Self = (data.json::<serde_json::Value>().await?).try_into()?;
 
@@ -43,10 +43,14 @@ impl Forecast {
         Ok(forecast)
     }
 
-    async fn fetch_data(client: &Client, spot: &Spot) -> anyhow::Result<Response> {
+    async fn fetch_data(client: &Client, spot: &Spot, noaa_url: &str) -> anyhow::Result<Response> {
         const RETRY: u8 = 1;
         for _ in 0..RETRY {
-            let response = client.get(spot.forecast_url).send().await?;
+            println!("{}{}", noaa_url, spot.forecast_url);
+            let response = client
+                .get(format!("{}{}", noaa_url, spot.forecast_url))
+                .send()
+                .await?;
             if response.status().as_u16() == 200 {
                 info!("NOAA 200 success.");
                 return Ok(response);

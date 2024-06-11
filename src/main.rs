@@ -23,7 +23,7 @@ async fn main() {
 
     let config = get_configuration().expect("Failed to read configuration.");
 
-    let app = startup().expect("Unable to start the server.");
+    let app = startup(config.noaa_api.base_url).expect("Unable to start the server.");
 
     let address = format!("{}:{}", config.application.host, config.application.port)
         .parse::<SocketAddr>()

@@ -66,7 +66,7 @@ impl From<SpotParam> for Spot {
     }
 }
 
-const ATWATER_URL: &str = "https://api.weather.gov/gridpoints/MKX/90,67";
+pub const ATWATER_URL: &str = "/gridpoints/MKX/90,67";
 const BRADFORD_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
 const SHEBOYGAN_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,98";
 const PORT_WASHINGTON_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,80";
