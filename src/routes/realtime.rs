@@ -11,6 +11,6 @@ pub async fn latest(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Realtime>, AppError> {
     Ok(Json(
-        Realtime::try_get(&selected_spot.0.into(), &state.realtime_url).await?,
+        Realtime::try_get(&selected_spot.0.into(), state.realtime_url).await?,
     ))
 }

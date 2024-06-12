@@ -11,6 +11,6 @@ pub async fn forecast(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Forecast>, AppError> {
     Ok(Json(
-        Forecast::try_get(&selected_spot.0.into(), &state.forecast_url).await?,
+        Forecast::try_get(&selected_spot.0.into(), state.forecast_url).await?,
     ))
 }
