@@ -3,6 +3,13 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub application: ApplicationSettings,
+    pub forecast_api: DataAPI,
+    pub realtime_api: DataAPI,
+}
+
+#[derive(serde::Deserialize)]
+pub struct DataAPI {
+    pub base_url: String,
 }
 
 #[derive(serde::Deserialize)]

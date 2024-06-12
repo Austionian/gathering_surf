@@ -1,4 +1,4 @@
-use gathering_surf::{get_configuration, startup};
+use gathering_surf::{get_configuration, startup, Settings};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::Level;
@@ -21,9 +21,11 @@ async fn main() {
         .with(filter)
         .init();
 
-    let config = get_configuration().expect("Failed to read configuration.");
+    let config = Box::new(get_configuration().expect("Failed to read configuration."));
 
-    let app = startup().expect("Unable to start the server.");
+    let config: &'static Settings = Box::leak(config);
+
+    let app = startup(config).expect("Unable to start the server.");
 
     let address = format!("{}:{}", config.application.host, config.application.port)
         .parse::<SocketAddr>()

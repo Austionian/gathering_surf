@@ -1,3 +1,7 @@
 application:
   port: 8080
   api_key: "1234567890"
+forecast_api:
+  base_url: "https://api.weather.gov"
+realtime_api:
+  base_url: "https://www.ndbc.noaa.gov"
