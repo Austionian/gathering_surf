@@ -56,4 +56,5 @@ update:
     #!/bin/bash
     cargo update
     echo $'Dependencies updated!\n'
+    cargo clippy
     cargo test
