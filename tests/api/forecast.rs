@@ -1,4 +1,4 @@
-use gathering_surf::ATWATER_URL;
+use gathering_surf::ATWATER_PATH;
 use serde_json::json;
 use wiremock::{
     matchers::{method, path},
@@ -16,7 +16,7 @@ async fn it_returns_the_forecast_data_as_json() {
     // Arrange the behaviour of the MockServer adding a Mock:
     // when it receives a GET request on '/hello' it will respond with a 200.
     Mock::given(method("GET"))
-        .and(path(ATWATER_URL))
+        .and(path(ATWATER_PATH))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!(
                         {
         "@context": [
@@ -122,7 +122,7 @@ async fn it_returns_the_forecast_data_as_json() {
         }}
             )))
         // Mounting the mock on the mock server - it's now effective!
-        .mount(&app.noaa_client)
+        .mount(&app.forecast_client)
         .await;
 
     let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
@@ -138,4 +138,29 @@ async fn it_returns_the_forecast_data_as_json() {
     assert!(data.contains("forecast_as_of"));
     assert!(data.contains("graph_max"));
     assert!(data.contains("qualities"));
+}
+
+#[tokio::test]
+async fn it_handles_a_non_200_response_from_forecast_client_and_retries_once() {
+    let app = start_test_app()
+        .await
+        .expect("Unable to start test server.");
+
+    Mock::given(method("GET"))
+        .and(path(ATWATER_PATH))
+        .respond_with(ResponseTemplate::new(502).set_body_string("Bad gateway"))
+        .expect(2)
+        .mount(&app.forecast_client)
+        .await;
+
+    let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
+        .await
+        .unwrap();
+
+    assert_eq!(response.status().as_u16(), 500);
+
+    let data = response.text().await.unwrap();
+
+    assert!(!data.contains("current_wave_direction"));
+    assert!(data.contains("Something went wrong: Non 200 response from NOAA"));
 }

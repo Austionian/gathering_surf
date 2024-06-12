@@ -2,11 +2,11 @@ use crate::helpers::start_test_app;
 
 #[tokio::test]
 async fn an_invalid_url_returns_the_404_not_found() {
-    let addr = start_test_app()
+    let app = start_test_app()
         .await
         .expect("Unable to start test server.");
 
-    let response = reqwest::get(format!("http://{}/four-oh-four-please", &addr))
+    let response = reqwest::get(format!("http://{}/four-oh-four-please", &app.addr))
         .await
         .unwrap();
 

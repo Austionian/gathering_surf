@@ -1,5 +1,5 @@
 use super::AppError;
-use crate::{AppState, Latest, Spot, SpotParam, TEMPLATES};
+use crate::{AppState, Realtime, Spot, SpotParam, TEMPLATES};
 use axum::{
     extract::{Query, State},
     response::Html,
@@ -20,7 +20,7 @@ pub async fn glimpse(
     context.insert("spot", &spot.to_string());
     context.insert("breaks", &state.breaks);
 
-    match Latest::try_get(&spot).await {
+    match Realtime::try_get(&spot, &state.realtime_url).await {
         Ok(latest) => {
             context.insert("as_of", &latest.as_of);
             context.insert("wind_direction", &latest.wind_direction);

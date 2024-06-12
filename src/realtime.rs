@@ -1,11 +1,12 @@
 use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
+use tracing::warn;
 
 use super::Spot;
 
 #[derive(serde::Serialize)]
-pub struct Latest {
+pub struct Realtime {
     pub as_of: String,
     pub wind_direction: u32,
     pub wind_speed: String,
@@ -19,14 +20,14 @@ pub struct Latest {
     pub wave_direction: Option<u16>,
 }
 
-impl Latest {
-    pub async fn try_get(spot: &Spot) -> anyhow::Result<Self> {
+impl Realtime {
+    pub async fn try_get(spot: &Spot, realtime_url: &str) -> anyhow::Result<Self> {
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         // Fallback to Atwater bouy for now.
-        const FALLBACK_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
+        const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
-        let data = Self::get_latest_data(spot).await?;
+        let data = Self::get_latest_data(spot, realtime_url).await?;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -60,7 +61,10 @@ impl Latest {
         let raw_water_temp = measurements.next().unwrap_or("MM");
 
         let water_temp = if raw_water_temp == "MM" {
-            let bouy_data = reqwest::get(FALLBACK_BOUY).await?.text().await?;
+            let bouy_data = reqwest::get(format!("{}{}", realtime_url, FALLBACK_BOUY))
+                .await?
+                .text()
+                .await?;
             convert_celsius_to_fahrenheit(
                 bouy_data
                     .lines()
@@ -101,12 +105,16 @@ impl Latest {
         })
     }
 
-    async fn get_latest_data(spot: &Spot) -> Result<String, reqwest::Error> {
-        let response = reqwest::get(spot.latest_url).await?;
+    async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, reqwest::Error> {
+        let response = reqwest::get(format!("{}{}", realtime_url, spot.realtime_path)).await?;
 
         if response.status().as_u16() != 200 {
-            if let Some(fallback_url) = spot.fallback_latest_url {
-                return reqwest::get(fallback_url).await?.text().await;
+            warn!("Non 200 from Realtime api, retrying.");
+            if let Some(fallback_url) = spot.fallback_realtime_path {
+                return reqwest::get(format!("{}{}", realtime_url, fallback_url))
+                    .await?
+                    .text()
+                    .await;
             }
         }
 

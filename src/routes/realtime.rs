@@ -1,16 +1,16 @@
 use super::AppError;
-use crate::{AppState, Forecast, SpotParam};
+use crate::{AppState, Realtime, SpotParam};
 use axum::{
     extract::{Query, State},
     response::Json,
 };
 use std::sync::Arc;
 
-pub async fn forecast(
+pub async fn latest(
     selected_spot: Query<SpotParam>,
     State(state): State<Arc<AppState>>,
-) -> Result<Json<Forecast>, AppError> {
+) -> Result<Json<Realtime>, AppError> {
     Ok(Json(
-        Forecast::try_get(&selected_spot.0.into(), &state.forecast_url).await?,
+        Realtime::try_get(&selected_spot.0.into(), &state.realtime_url).await?,
     ))
 }

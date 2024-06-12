@@ -14,9 +14,9 @@ impl SpotParam {
 }
 
 pub struct Spot {
-    pub forecast_url: &'static str,
-    pub latest_url: &'static str,
-    pub fallback_latest_url: Option<&'static str>,
+    pub forecast_path: &'static str,
+    pub realtime_path: &'static str,
+    pub fallback_realtime_path: Option<&'static str>,
     pub location: Location,
 }
 
@@ -29,35 +29,35 @@ impl Display for Spot {
 impl From<SpotParam> for Spot {
     fn from(mut val: SpotParam) -> Self {
         let atwater = Spot {
-            forecast_url: ATWATER_URL,
-            latest_url: ATWATER_LATEST_URL,
-            fallback_latest_url: Some(BRADFORD_LATEST_URL),
+            forecast_path: ATWATER_PATH,
+            realtime_path: ATWATER_REALTIME_PATH,
+            fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
             location: Location::Atwater(Atwater),
         };
 
         match val.get_spot().to_lowercase().as_str() {
             "bradford" => Spot {
-                forecast_url: BRADFORD_URL,
-                latest_url: BRADFORD_LATEST_URL,
-                fallback_latest_url: None,
+                forecast_path: BRADFORD_PATH,
+                realtime_path: BRADFORD_REALTIME_PATH,
+                fallback_realtime_path: None,
                 location: Location::Bradford(Bradford),
             },
             "port washington" => Spot {
-                forecast_url: PORT_WASHINGTON_URL,
-                latest_url: PORT_WASHINGTON_LATEST_URL,
-                fallback_latest_url: None,
+                forecast_path: PORT_WASHINGTON_PATH,
+                realtime_path: PORT_WASHINGTON_REALTIME_PATH,
+                fallback_realtime_path: None,
                 location: Location::PortWashington(PortWashington),
             },
             "sheboygan" => Spot {
-                forecast_url: SHEBOYGAN_URL,
-                latest_url: SHEBOYGAN_LATEST_URL,
-                fallback_latest_url: Some(SHEBOYGAN_FALLBACK_LATEST_URL),
+                forecast_path: SHEBOYGAN_PATH,
+                realtime_path: SHEBOYGAN_REALTIME_PATH,
+                fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan(Sheboygan),
             },
             "racine" => Spot {
-                forecast_url: RACINE_URL,
-                latest_url: RACINE_LATEST_URL,
-                fallback_latest_url: Some(RACINE_FALLBACK_LATEST_URL),
+                forecast_path: RACINE_PATH,
+                realtime_path: RACINE_REALTIME_PATH,
+                fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine(Racine),
             },
             "atwater" => atwater,
@@ -66,22 +66,30 @@ impl From<SpotParam> for Spot {
     }
 }
 
-pub const ATWATER_URL: &str = "/gridpoints/MKX/90,67";
-const BRADFORD_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,67";
-const SHEBOYGAN_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,98";
-const PORT_WASHINGTON_URL: &str = "https://api.weather.gov/gridpoints/MKX/91,80";
-const RACINE_URL: &str = "https://api.weather.gov/gridpoints/MKX/94,52";
+// -- Forecast PATHs --
+pub const ATWATER_PATH: &str = "/gridpoints/MKX/90,67";
+const BRADFORD_PATH: &str = "/gridpoints/MKX/91,67";
+const SHEBOYGAN_PATH: &str = "/gridpoints/MKX/94,98";
+const PORT_WASHINGTON_PATH: &str = "/gridpoints/MKX/91,80";
+const RACINE_PATH: &str = "/gridpoints/MKX/94,52";
+// -- --
 
-const ATWATER_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45013.txt";
-const SHEBOYGAN_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45218.txt";
-const RACINE_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/45199.txt";
+// -- Realtime PATHs --
+//
+// -- Bouy PATHs --
+const ATWATER_REALTIME_PATH: &str = "/data/realtime2/45013.txt";
+const SHEBOYGAN_REALTIME_PATH: &str = "/data/realtime2/45218.txt";
+const RACINE_REALTIME_PATH: &str = "/data/realtime2/45199.txt";
+// -- --
 
-// -- These are all land based weather stations --
-const BRADFORD_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/MLWW3.txt";
-const PORT_WASHINGTON_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/PWAW3.txt";
+// -- Land Based Weather Station PATHs --
+const BRADFORD_REALTIME_PATH: &str = "/data/realtime2/MLWW3.txt";
+const PORT_WASHINGTON_REALTIME_PATH: &str = "/data/realtime2/PWAW3.txt";
 
-const SHEBOYGAN_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/SGNW3.txt";
-const RACINE_FALLBACK_LATEST_URL: &str = "https://www.ndbc.noaa.gov/data/realtime2/KNSW3.txt";
+const SHEBOYGAN_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/SGNW3.txt";
+const RACINE_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/KNSW3.txt";
+// -- --
+//
 // -- --
 
 pub struct Atwater;

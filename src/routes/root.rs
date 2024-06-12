@@ -1,4 +1,4 @@
-use crate::{AppState, Forecast, Latest, Spot, SpotParam, TEMPLATES};
+use crate::{AppState, Forecast, Realtime, Spot, SpotParam, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -28,7 +28,7 @@ pub async fn root(
         tx.send(Ok(TEMPLATES.render("index.html", &context)?))
             .await?;
 
-        match Latest::try_get(&spot).await {
+        match Realtime::try_get(&spot, &state.realtime_url).await {
             Ok(latest) => {
                 context.insert("latest_json", &serde_json::to_string(&latest)?);
 
@@ -45,7 +45,7 @@ pub async fn root(
             }
         }
 
-        match Forecast::try_get(&spot, &state.noaa_api).await {
+        match Forecast::try_get(&spot, &state.forecast_url).await {
             Ok(forecast) => {
                 context.insert("forecast_json", &serde_json::to_string(&forecast)?);
 

@@ -2,11 +2,11 @@ use crate::helpers::start_test_app;
 
 #[tokio::test]
 async fn it_returns_the_glimpse_view() {
-    let addr = start_test_app()
+    let app = start_test_app()
         .await
         .expect("Unable to start test server.");
 
-    let response = reqwest::get(format!("http://{}/glimpse", &addr))
+    let response = reqwest::get(format!("http://{}/glimpse", &app.addr))
         .await
         .unwrap();
 
