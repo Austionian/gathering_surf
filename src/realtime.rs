@@ -1,7 +1,8 @@
 use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
+use anyhow::bail;
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
-use tracing::warn;
+use tracing::{error, info, warn};
 
 use super::Spot;
 
@@ -105,20 +106,22 @@ impl Realtime {
         })
     }
 
-    async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, reqwest::Error> {
-        let response = reqwest::get(format!("{}{}", realtime_url, spot.realtime_path)).await?;
-
-        if response.status().as_u16() != 200 {
-            warn!("Non 200 from Realtime api, retrying.");
-            if let Some(fallback_url) = spot.fallback_realtime_path {
-                return reqwest::get(format!("{}{}", realtime_url, fallback_url))
-                    .await?
-                    .text()
-                    .await;
+    async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {
+        const RETRY: u8 = 2;
+        for _ in 0..RETRY {
+            let response = reqwest::get(format!("{}{}", realtime_url, spot.realtime_path)).await?;
+            if response.status().as_u16() == 200 {
+                info!("NOAA realtime 200 success.");
+                return match response.text().await {
+                    Ok(r) => Ok(r),
+                    Err(e) => Err(anyhow::anyhow!("Error reading realtime message: {}", e)),
+                };
             }
+            warn!("NOAA realtime non-200, retrying.");
         }
 
-        response.text().await
+        error!("Non 200 response from NOAA realtime");
+        bail!("Non 200 response from NOAA realtime");
     }
 
     fn parse_wave_height(wave_height: &str) -> Option<String> {

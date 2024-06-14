@@ -121,7 +121,7 @@ async fn it_returns_the_forecast_data_as_json() {
                 }]}
         }}
             )))
-        .mount(&app.forecast_client.unwrap())
+        .mount(&app.mock_client.unwrap())
         .await;
 
     let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
@@ -145,11 +145,12 @@ async fn it_handles_a_non_200_response_from_forecast_client_and_retries_once() {
         .await
         .expect("Unable to start test server.");
 
+    let mock_client = &app.mock_client.unwrap();
     Mock::given(method("GET"))
         .and(path(ATWATER_PATH))
         .respond_with(ResponseTemplate::new(502).set_body_string("Bad gateway"))
         .expect(2)
-        .mount(&app.forecast_client.unwrap())
+        .mount(mock_client)
         .await;
 
     let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
