@@ -5,7 +5,7 @@ use wiremock::{
     Mock, ResponseTemplate,
 };
 
-use crate::helpers::start_test_app;
+use crate::helpers::{start_integration_test_app, start_test_app};
 
 #[tokio::test]
 async fn it_returns_the_forecast_data_as_json() {
@@ -121,8 +121,7 @@ async fn it_returns_the_forecast_data_as_json() {
                 }]}
         }}
             )))
-        // Mounting the mock on the mock server - it's now effective!
-        .mount(&app.forecast_client)
+        .mount(&app.forecast_client.unwrap())
         .await;
 
     let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
@@ -150,7 +149,7 @@ async fn it_handles_a_non_200_response_from_forecast_client_and_retries_once() {
         .and(path(ATWATER_PATH))
         .respond_with(ResponseTemplate::new(502).set_body_string("Bad gateway"))
         .expect(2)
-        .mount(&app.forecast_client)
+        .mount(&app.forecast_client.unwrap())
         .await;
 
     let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
@@ -163,4 +162,25 @@ async fn it_handles_a_non_200_response_from_forecast_client_and_retries_once() {
 
     assert!(!data.contains("current_wave_direction"));
     assert!(data.contains("Something went wrong: Non 200 response from NOAA"));
+}
+
+#[tokio::test]
+async fn forecast_integration_test() {
+    let app = start_integration_test_app()
+        .await
+        .expect("Unable to start test server.");
+
+    let response = reqwest::get(format!("http://{}/api/forecast", &app.addr))
+        .await
+        .unwrap();
+
+    assert_eq!(response.status().as_u16(), 200);
+
+    let data = response.text().await.unwrap();
+
+    assert!(data.contains("current_wave_direction"));
+    assert!(data.contains("current_wave_height"));
+    assert!(data.contains("forecast_as_of"));
+    assert!(data.contains("graph_max"));
+    assert!(data.contains("qualities"));
 }

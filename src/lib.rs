@@ -47,7 +47,7 @@ pub fn startup(settings: &'static Settings) -> Result<Router, String> {
     };
 
     let api = Router::new()
-        .route("/latest", get(routes::latest))
+        .route("/realtime", get(routes::realtime))
         .route("/forecast", get(routes::forecast));
 
     // Create the Axum router.

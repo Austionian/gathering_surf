@@ -6,7 +6,7 @@ use axum::{
 };
 use std::sync::Arc;
 
-pub async fn latest(
+pub async fn realtime(
     selected_spot: Query<SpotParam>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Realtime>, AppError> {
