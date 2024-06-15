@@ -77,7 +77,7 @@ const RACINE_PATH: &str = "/gridpoints/MKX/94,52";
 // -- Realtime PATHs --
 //
 // -- Bouy PATHs --
-const ATWATER_REALTIME_PATH: &str = "/data/realtime2/45013.txt";
+pub const ATWATER_REALTIME_PATH: &str = "/data/realtime2/45013.txt";
 const SHEBOYGAN_REALTIME_PATH: &str = "/data/realtime2/45218.txt";
 const RACINE_REALTIME_PATH: &str = "/data/realtime2/45199.txt";
 // -- --

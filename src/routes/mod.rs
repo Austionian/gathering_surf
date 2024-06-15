@@ -9,5 +9,5 @@ pub use forecast::forecast;
 pub use glimpse::glimpse;
 pub use handle_404::handle_404;
 pub use health_check::health_check;
-pub use realtime::latest;
+pub use realtime::realtime;
 pub use root::*;
