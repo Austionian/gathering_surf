@@ -126,6 +126,9 @@ impl Forecast {
             } else {
                 v += 1;
             }
+            if v < 4 {
+                v = 4;
+            }
             Some(v)
         } else {
             Some(4)
