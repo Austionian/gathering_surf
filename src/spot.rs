@@ -13,11 +13,14 @@ impl SpotParam {
     }
 }
 
+#[derive(serde::Serialize)]
 pub struct Spot {
     pub forecast_path: &'static str,
     pub realtime_path: &'static str,
     pub fallback_realtime_path: Option<&'static str>,
     pub location: Location,
+    pub live_feed_url: Option<&'static str>,
+    pub name: &'static str,
 }
 
 impl Display for Spot {
@@ -32,7 +35,9 @@ impl From<SpotParam> for Spot {
             forecast_path: ATWATER_PATH,
             realtime_path: ATWATER_REALTIME_PATH,
             fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
-            location: Location::Atwater(Atwater),
+            location: Location::Atwater,
+            live_feed_url: None,
+            name: "Atwater",
         };
 
         match val.get_spot().to_lowercase().as_str() {
@@ -40,25 +45,41 @@ impl From<SpotParam> for Spot {
                 forecast_path: BRADFORD_PATH,
                 realtime_path: BRADFORD_REALTIME_PATH,
                 fallback_realtime_path: None,
-                location: Location::Bradford(Bradford),
+                location: Location::Bradford,
+                live_feed_url: None,
+                name: "Bradford"
             },
             "port washington" => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
                 realtime_path: PORT_WASHINGTON_REALTIME_PATH,
                 fallback_realtime_path: None,
-                location: Location::PortWashington(PortWashington),
+                location: Location::PortWashington,
+                live_feed_url: None,
+                name: "Port Washington"
             },
-            "sheboygan" => Spot {
+            "sheboygan - north" => Spot {
                 forecast_path: SHEBOYGAN_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
-                location: Location::Sheboygan(Sheboygan),
+                location: Location::Sheboygan,
+                live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
+                name: "Sheboygan - North"
+            },
+            "sheboygan - south" => Spot {
+                forecast_path: SHEBOYGAN_PATH,
+                realtime_path: SHEBOYGAN_REALTIME_PATH,
+                fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
+                location: Location::SheboyganSouth,
+                live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
+                name: "Sheboygan - South"
             },
             "racine" => Spot {
                 forecast_path: RACINE_PATH,
                 realtime_path: RACINE_REALTIME_PATH,
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
-                location: Location::Racine(Racine),
+                location: Location::Racine,
+                live_feed_url: None,
+                name: "Racine"
             },
             "atwater" => atwater,
             _ => atwater,
@@ -92,48 +113,14 @@ const RACINE_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/KNSW3.txt";
 //
 // -- --
 
-pub struct Atwater;
-pub struct Bradford;
-pub struct Sheboygan;
-pub struct PortWashington;
-pub struct Racine;
-
-impl Display for Atwater {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Atwater")
-    }
-}
-
-impl Display for Bradford {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Bradford")
-    }
-}
-
-impl Display for Sheboygan {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Sheboygan")
-    }
-}
-
-impl Display for PortWashington {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Port Washington")
-    }
-}
-
-impl Display for Racine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Racine")
-    }
-}
-
+#[derive(serde::Serialize)]
 pub enum Location {
-    Atwater(Atwater),
-    Bradford(Bradford),
-    Sheboygan(Sheboygan),
-    PortWashington(PortWashington),
-    Racine(Racine),
+    Atwater,
+    Bradford,
+    Sheboygan,
+    SheboyganSouth,
+    PortWashington,
+    Racine,
 }
 
 impl Location {
@@ -141,13 +128,14 @@ impl Location {
         Self::into_iter().map(|v| v.to_string()).collect()
     }
 
-    fn into_iter() -> core::array::IntoIter<Self, 5> {
+    fn into_iter() -> core::array::IntoIter<Self, 6> {
         [
-            Self::Atwater(Atwater),
-            Self::Bradford(Bradford),
-            Self::Sheboygan(Sheboygan),
-            Self::PortWashington(PortWashington),
-            Self::Racine(Racine),
+            Self::Atwater,
+            Self::Bradford,
+            Self::Sheboygan,
+            Self::SheboyganSouth,
+            Self::PortWashington,
+            Self::Racine,
         ]
         .into_iter()
     }
@@ -159,10 +147,10 @@ impl Location {
         wind_direction: f64,
     ) -> &'static Quality {
         match self {
-            Self::Atwater(_) | Self::Bradford(_) | Self::Sheboygan(_) => {
+            Self::Atwater | Self::Bradford | Self::Sheboygan => {
                 Quality::south(wave_height, wind_speed, wind_direction)
             }
-            Self::PortWashington(_) | Self::Racine(_) => {
+            Self::PortWashington | Self::Racine | Self::SheboyganSouth => {
                 Quality::north(wave_height, wind_speed, wind_direction)
             }
         }
@@ -172,11 +160,12 @@ impl Location {
 impl Display for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Atwater(_) => write!(f, "{}", Atwater),
-            Self::Bradford(_) => write!(f, "{}", Bradford),
-            Self::Sheboygan(_) => write!(f, "{}", Sheboygan),
-            Self::PortWashington(_) => write!(f, "{}", PortWashington),
-            Self::Racine(_) => write!(f, "{}", Racine),
+            Self::Atwater => write!(f, "Atwater"),
+            Self::Bradford => write!(f, "Bradford"),
+            Self::Sheboygan => write!(f, "Sheboygan - North"),
+            Self::SheboyganSouth => write!(f, "Sheboygan - South"),
+            Self::PortWashington => write!(f, "Port Washington"),
+            Self::Racine => write!(f, "Racine"),
         }
     }
 }

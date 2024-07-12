@@ -1,31 +1,17 @@
 <div
   class="relative z-50"
   x-cloak
-  x-show="open"
+  x-show="showNav"
   role="dialog"
-  aria-modal="true"
 >
   <div class="fixed inset-0 bg-black/10 backdrop-blur-md"></div>
 
   <div class="fixed inset-0 flex">
     <div class="relative mr-16 flex w-full max-w-xs flex-1">
-      <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
-        <button type="button" @click="open = false" class="-m-2.5 p-2.5">
+      <div class="absolute left-full top-0 flex w-16 justify-center pt-5 group">
+        <button type="button" @click="showNav = false" class="-m-2.5 p-2.5">
           <span class="sr-only">Close sidebar</span>
-          <svg
-            class="h-6 w-6 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          {% include "includes/exit.html" %}
         </button>
       </div>
 
@@ -41,7 +27,7 @@
               <ul role="list" class="-mx-2 space-y-1">
                 {% for break in breaks %}
                 <li>
-                    {% if break == spot %}
+                    {% if break == spot.name %}
                       <a
                         href="?spot={{ break }}"
                      class="bg-gray-800 text-white group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"

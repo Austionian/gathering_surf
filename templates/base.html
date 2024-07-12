@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <title>Gathering Surf - {{ spot }}</title>
+    <title>Gathering Surf - {{ spot.name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <meta charset="utf-8" />
@@ -23,7 +23,12 @@
       }
     </style>
   </head>
-  <body class="h-full bg-black">
+  <body
+    class="h-full bg-black"
+    x-data="{ showNav: false, showLiveFeed: false }"
+    @keyup.escape="showLiveFeed = false; showNav = false;"
+    :class="{ 'overflow-hidden': showNav || showLiveFeed }"
+  >
     <script src="/assets/static/index.js?v=1"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %}
   </body>

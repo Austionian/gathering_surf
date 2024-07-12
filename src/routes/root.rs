@@ -22,7 +22,7 @@ pub async fn root(
 
         let spot: Spot = selected_spot.0.into();
 
-        context.insert("spot", &spot.to_string());
+        context.insert("spot", &spot);
         context.insert("breaks", &state.breaks);
 
         tx.send(Ok(TEMPLATES.render("index.html", &context)?))

@@ -17,7 +17,7 @@ pub async fn glimpse(
 
     let spot: Spot = selected_spot.0.into();
 
-    context.insert("spot", &spot.to_string());
+    context.insert("spot", &spot);
     context.insert("breaks", &state.breaks);
 
     match Realtime::try_get(&spot, state.realtime_url).await {
