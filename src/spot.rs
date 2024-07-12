@@ -88,10 +88,10 @@ impl From<SpotParam> for Spot {
 }
 
 // -- Forecast PATHs --
-pub const ATWATER_PATH: &str = "/gridpoints/MKX/89,67";
-const BRADFORD_PATH: &str = "/gridpoints/MKX/89,66";
-const SHEBOYGAN_PATH: &str = "/gridpoints/MKX/94,98";
-const SHEBOYGAN_SOUTH_PATH: &str = "/gridpoints/MKX/93,98";
+pub const ATWATER_PATH: &str = "/gridpoints/MKX/90,67";
+const BRADFORD_PATH: &str = "/gridpoints/MKX/90,66";
+const SHEBOYGAN_PATH: &str = "/gridpoints/MKX/94,99";
+const SHEBOYGAN_SOUTH_PATH: &str = "/gridpoints/MKX/94,98";
 const PORT_WASHINGTON_PATH: &str = "/gridpoints/MKX/91,80";
 const RACINE_PATH: &str = "/gridpoints/MKX/94,52";
 // -- --
