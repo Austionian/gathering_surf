@@ -66,7 +66,7 @@ impl From<SpotParam> for Spot {
                 name: "Sheboygan - North"
             },
             "sheboygan - south" => Spot {
-                forecast_path: SHEBOYGAN_PATH,
+                forecast_path: SHEBOYGAN_SOUTH_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
@@ -91,6 +91,7 @@ impl From<SpotParam> for Spot {
 pub const ATWATER_PATH: &str = "/gridpoints/MKX/90,67";
 const BRADFORD_PATH: &str = "/gridpoints/MKX/91,67";
 const SHEBOYGAN_PATH: &str = "/gridpoints/MKX/94,98";
+const SHEBOYGAN_SOUTH_PATH: &str = "/gridpoints/MKX/93,98";
 const PORT_WASHINGTON_PATH: &str = "/gridpoints/MKX/91,80";
 const RACINE_PATH: &str = "/gridpoints/MKX/94,52";
 // -- --
