@@ -43,7 +43,7 @@ pub async fn glimpse(
     match TEMPLATES.render("glimpse.html", &context) {
         Ok(s) => Ok(Html(s)),
         Err(e) => {
-            println!("{:?}", e);
+            tracing::error!("{:?}", e);
             Ok(Html("<html>error</html>".to_string()))
         }
     }

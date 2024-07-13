@@ -1,5 +1,6 @@
 use super::{Location, Spot};
 use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
+
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
@@ -52,6 +53,7 @@ impl Forecast {
         for _ in 0..RETRY {
             let response = client
                 .get(format!("{}{}", forecast_url, spot.forecast_path))
+                .timeout(std::time::Duration::from_secs(10))
                 .send()
                 .await?;
             if response.status().as_u16() == 200 {
@@ -220,14 +222,11 @@ impl Forecast {
                 if let Some(last_hour) = self.wave_height.get(i - 1) {
                     let last_hour_height = last_hour.value as u8;
                     return match height.partial_cmp(&last_hour_height) {
-                        Some(Ordering::Less) => {
-                            println!("{}, {}", height, last_hour_height);
-                            (
-                                format!("{:.0}-{:.0}", height, last_hour_height),
-                                period,
-                                direction,
-                            )
-                        }
+                        Some(Ordering::Less) => (
+                            format!("{:.0}-{:.0}", height, last_hour_height),
+                            period,
+                            direction,
+                        ),
                         Some(Ordering::Greater) => (
                             format!("{:.0}-{:.0}+", last_hour_height, height),
                             period,
