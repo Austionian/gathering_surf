@@ -29,7 +29,7 @@ pub async fn root(
             .await?;
 
         let (realtime, forecast) = tokio::join!(
-            Realtime::try_get(&spot, state.realtime_url),
+            Realtime::try_get(&spot, state.realtime_url, state.quality_url),
             Forecast::try_get(&spot, state.forecast_url)
         );
 

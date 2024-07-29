@@ -1,5 +1,5 @@
 use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
 use tracing::{error, info, warn};
@@ -19,14 +19,26 @@ pub struct Realtime {
     pub wave_height: Option<String>,
     pub wave_period: Option<u8>,
     pub wave_direction: Option<u16>,
+    pub water_quality: String,
 }
 
 impl Realtime {
-    pub async fn try_get(spot: &Spot, realtime_url: &str) -> anyhow::Result<Self> {
+    pub async fn try_get(
+        spot: &Spot,
+        realtime_url: &'static str,
+        quality_url: &'static str,
+    ) -> anyhow::Result<Self> {
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         // Fallback to Atwater bouy for now.
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
+
+        let quality_path = spot.quality_path;
+        let water_quality = tokio::spawn(async move {
+            Self::get_quality_data(quality_path, quality_url)
+                .await
+                .unwrap()
+        });
 
         let data = Self::get_latest_data(spot, realtime_url).await?;
 
@@ -103,7 +115,33 @@ impl Realtime {
             wave_height,
             wave_period,
             wave_direction,
+            water_quality: water_quality.await?,
         })
+    }
+
+    async fn get_quality_data(
+        quality_path: &'static str,
+        quality_url: &'static str,
+    ) -> anyhow::Result<String> {
+        let response = reqwest::get(format!("{quality_url}{quality_path}"))
+            .await?
+            .json::<serde_json::Value>()
+            .await?;
+
+        Ok(response
+            .get("features")
+            .ok_or(anyhow!("no features found."))?
+            .as_array()
+            .ok_or(anyhow!("features is not an array."))?
+            .first()
+            .ok_or(anyhow!("empty array of features."))?
+            .get("attributes")
+            .ok_or(anyhow!("no attributes found."))?
+            .get("STATUS")
+            .ok_or(anyhow!("no status found."))?
+            .as_str()
+            .ok_or(anyhow!("status not a string."))?
+            .to_string())
     }
 
     async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {

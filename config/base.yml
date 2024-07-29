@@ -5,3 +5,5 @@ forecast_api:
   base_url: "https://api.weather.gov"
 realtime_api:
   base_url: "https://www.ndbc.noaa.gov"
+quality_api:
+  base_url: "https://dnrmaps.wi.gov"

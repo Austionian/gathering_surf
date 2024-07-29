@@ -20,7 +20,7 @@ pub async fn glimpse(
     context.insert("spot", &spot);
     context.insert("breaks", &state.breaks);
 
-    match Realtime::try_get(&spot, state.realtime_url).await {
+    match Realtime::try_get(&spot, state.realtime_url, state.quality_url).await {
         Ok(latest) => {
             context.insert("as_of", &latest.as_of);
             context.insert("wind_direction", &latest.wind_direction);

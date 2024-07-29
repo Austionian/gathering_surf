@@ -56,6 +56,7 @@ function NonNull(item) {
  * @property {string} quality_color - The hexcode of the quality.
  * @property {string} quality_text - The computed text of the quality.
  * @property {string} water_temp - The latest water temperature.
+ * @property {string} water_quality - The latest water temperature.
  * @property {number} wind_direction - The current wind direction.
  * @property {string} wind_speed - The current wind speed.
  * @property {string} gusts - The current wind gust.
@@ -102,6 +103,8 @@ function parseLatestData(data) {
     data.water_temp;
   NonNull(document.getElementById("current-air-temp")).innerText =
     data.air_temp;
+  NonNull(document.getElementById("current-water-quality")).innerText =
+    data.water_quality.split(" ")[0] === "Open" ? "Meh" : "Bad";
   NonNull(document.getElementById("wind")).innerText = getWindData(data);
   NonNull(document.getElementById("as-of")).innerText =
     `Live as of ${data.as_of}`;

@@ -36,6 +36,7 @@ pub struct AppState {
     breaks: Vec<String>,
     forecast_url: &'static str,
     realtime_url: &'static str,
+    quality_url: &'static str,
 }
 
 pub fn startup(settings: &'static Settings) -> Result<Router, String> {
@@ -44,6 +45,7 @@ pub fn startup(settings: &'static Settings) -> Result<Router, String> {
         breaks: Location::get_all(),
         forecast_url: &settings.forecast_api.base_url,
         realtime_url: &settings.realtime_api.base_url,
+        quality_url: &settings.quality_api.base_url,
     };
 
     let api = Router::new()
