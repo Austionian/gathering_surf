@@ -103,8 +103,13 @@ function parseLatestData(data) {
     data.water_temp;
   NonNull(document.getElementById("current-air-temp")).innerText =
     data.air_temp;
-  NonNull(document.getElementById("current-water-quality")).innerText =
-    data.water_quality.split(" ")[0] === "Open" ? "Meh" : "Bad";
+  data.water_quality.split(" ")[0] === "Open"
+    ? NonNull(
+        document.getElementById("current-water-quality-open"),
+      )?.classList.remove("hidden")
+    : NonNull(
+        document.getElementById("current-water-quality-closed"),
+      )?.classList.remove("hidden");
   NonNull(document.getElementById("wind")).innerText = getWindData(data);
   NonNull(document.getElementById("as-of")).innerText =
     `Live as of ${data.as_of}`;

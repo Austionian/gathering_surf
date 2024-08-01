@@ -1,7 +1,11 @@
 <div
   class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-6 border-b border-white/5 bg-black/80 px-4 shadow-sm sm:px-6 lg:px-8"
 >
-  <button @click="showNav = true" type="button" class="-m-2.5 p-2.5 text-white hover:text-gray-500">
+  <button
+    @click="showNav = true"
+    type="button"
+    class="-m-2.5 p-2.5 text-white hover:text-gray-500"
+  >
     <span class="sr-only">Open sidebar</span>
     <svg
       class="h-5 w-5"
@@ -18,4 +22,21 @@
   </button>
   <a href="/"><p class="h-8 w-8 mr-2">{% include "includes/logo.svg" %}</p></a>
   <p class="text-3xl font-light whitespace-nowrap">{{ spot.name }}</p>
+  <div
+    class="latest-loader w-8 h-8 animate-pulse rounded-xl bg-gray-700"
+  ></div>
+  <div class="hidden w-8 h-8" id="current-water-quality-open">
+    <svg class="fill-green-400" height="25" width="25" xmlns="http://www.w3.org/2000/svg">
+      <polygon
+        points="12,12,25, 25, 0, 25"
+      />
+    </svg>
+  </div>
+  <div class="hidden w-8 h-8" id="current-water-quality-closed">
+    <svg class="fill-red-400" height="25" width="25" xmlns="http://www.w3.org/2000/svg">
+      <polygon
+        points="12,12,25, 25, 0, 25"
+      />
+    </svg>
+  </div>
 </div>
