@@ -1,4 +1,4 @@
-use crate::{AppState, Forecast, Realtime, Spot, SpotParam, TEMPLATES};
+use crate::{templates, AppState, Forecast, Realtime, Spot, SpotParam};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -25,7 +25,7 @@ pub async fn root(
         context.insert("spot", &spot);
         context.insert("breaks", &state.breaks);
 
-        tx.send(Ok(TEMPLATES.render("index.html", &context)?))
+        tx.send(Ok(templates().render("index.html", &context)?))
             .await?;
 
         let (realtime, forecast) = tokio::join!(
@@ -37,7 +37,7 @@ pub async fn root(
             Ok(realtime) => {
                 context.insert("latest_json", &serde_json::to_string(&realtime)?);
 
-                tx.send(Ok(TEMPLATES.render("latest.html", &context)?))
+                tx.send(Ok(templates().render("latest.html", &context)?))
                     .await?;
             }
             Err(e) => {
@@ -45,7 +45,7 @@ pub async fn root(
                 context.insert("error_type", &"latest");
                 context.insert("container", &"latest-container");
                 context.insert("error_container", &"latest-error");
-                tx.send(Ok(TEMPLATES.render("error.html", &context)?))
+                tx.send(Ok(templates().render("error.html", &context)?))
                     .await?;
             }
         }
@@ -54,7 +54,7 @@ pub async fn root(
             Ok(forecast) => {
                 context.insert("forecast_json", &serde_json::to_string(&forecast)?);
 
-                tx.send(Ok(TEMPLATES.render("forecast.html", &context)?))
+                tx.send(Ok(templates().render("forecast.html", &context)?))
                     .await?;
 
                 Ok(())
@@ -64,7 +64,7 @@ pub async fn root(
                 context.insert("error_type", &"forecast");
                 context.insert("container", &"forecast-container");
                 context.insert("error_container", &"forecast-error");
-                tx.send(Ok(TEMPLATES.render("error.html", &context)?))
+                tx.send(Ok(templates().render("error.html", &context)?))
                     .await?;
 
                 Err(AppError(anyhow!("Failed to load forecast.")))

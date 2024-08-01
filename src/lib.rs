@@ -7,8 +7,8 @@ mod spot;
 mod utils;
 
 use axum::{routing::get, Router};
-use lazy_static::lazy_static;
 use std::sync::Arc;
+use std::sync::OnceLock;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
@@ -19,16 +19,16 @@ pub use realtime::Realtime;
 pub use spot::*;
 pub use utils::*;
 
-lazy_static! {
-    pub static ref TEMPLATES: tera::Tera = {
-        match tera::Tera::new("templates/**/*") {
-            Ok(t) => t,
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
+pub fn templates() -> &'static tera::Tera {
+    static TEMPLATES: OnceLock<tera::Tera> = OnceLock::new();
+
+    TEMPLATES.get_or_init(|| match tera::Tera::new("templates/**/*") {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            ::std::process::exit(1);
         }
-    };
+    })
 }
 
 #[derive(Clone, serde::Serialize)]
