@@ -1,4 +1,7 @@
-use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
+use crate::{
+    utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile},
+    QUALITY_PATH,
+};
 use anyhow::{anyhow, bail};
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
@@ -20,6 +23,7 @@ pub struct Realtime {
     pub wave_period: Option<u8>,
     pub wave_direction: Option<u16>,
     pub water_quality: String,
+    pub water_quality_text: String,
 }
 
 impl Realtime {
@@ -33,9 +37,10 @@ impl Realtime {
         // Fallback to Atwater bouy for now.
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
-        let quality_path = spot.quality_path;
-        let water_quality = tokio::spawn(async move {
-            Self::get_quality_data(quality_path, quality_url)
+        let quality_query = spot.quality_query;
+        let status_query = spot.status_query;
+        let water_quality_data = tokio::spawn(async move {
+            Self::get_quality_data(quality_query, status_query, quality_url)
                 .await
                 .unwrap()
         });
@@ -103,6 +108,8 @@ impl Realtime {
             wind_direction as f64,
         );
 
+        let (water_quality, water_quality_text) = water_quality_data.await?;
+
         Ok(Self {
             air_temp,
             as_of,
@@ -115,33 +122,56 @@ impl Realtime {
             wave_height,
             wave_period,
             wave_direction,
-            water_quality: water_quality.await?,
+            water_quality,
+            water_quality_text,
         })
     }
 
     async fn get_quality_data(
-        quality_path: &'static str,
+        quality_query: &'static str,
+        status_query: &'static str,
         quality_url: &'static str,
-    ) -> anyhow::Result<String> {
-        let response = reqwest::get(format!("{quality_url}{quality_path}"))
+    ) -> anyhow::Result<(String, String)> {
+        let status = reqwest::get(format!("{quality_url}{QUALITY_PATH}{status_query}"))
             .await?
             .json::<serde_json::Value>()
             .await?;
 
-        Ok(response
-            .get("features")
-            .ok_or(anyhow!("no features found."))?
-            .as_array()
-            .ok_or(anyhow!("features is not an array."))?
-            .first()
-            .ok_or(anyhow!("empty array of features."))?
-            .get("attributes")
-            .ok_or(anyhow!("no attributes found."))?
-            .get("STATUS")
-            .ok_or(anyhow!("no status found."))?
-            .as_str()
-            .ok_or(anyhow!("status not a string."))?
-            .to_string())
+        let response = reqwest::get(format!("{quality_url}{QUALITY_PATH}{quality_query}"))
+            .await?
+            .json::<serde_json::Value>()
+            .await?;
+
+        Ok((
+            status
+                .get("features")
+                .ok_or(anyhow!("no features found."))?
+                .as_array()
+                .ok_or(anyhow!("features is not an array."))?
+                .first()
+                .ok_or(anyhow!("empty array of features."))?
+                .get("attributes")
+                .ok_or(anyhow!("no attributes found."))?
+                .get("MAP_STATUS")
+                .ok_or(anyhow!("no map status found."))?
+                .as_str()
+                .ok_or(anyhow!("map status not a string."))?
+                .to_string(),
+            response
+                .get("features")
+                .ok_or(anyhow!("no features found."))?
+                .as_array()
+                .ok_or(anyhow!("features is not an array."))?
+                .first()
+                .ok_or(anyhow!("empty array of features."))?
+                .get("attributes")
+                .ok_or(anyhow!("no attributes found."))?
+                .get("STATUS")
+                .ok_or(anyhow!("no status found."))?
+                .as_str()
+                .ok_or(anyhow!("status not a string."))?
+                .to_string(),
+        ))
     }
 
     async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {

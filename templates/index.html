@@ -165,27 +165,70 @@
                   >
                 </div>
               </div>
-              <div class="border-r border-white/5"></div>
-              <div>
-                <p class="text-sm font-medium leading-6 text-gray-400">
-                  Air Temp
-                </p>
-                <div
-                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
-                >
-                  <div
-                    class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
-                  ></div>
-                  <span id="current-air-temp"></span>
-                  <span
-                    class="text-sm tracking-tight font-semibold text-gray-400"
-                    >°F</span
-                  >
-                </div>
-              </div>
             </div>
           </div>
         </header>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 bg-gray-700/10">
+        <div
+          class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 text-gray-300"
+        >
+          <p class="text-sm font-medium leading-6 text-gray-400 mr-2">
+            Beach Status
+          </p>
+          <div
+            class="latest-loader w-80 h-[40px] mt-2 animate-pulse rounded-xl bg-gray-700"
+          ></div>
+          <div class="hidden" id="current-water-quality-open">
+            <div
+              class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+            >
+              OPEN
+              <span
+                id="current-water-quality-open-status-text"
+                class="hidden lg:block text-sm tracking-tight font-semibold text-gray-400"
+              ></span>
+            </div>
+          </div>
+          <div class="hidden" id="current-water-quality-advisory">
+            <div
+              class="text-4xl font-semibold tracking-tight mt-2 flex items-baseline gap-x-2 text-yellow-400"
+            >
+              ADVISORY
+              <span
+                id="current-water-quality-advisory-status-text"
+                class="hidden lg:block text-sm tracking-tight font-semibold text-gray-400"
+              ></span>
+            </div>
+          </div>
+          <div class="hidden" id="current-water-quality-closed">
+            <div
+              class="text-4xl font-semibold tracking-tight text-red-500 mt-2 flex items-baseline gap-x-2"
+            >
+              CLOSED
+              <span
+                id="current-water-quality-closed-status-text"
+                class="hidden lg:block text-sm tracking-tight font-semibold text-gray-400"
+              ></span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+        >
+          <p class="text-sm font-medium leading-6 text-gray-400">Air Temp</p>
+          <div
+            class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+          >
+            <div
+              class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+            ></div>
+            <span id="current-air-temp"></span>
+            <span class="text-sm tracking-tight font-semibold text-gray-400"
+              >°F</span
+            >
+          </div>
+        </div>
       </div>
       <div id="latest-error"></div>
 

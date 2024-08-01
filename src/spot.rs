@@ -17,7 +17,8 @@ impl SpotParam {
 pub struct Spot {
     pub forecast_path: &'static str,
     pub realtime_path: &'static str,
-    pub quality_path: &'static str,
+    pub quality_query: &'static str,
+    pub status_query: &'static str,
     pub fallback_realtime_path: Option<&'static str>,
     pub location: Location,
     pub live_feed_url: Option<&'static str>,
@@ -35,7 +36,8 @@ impl From<SpotParam> for Spot {
         let atwater = Spot {
             forecast_path: ATWATER_PATH,
             realtime_path: ATWATER_REALTIME_PATH,
-            quality_path: ATWATER_QUALITY_PATH,
+            quality_query: ATWATER_QUALITY_QUERY,
+            status_query: ATWATER_QUALITY_STATUS_QUERY,
             fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
             location: Location::Atwater,
             live_feed_url: None,
@@ -46,7 +48,8 @@ impl From<SpotParam> for Spot {
             "bradford" => Spot {
                 forecast_path: BRADFORD_PATH,
                 realtime_path: BRADFORD_REALTIME_PATH,
-                quality_path: ATWATER_QUALITY_PATH,
+                quality_query: ATWATER_QUALITY_QUERY,
+                status_query: ATWATER_QUALITY_STATUS_QUERY,
                 fallback_realtime_path: None,
                 location: Location::Bradford,
                 live_feed_url: None,
@@ -55,7 +58,8 @@ impl From<SpotParam> for Spot {
             "port washington" => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
                 realtime_path: PORT_WASHINGTON_REALTIME_PATH,
-                quality_path: ATWATER_QUALITY_PATH,
+                quality_query: ATWATER_QUALITY_QUERY,
+                status_query: ATWATER_QUALITY_STATUS_QUERY,
                 fallback_realtime_path: None,
                 location: Location::PortWashington,
                 live_feed_url: None,
@@ -64,7 +68,8 @@ impl From<SpotParam> for Spot {
             "sheboygan - north" => Spot {
                 forecast_path: SHEBOYGAN_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_path: ATWATER_QUALITY_PATH,
+                quality_query: ATWATER_QUALITY_QUERY,
+                status_query: ATWATER_QUALITY_STATUS_QUERY,
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
@@ -73,7 +78,8 @@ impl From<SpotParam> for Spot {
             "sheboygan - south" => Spot {
                 forecast_path: SHEBOYGAN_SOUTH_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_path: ATWATER_QUALITY_PATH,
+                quality_query: ATWATER_QUALITY_QUERY,
+                status_query: ATWATER_QUALITY_STATUS_QUERY,
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
@@ -82,7 +88,8 @@ impl From<SpotParam> for Spot {
             "racine" => Spot {
                 forecast_path: RACINE_PATH,
                 realtime_path: RACINE_REALTIME_PATH,
-                quality_path: ATWATER_QUALITY_PATH,
+                quality_query: ATWATER_QUALITY_QUERY,
+                status_query: ATWATER_QUALITY_STATUS_QUERY,
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine,
                 live_feed_url: None,
@@ -119,8 +126,13 @@ const SHEBOYGAN_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/SGNW3.txt";
 const RACINE_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/KNSW3.txt";
 // -- --
 //
-// -- Water Quality Paths --
-pub const ATWATER_QUALITY_PATH: &str = "/arcgis2/rest/services/OGW_Beach_Monitoring/OGW_Beach_Monitoring_Locations_Ext/MapServer/0/query?f=json&objectIds=171&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID&outSR=102100&returnM=true&returnZ=true&spatialRel=esriSpatialRelIntersects&where=1%3D1";
+// -- Water Quality Queries --
+// Base path for all spot queries
+pub const QUALITY_PATH: &str =
+"/arcgis2/rest/services/OGW_Beach_Monitoring/OGW_Beach_Monitoring_Locations_Ext/MapServer/0/query";
+//
+pub const ATWATER_QUALITY_QUERY: &str = "?f=json&objectIds=171&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID&outSR=102100&returnM=true&returnZ=true&spatialRel=esriSpatialRelIntersects&where=1%3D1";
+pub const ATWATER_QUALITY_STATUS_QUERY: &str = "?f=json&geometry={\"spatialReference\"%3A{\"latestWkid\"%3A3857%2C\"wkid\"%3A102100}%2C\"xmin\"%3A-9782105.131824149%2C\"ymin\"%3A5325520.6346863955%2C\"xmax\"%3A-9781493.635597868%2C\"ymax\"%3A5326132.130912676}&maxRecordCountFactor=1&outFields=MAP_STATUS";
 // -- --
 //
 // -- --
