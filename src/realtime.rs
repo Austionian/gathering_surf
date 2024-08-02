@@ -1,13 +1,11 @@
-use crate::{
-    utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile},
-    QUALITY_PATH,
-};
-use anyhow::{anyhow, bail};
+use super::Spot;
+use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
+
+use anyhow::bail;
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
+use std::sync::Arc;
 use tracing::{error, info, warn};
-
-use super::Spot;
 
 #[derive(serde::Serialize)]
 pub struct Realtime {
@@ -22,31 +20,17 @@ pub struct Realtime {
     pub wave_height: Option<String>,
     pub wave_period: Option<u8>,
     pub wave_direction: Option<u16>,
-    pub water_quality: String,
-    pub water_quality_text: String,
 }
 
 impl Realtime {
-    pub async fn try_get(
-        spot: &Spot,
-        realtime_url: &'static str,
-        quality_url: &'static str,
-    ) -> anyhow::Result<Self> {
+    pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
+        info!("fetching realtime");
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         // Fallback to Atwater bouy for now.
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
-        let quality_query = spot.quality_query;
-        // could use a oncelock here to get the static value and not need to clone
-        let status_query = spot.status_query.clone();
-        let water_quality_data = tokio::spawn(async move {
-            Self::get_quality_data(&quality_query, &status_query, quality_url)
-                .await
-                .unwrap()
-        });
-
-        let data = Self::get_latest_data(spot, realtime_url).await?;
+        let data = Self::get_latest_data(&spot, realtime_url).await?;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -80,6 +64,7 @@ impl Realtime {
         let raw_water_temp = measurements.next().unwrap_or("MM");
 
         let water_temp = if raw_water_temp == "MM" {
+            info!("fetching fallback bouy data for water temp");
             let bouy_data = reqwest::get(format!("{}{}", realtime_url, FALLBACK_BOUY))
                 .await?
                 .text()
@@ -109,8 +94,6 @@ impl Realtime {
             wind_direction as f64,
         );
 
-        let (water_quality, water_quality_text) = water_quality_data.await?;
-
         Ok(Self {
             air_temp,
             as_of,
@@ -123,56 +106,7 @@ impl Realtime {
             wave_height,
             wave_period,
             wave_direction,
-            water_quality,
-            water_quality_text,
         })
-    }
-
-    async fn get_quality_data(
-        quality_query: &str,
-        status_query: &str,
-        quality_url: &'static str,
-    ) -> anyhow::Result<(String, String)> {
-        let status = reqwest::get(format!("{quality_url}{QUALITY_PATH}{status_query}"))
-            .await?
-            .json::<serde_json::Value>()
-            .await?;
-
-        let response = reqwest::get(format!("{quality_url}{QUALITY_PATH}{quality_query}"))
-            .await?
-            .json::<serde_json::Value>()
-            .await?;
-
-        Ok((
-            status
-                .get("features")
-                .ok_or(anyhow!("no features found."))?
-                .as_array()
-                .ok_or(anyhow!("features is not an array."))?
-                .first()
-                .ok_or(anyhow!("empty array of features."))?
-                .get("attributes")
-                .ok_or(anyhow!("no attributes found."))?
-                .get("MAP_STATUS")
-                .ok_or(anyhow!("no map status found."))?
-                .as_str()
-                .ok_or(anyhow!("map status not a string."))?
-                .to_string(),
-            response
-                .get("features")
-                .ok_or(anyhow!("no features found."))?
-                .as_array()
-                .ok_or(anyhow!("features is not an array."))?
-                .first()
-                .ok_or(anyhow!("empty array of features."))?
-                .get("attributes")
-                .ok_or(anyhow!("no attributes found."))?
-                .get("STATUS")
-                .ok_or(anyhow!("no status found."))?
-                .as_str()
-                .ok_or(anyhow!("status not a string."))?
-                .to_string(),
-        ))
     }
 
     async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {

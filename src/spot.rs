@@ -1,5 +1,6 @@
 use super::Quality;
 use std::{fmt::Display, sync::OnceLock};
+use tracing::warn;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct SpotParam {
@@ -18,7 +19,7 @@ pub struct Spot {
     pub forecast_path: &'static str,
     pub realtime_path: &'static str,
     pub quality_query: &'static str,
-    pub status_query: String,
+    pub status_query: &'static str,
     pub fallback_realtime_path: Option<&'static str>,
     pub location: Location,
     pub live_feed_url: Option<&'static str>,
@@ -33,11 +34,12 @@ impl Display for Spot {
 
 impl From<SpotParam> for Spot {
     fn from(mut val: SpotParam) -> Self {
+        // Create atwater to use as the default value
         let atwater = Spot {
             forecast_path: ATWATER_PATH,
             realtime_path: ATWATER_REALTIME_PATH,
             quality_query: get_atwater_quality(),
-            status_query: get_status_query(ATWATER_QUALITY_ID),
+            status_query: get_atwater_status(),
             fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
             location: Location::Atwater,
             live_feed_url: None,
@@ -48,8 +50,8 @@ impl From<SpotParam> for Spot {
             "bradford" => Spot {
                 forecast_path: BRADFORD_PATH,
                 realtime_path: BRADFORD_REALTIME_PATH,
-                quality_query: get_atwater_quality(),
-                status_query: get_status_query(ATWATER_QUALITY_ID),
+                quality_query: get_bradford_quality(),
+                status_query: get_bradford_status(),
                 fallback_realtime_path: None,
                 location: Location::Bradford,
                 live_feed_url: None,
@@ -58,8 +60,8 @@ impl From<SpotParam> for Spot {
             "port washington" => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
                 realtime_path: PORT_WASHINGTON_REALTIME_PATH,
-                quality_query: get_atwater_quality(),
-                status_query: get_status_query(ATWATER_QUALITY_ID),
+                quality_query: get_port_washington_quality(),
+                status_query: get_port_washington_status(),
                 fallback_realtime_path: None,
                 location: Location::PortWashington,
                 live_feed_url: None,
@@ -68,8 +70,8 @@ impl From<SpotParam> for Spot {
             "sheboygan - north" => Spot {
                 forecast_path: SHEBOYGAN_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: get_atwater_quality(),
-                status_query: get_status_query(ATWATER_QUALITY_ID),
+                quality_query: get_sheboygan_north_quality(),
+                status_query: get_sheboygan_north_status(),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
@@ -78,8 +80,8 @@ impl From<SpotParam> for Spot {
             "sheboygan - south" => Spot {
                 forecast_path: SHEBOYGAN_SOUTH_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: get_atwater_quality(),
-                status_query: get_status_query(ATWATER_QUALITY_ID),
+                quality_query: get_sheboygan_south_quality(),
+                status_query: get_sheboygan_south_status(),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
@@ -89,14 +91,17 @@ impl From<SpotParam> for Spot {
                 forecast_path: RACINE_PATH,
                 realtime_path: RACINE_REALTIME_PATH,
                 quality_query: get_racine_quality(),
-                status_query: get_status_query(RACINE_QUALITY_ID),
+                status_query: get_racine_status(),
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine,
                 live_feed_url: None,
                 name: "Racine"
             },
             "atwater" => atwater,
-            _ => atwater,
+            _ => {
+                warn!("unmatched spot found, falling back to atwater.");
+                atwater
+            },
         }
     }
 }
@@ -133,6 +138,10 @@ pub const QUALITY_PATH: &str =
 //
 const ATWATER_QUALITY_ID: &str = "171";
 const RACINE_QUALITY_ID: &str = "204";
+const BRADFORD_QUALITY_ID: &str = "192";
+const SHEBOYGAN_NORTH_QUALITY_ID: &str = "170";
+const SHEBOYGAN_SOUTH_QUALITY_ID: &str = "382";
+const PORT_WASHINGTON_QUALITY_ID: &str = "100";
 // -- --
 //
 // -- --
@@ -143,10 +152,70 @@ fn get_atwater_quality() -> &'static str {
     ATWATER_QUALITY.get_or_init(|| get_quality_query(ATWATER_QUALITY_ID))
 }
 
+fn get_bradford_quality() -> &'static str {
+    static BRADFORD_QUALITY: OnceLock<String> = OnceLock::new();
+
+    BRADFORD_QUALITY.get_or_init(|| get_quality_query(BRADFORD_QUALITY_ID))
+}
+
+fn get_port_washington_quality() -> &'static str {
+    static PORT_WASHINGTON_QUALITY: OnceLock<String> = OnceLock::new();
+
+    PORT_WASHINGTON_QUALITY.get_or_init(|| get_quality_query(PORT_WASHINGTON_QUALITY_ID))
+}
+
+fn get_sheboygan_north_quality() -> &'static str {
+    static SHEBOYGAN_NORTH_QUALITY: OnceLock<String> = OnceLock::new();
+
+    SHEBOYGAN_NORTH_QUALITY.get_or_init(|| get_quality_query(SHEBOYGAN_NORTH_QUALITY_ID))
+}
+
+fn get_sheboygan_south_quality() -> &'static str {
+    static SHEBOYGAN_SOUTH_QUALITY: OnceLock<String> = OnceLock::new();
+
+    SHEBOYGAN_SOUTH_QUALITY.get_or_init(|| get_quality_query(SHEBOYGAN_SOUTH_QUALITY_ID))
+}
+
 fn get_racine_quality() -> &'static str {
     static RACINE_QUALITY: OnceLock<String> = OnceLock::new();
 
     RACINE_QUALITY.get_or_init(|| get_quality_query(RACINE_QUALITY_ID))
+}
+
+fn get_atwater_status() -> &'static str {
+    static ATWATER_STATUS: OnceLock<String> = OnceLock::new();
+
+    ATWATER_STATUS.get_or_init(|| get_status_query(ATWATER_QUALITY_ID))
+}
+
+fn get_bradford_status() -> &'static str {
+    static BRADFORD_STATUS: OnceLock<String> = OnceLock::new();
+
+    BRADFORD_STATUS.get_or_init(|| get_status_query(BRADFORD_QUALITY_ID))
+}
+
+fn get_port_washington_status() -> &'static str {
+    static PORT_WASHINGTON_STATUS: OnceLock<String> = OnceLock::new();
+
+    PORT_WASHINGTON_STATUS.get_or_init(|| get_status_query(PORT_WASHINGTON_QUALITY_ID))
+}
+
+fn get_sheboygan_north_status() -> &'static str {
+    static SHEBOYGAN_NORTH_STATUS: OnceLock<String> = OnceLock::new();
+
+    SHEBOYGAN_NORTH_STATUS.get_or_init(|| get_status_query(SHEBOYGAN_NORTH_QUALITY_ID))
+}
+
+fn get_sheboygan_south_status() -> &'static str {
+    static SHEBOYGAN_SOUTH_STATUS: OnceLock<String> = OnceLock::new();
+
+    SHEBOYGAN_SOUTH_STATUS.get_or_init(|| get_status_query(SHEBOYGAN_SOUTH_QUALITY_ID))
+}
+
+fn get_racine_status() -> &'static str {
+    static RACINE_STATUS: OnceLock<String> = OnceLock::new();
+
+    RACINE_STATUS.get_or_init(|| get_status_query(RACINE_QUALITY_ID))
 }
 
 fn get_status_query(id: &str) -> String {

@@ -5,6 +5,7 @@ mod realtime;
 mod routes;
 mod spot;
 mod utils;
+mod water_quality;
 
 use axum::{routing::get, Router};
 use std::sync::Arc;
@@ -18,6 +19,7 @@ pub use quality::*;
 pub use realtime::Realtime;
 pub use spot::*;
 pub use utils::*;
+pub use water_quality::*;
 
 pub fn templates() -> &'static tera::Tera {
     static TEMPLATES: OnceLock<tera::Tera> = OnceLock::new();

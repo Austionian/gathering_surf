@@ -14,10 +14,11 @@ const observerCallback = (mutationList) => {
     if (mutation.target.id === "latest-data") {
       parseLatestData(JSON.parse(mutation.target.innerText));
     }
+    if (mutation.target.id === "water-quality-data") {
+      parseWaterQualityData(JSON.parse(mutation.target.innerText));
+    }
     if (mutation.target.id === "forecast-data") {
-      setTimeout(() => {
-        parseForecastData(JSON.parse(mutation.target.innerText));
-      }, 100);
+      parseForecastData(JSON.parse(mutation.target.innerText));
     }
   }
 };
@@ -52,12 +53,36 @@ function NonNull(item) {
 }
 
 /**
+ * @typedef {Object} WaterQualityData
+ * @property {string} water_quality - The latest water quality.
+ * @property {string} water_quality_text - The latest water quality information.
+ */
+
+/**
+ * Takes the latest data JSON and updates the HTML
+ *
+ * @param {WaterQualityData} data
+ */
+function parseWaterQualityData(data) {
+  NonNull(
+    document.getElementById(
+      `current-water-quality-${data.water_quality.toLowerCase()}`,
+    ),
+  )?.classList.remove("hidden");
+  NonNull(
+    document.getElementById(
+      `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
+    ),
+  ).innerText = data.water_quality_text;
+
+  document.querySelectorAll(".water-quality-loader").forEach((e) => e.remove());
+}
+
+/**
  * @typedef {Object} LatestData
  * @property {string} quality_color - The hexcode of the quality.
  * @property {string} quality_text - The computed text of the quality.
  * @property {string} water_temp - The latest water temperature.
- * @property {string} water_quality - The latest water quality.
- * @property {string} water_quality_text - The latest water quality information.
  * @property {number} wind_direction - The current wind direction.
  * @property {string} wind_speed - The current wind speed.
  * @property {string} gusts - The current wind gust.
@@ -105,11 +130,8 @@ function parseLatestData(data) {
   NonNull(document.getElementById("current-air-temp")).innerText =
     data.air_temp;
 
-  updateBeachStatus(data);
-
   NonNull(document.getElementById("wind")).innerText = getWindData(data);
-  NonNull(document.getElementById("as-of")).innerText =
-    `Live as of ${data.as_of}`;
+  NonNull(document.getElementById("as-of")).innerText = `As of ${data.as_of}`;
   document
     .getElementById("wind-icon")
     ?.setAttribute(
@@ -126,24 +148,6 @@ function parseLatestData(data) {
   document.getElementById("wave-icon-container")?.classList.remove("hidden");
   document.getElementById("as-of-container")?.classList.remove("animate-pulse");
   document.getElementById("wave-quality")?.classList.remove("hidden");
-}
-
-/**
- * Takes the latest data JSON and updates the HTML
- *
- * @param {LatestData} data
- */
-function updateBeachStatus(data) {
-  NonNull(
-    document.getElementById(
-      `current-water-quality-${data.water_quality.toLowerCase()}`,
-    ),
-  )?.classList.remove("hidden");
-  NonNull(
-    document.getElementById(
-      `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
-    ),
-  ).innerText = data.water_quality_text;
 }
 
 /**

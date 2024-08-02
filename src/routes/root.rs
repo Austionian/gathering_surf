@@ -1,4 +1,4 @@
-use crate::{templates, AppState, Forecast, Realtime, Spot, SpotParam};
+use crate::{templates, AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -6,8 +6,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use std::{convert::Infallible, sync::Arc};
-use tokio::sync::mpsc;
+use std::{convert::Infallible, ops::Deref, sync::Arc};
+use tokio::sync::{mpsc, Mutex};
+use tracing::info;
 
 /// Handler to return the website's index
 pub async fn root(
@@ -17,55 +18,111 @@ pub async fn root(
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
+    let tx = Arc::new(tx);
+    let context = Arc::new(Mutex::new(tera::Context::new()));
+
+    let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
+
+    context.lock().await.insert("spot", &*spot);
+    context.lock().await.insert("breaks", &state.breaks);
+
+    tx.send(Ok(
+        templates().render("index.html", context.lock().await.deref())?
+    ))
+    .await?;
+
+    // Figure out a better way than unwraping in the spawned tasks
+    let realtime_tx = tx.clone();
+    let realtime_context = context.clone();
+    let realtime_spot = spot.clone();
+    let realtime_state = state.clone();
     tokio::spawn(async move {
-        let mut context = tera::Context::new();
-
-        let spot: Spot = selected_spot.0.into();
-
-        context.insert("spot", &spot);
-        context.insert("breaks", &state.breaks);
-
-        tx.send(Ok(templates().render("index.html", &context)?))
-            .await?;
-
-        let (realtime, forecast) = tokio::join!(
-            Realtime::try_get(&spot, state.realtime_url, state.quality_url),
-            Forecast::try_get(&spot, state.forecast_url)
-        );
-
-        match realtime {
+        match Realtime::try_get(realtime_spot, realtime_state.realtime_url).await {
             Ok(realtime) => {
-                context.insert("latest_json", &serde_json::to_string(&realtime)?);
+                let mut context = realtime_context.lock().await;
+                context.insert("latest_json", &serde_json::to_string(&realtime).unwrap());
+                info!("realtime data parsed");
 
-                tx.send(Ok(templates().render("latest.html", &context)?))
-                    .await?;
+                realtime_tx
+                    .send(Ok(templates().render("latest.html", &context).unwrap()))
+                    .await
+                    .unwrap();
             }
             Err(e) => {
+                let mut context = realtime_context.lock().await;
                 context.insert("error", &e.to_string());
                 context.insert("error_type", &"latest");
                 context.insert("container", &"latest-container");
                 context.insert("error_container", &"latest-error");
-                tx.send(Ok(templates().render("error.html", &context)?))
-                    .await?;
+                realtime_tx
+                    .send(Ok(templates().render("error.html", &context).unwrap()))
+                    .await
+                    .unwrap();
             }
         }
+    });
 
-        match forecast {
-            Ok(forecast) => {
-                context.insert("forecast_json", &serde_json::to_string(&forecast)?);
+    let water_quality_tx = tx.clone();
+    let water_quality_context = context.clone();
+    let water_quality_spot = spot.clone();
+    let water_quality_state = state.clone();
+    tokio::spawn(async move {
+        match WaterQuality::try_get(water_quality_spot, water_quality_state.quality_url).await {
+            Ok(water_quality) => {
+                let mut context = water_quality_context.lock().await;
+                context.insert(
+                    "water_quality_json",
+                    &serde_json::to_string(&water_quality).unwrap(),
+                );
+                info!("water quality data parsed");
 
-                tx.send(Ok(templates().render("forecast.html", &context)?))
-                    .await?;
+                water_quality_tx
+                    .send(Ok(templates()
+                        .render("water_quality.html", &context)
+                        .unwrap()))
+                    .await
+                    .unwrap();
 
                 Ok(())
             }
             Err(e) => {
+                let mut context = water_quality_context.lock().await;
+                context.insert("error", &e.to_string());
+                context.insert("error_type", &"beach status");
+                context.insert("container", &"water-quality-container");
+                context.insert("error_container", &"water-quality-error");
+                water_quality_tx
+                    .send(Ok(templates().render("error.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+
+                Err(AppError(anyhow!("Failed to load water quality.")))
+            }
+        }
+    });
+
+    tokio::spawn(async move {
+        match Forecast::try_get(&spot, state.forecast_url).await {
+            Ok(forecast) => {
+                let mut context = context.lock().await;
+                context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
+                info!("forecast data parsed");
+
+                tx.send(Ok(templates().render("forecast.html", &context).unwrap()))
+                    .await
+                    .unwrap();
+
+                Ok(())
+            }
+            Err(e) => {
+                let mut context = context.lock().await;
                 context.insert("error", &e.to_string());
                 context.insert("error_type", &"forecast");
                 context.insert("container", &"forecast-container");
                 context.insert("error_container", &"forecast-error");
-                tx.send(Ok(templates().render("error.html", &context)?))
-                    .await?;
+                tx.send(Ok(templates().render("error.html", &context).unwrap()))
+                    .await
+                    .unwrap();
 
                 Err(AppError(anyhow!("Failed to load forecast.")))
             }

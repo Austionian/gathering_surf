@@ -15,12 +15,12 @@ pub async fn glimpse(
 ) -> Result<Html<String>, AppError> {
     let mut context = tera::Context::new();
 
-    let spot: Spot = selected_spot.0.into();
+    let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
 
-    context.insert("spot", &spot);
+    context.insert("spot", &*spot);
     context.insert("breaks", &state.breaks);
 
-    match Realtime::try_get(&spot, state.realtime_url, state.quality_url).await {
+    match Realtime::try_get(spot, state.realtime_url).await {
         Ok(latest) => {
             context.insert("as_of", &latest.as_of);
             context.insert("wind_direction", &latest.wind_direction);
