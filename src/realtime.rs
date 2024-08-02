@@ -38,9 +38,10 @@ impl Realtime {
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
         let quality_query = spot.quality_query;
-        let status_query = spot.status_query;
+        // could use a oncelock here to get the static value and not need to clone
+        let status_query = spot.status_query.clone();
         let water_quality_data = tokio::spawn(async move {
-            Self::get_quality_data(quality_query, status_query, quality_url)
+            Self::get_quality_data(&quality_query, &status_query, quality_url)
                 .await
                 .unwrap()
         });
@@ -128,8 +129,8 @@ impl Realtime {
     }
 
     async fn get_quality_data(
-        quality_query: &'static str,
-        status_query: &'static str,
+        quality_query: &str,
+        status_query: &str,
         quality_url: &'static str,
     ) -> anyhow::Result<(String, String)> {
         let status = reqwest::get(format!("{quality_url}{QUALITY_PATH}{status_query}"))
