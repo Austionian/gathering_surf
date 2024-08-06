@@ -18,7 +18,16 @@ const observerCallback = (mutationList) => {
       parseWaterQualityData(JSON.parse(mutation.target.innerText));
     }
     if (mutation.target.id === "forecast-data") {
-      parseForecastData(JSON.parse(mutation.target.innerText));
+      try {
+        const data = JSON.parse(mutation.target.innerText);
+        parseForecastData(data);
+      } catch {
+        console.log("failed to parse forecast, trying again.");
+        setTimeout(() => {
+          const data = JSON.parse(mutation.target.innerText);
+          parseForecastData(data);
+        }, 100);
+      }
     }
   }
 };
