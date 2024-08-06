@@ -82,8 +82,6 @@ pub async fn root(
                         .unwrap()))
                     .await
                     .unwrap();
-
-                Ok(())
             }
             Err(e) => {
                 let mut context = water_quality_context.lock().await;
@@ -95,8 +93,6 @@ pub async fn root(
                     .send(Ok(templates().render("error.html", &context).unwrap()))
                     .await
                     .unwrap();
-
-                Err(AppError(anyhow!("Failed to load water quality.")))
             }
         }
     });
