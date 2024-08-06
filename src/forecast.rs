@@ -30,6 +30,7 @@ pub struct Forecast {
 
 impl Forecast {
     pub async fn try_get(spot: &Spot, forecast_url: &str) -> anyhow::Result<Self> {
+        info!("fetching forecast");
         let client = reqwest::Client::builder()
             .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
             .build()

@@ -5,6 +5,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub forecast_api: DataAPI,
     pub realtime_api: DataAPI,
+    pub quality_api: DataAPI,
 }
 
 #[derive(serde::Deserialize)]

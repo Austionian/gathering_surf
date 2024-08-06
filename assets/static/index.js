@@ -14,10 +14,11 @@ const observerCallback = (mutationList) => {
     if (mutation.target.id === "latest-data") {
       parseLatestData(JSON.parse(mutation.target.innerText));
     }
+    if (mutation.target.id === "water-quality-data") {
+      parseWaterQualityData(JSON.parse(mutation.target.innerText));
+    }
     if (mutation.target.id === "forecast-data") {
-      setTimeout(() => {
-        parseForecastData(JSON.parse(mutation.target.innerText));
-      }, 100);
+      parseForecastData(JSON.parse(mutation.target.innerText));
     }
   }
 };
@@ -49,6 +50,32 @@ const qualityMap = {
 function NonNull(item) {
   if (item === null || item === undefined) throw "item is null or undefined";
   return item;
+}
+
+/**
+ * @typedef {Object} WaterQualityData
+ * @property {string} water_quality - The latest water quality.
+ * @property {string} water_quality_text - The latest water quality information.
+ */
+
+/**
+ * Takes the latest data JSON and updates the HTML
+ *
+ * @param {WaterQualityData} data
+ */
+function parseWaterQualityData(data) {
+  NonNull(
+    document.getElementById(
+      `current-water-quality-${data.water_quality.toLowerCase()}`,
+    ),
+  )?.classList.remove("hidden");
+  NonNull(
+    document.getElementById(
+      `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
+    ),
+  ).innerText = data.water_quality_text;
+
+  document.querySelectorAll(".water-quality-loader").forEach((e) => e.remove());
 }
 
 /**
@@ -102,9 +129,9 @@ function parseLatestData(data) {
     data.water_temp;
   NonNull(document.getElementById("current-air-temp")).innerText =
     data.air_temp;
+
   NonNull(document.getElementById("wind")).innerText = getWindData(data);
-  NonNull(document.getElementById("as-of")).innerText =
-    `Live as of ${data.as_of}`;
+  NonNull(document.getElementById("as-of")).innerText = `As of ${data.as_of}`;
   document
     .getElementById("wind-icon")
     ?.setAttribute(

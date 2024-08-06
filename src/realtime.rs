@@ -1,10 +1,11 @@
+use super::Spot;
 use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
+
 use anyhow::bail;
 use chrono::{TimeZone, Utc};
 use chrono_tz::US::Central;
+use std::sync::Arc;
 use tracing::{error, info, warn};
-
-use super::Spot;
 
 #[derive(serde::Serialize)]
 pub struct Realtime {
@@ -22,13 +23,14 @@ pub struct Realtime {
 }
 
 impl Realtime {
-    pub async fn try_get(spot: &Spot, realtime_url: &str) -> anyhow::Result<Self> {
+    pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
+        info!("fetching realtime");
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         // Fallback to Atwater bouy for now.
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
-        let data = Self::get_latest_data(spot, realtime_url).await?;
+        let data = Self::get_latest_data(&spot, realtime_url).await?;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -62,6 +64,7 @@ impl Realtime {
         let raw_water_temp = measurements.next().unwrap_or("MM");
 
         let water_temp = if raw_water_temp == "MM" {
+            info!("fetching fallback bouy data for water temp");
             let bouy_data = reqwest::get(format!("{}{}", realtime_url, FALLBACK_BOUY))
                 .await?
                 .text()
