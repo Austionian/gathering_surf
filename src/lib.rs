@@ -35,7 +35,7 @@ pub fn templates() -> &'static tera::Tera {
 
 #[derive(Clone, serde::Serialize)]
 pub struct AppState {
-    breaks: Vec<String>,
+    breaks: Vec<Location>,
     forecast_url: &'static str,
     realtime_url: &'static str,
     quality_url: &'static str,

@@ -1,16 +1,15 @@
 use super::Quality;
-use std::{fmt::Display, sync::OnceLock};
-use tracing::warn;
+use std::sync::OnceLock;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct SpotParam {
-    pub spot: Option<String>,
+    pub spot: Option<Location>,
 }
 
 impl SpotParam {
-    pub fn get_spot(&mut self) -> String {
+    pub fn get_spot(&mut self) -> Location {
         // Get the selected spot, fallback to Atwater
-        self.spot.take().unwrap_or("Atwater".to_string())
+        self.spot.take().unwrap_or(Location::Atwater)
     }
 }
 
@@ -26,81 +25,92 @@ pub struct Spot {
     pub name: &'static str,
 }
 
-impl Display for Spot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.location)
-    }
+fn get_status_query(id: &str) -> String {
+    format!("?f=json&objectIds={}&outFields=MAP_STATUS", id)
+}
+
+fn get_quality_query(id: &str) -> String {
+    format!("?f=json&objectIds={}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID", id)
+}
+
+macro_rules! quality_once_lock {
+    ($id:expr, $name:ident) => {{
+        static $name: OnceLock<String> = OnceLock::new();
+
+        $name.get_or_init(|| get_quality_query($id))
+    }};
+}
+
+macro_rules! status_once_lock {
+    ($id:expr, $name:ident) => {{
+        static $name: OnceLock<String> = OnceLock::new();
+
+        $name.get_or_init(|| get_status_query($id))
+    }};
 }
 
 impl From<SpotParam> for Spot {
     fn from(mut val: SpotParam) -> Self {
-        // Create atwater to use as the default value
-        let atwater = Spot {
-            forecast_path: ATWATER_PATH,
-            realtime_path: ATWATER_REALTIME_PATH,
-            quality_query: get_atwater_quality(),
-            status_query: get_atwater_status(),
-            fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
-            location: Location::Atwater,
-            live_feed_url: None,
-            name: "Atwater",
-        };
-
-        match val.get_spot().to_lowercase().as_str() {
-            "bradford" => Spot {
+        match val.get_spot() {
+            Location::Bradford => Spot {
                 forecast_path: BRADFORD_PATH,
                 realtime_path: BRADFORD_REALTIME_PATH,
-                quality_query: get_bradford_quality(),
-                status_query: get_bradford_status(),
+                quality_query: quality_once_lock!(BRADFORD_QUALITY_ID, BRADFORD_QUERY),
+                status_query: status_once_lock!(BRADFORD_QUALITY_ID, BRADFORD_STATUS),
                 fallback_realtime_path: None,
                 location: Location::Bradford,
                 live_feed_url: None,
                 name: "Bradford"
             },
-            "port washington" => Spot {
+            Location::PortWashington => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
                 realtime_path: PORT_WASHINGTON_REALTIME_PATH,
-                quality_query: get_port_washington_quality(),
-                status_query: get_port_washington_status(),
+                quality_query: quality_once_lock!(PORT_WASHINGTON_QUALITY_ID, PORT_WASHINGTON_QUERY),
+                status_query: status_once_lock!(PORT_WASHINGTON_QUALITY_ID, PORT_WASHINGTON_STATUS),
                 fallback_realtime_path: None,
                 location: Location::PortWashington,
                 live_feed_url: None,
                 name: "Port Washington"
             },
-            "sheboygan - north" => Spot {
+            Location::Sheboygan => Spot {
                 forecast_path: SHEBOYGAN_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: get_sheboygan_north_quality(),
-                status_query: get_sheboygan_north_status(),
+                quality_query: quality_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID, SHEBOYGAN_NORTH_QUERY),
+                status_query: status_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID, SHEBOYGAN_NORTH_STATUS),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
                 name: "Sheboygan - North"
             },
-            "sheboygan - south" => Spot {
+            Location::SheboyganSouth => Spot {
                 forecast_path: SHEBOYGAN_SOUTH_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: get_sheboygan_south_quality(),
-                status_query: get_sheboygan_south_status(),
+                quality_query: quality_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID, SHEBOYGAN_SOUTH_QUERY),
+                status_query: status_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID, SHEBOYGAN_SOUTH_STATUS),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
                 name: "Sheboygan - South"
             },
-            "racine" => Spot {
+            Location::Racine => Spot {
                 forecast_path: RACINE_PATH,
                 realtime_path: RACINE_REALTIME_PATH,
-                quality_query: get_racine_quality(),
-                status_query: get_racine_status(),
+                quality_query: quality_once_lock!(RACINE_QUALITY_ID, RACINE_QUERY),
+                status_query: status_once_lock!(RACINE_QUALITY_ID, RACINE_STATUS),
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine,
                 live_feed_url: None,
                 name: "Racine"
             },
-            "atwater" => atwater,
-            _ => {
-                warn!("unmatched spot found, falling back to atwater.");
-                atwater
+            Location::Atwater => Spot {
+            forecast_path: ATWATER_PATH,
+            realtime_path: ATWATER_REALTIME_PATH,
+            quality_query: quality_once_lock!(ATWATER_QUALITY_ID, ATWATER_QUERY),
+            status_query: status_once_lock!(ATWATER_QUALITY_ID, ATWATER_STATUS),
+            fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
+            location: Location::Atwater,
+            live_feed_url: None,
+            name: "Atwater",
             },
         }
     }
@@ -145,100 +155,23 @@ const PORT_WASHINGTON_QUALITY_ID: &str = "100";
 // -- --
 //
 // -- --
-//
-fn get_atwater_quality() -> &'static str {
-    static ATWATER_QUALITY: OnceLock<String> = OnceLock::new();
 
-    ATWATER_QUALITY.get_or_init(|| get_quality_query(ATWATER_QUALITY_ID))
-}
-
-fn get_bradford_quality() -> &'static str {
-    static BRADFORD_QUALITY: OnceLock<String> = OnceLock::new();
-
-    BRADFORD_QUALITY.get_or_init(|| get_quality_query(BRADFORD_QUALITY_ID))
-}
-
-fn get_port_washington_quality() -> &'static str {
-    static PORT_WASHINGTON_QUALITY: OnceLock<String> = OnceLock::new();
-
-    PORT_WASHINGTON_QUALITY.get_or_init(|| get_quality_query(PORT_WASHINGTON_QUALITY_ID))
-}
-
-fn get_sheboygan_north_quality() -> &'static str {
-    static SHEBOYGAN_NORTH_QUALITY: OnceLock<String> = OnceLock::new();
-
-    SHEBOYGAN_NORTH_QUALITY.get_or_init(|| get_quality_query(SHEBOYGAN_NORTH_QUALITY_ID))
-}
-
-fn get_sheboygan_south_quality() -> &'static str {
-    static SHEBOYGAN_SOUTH_QUALITY: OnceLock<String> = OnceLock::new();
-
-    SHEBOYGAN_SOUTH_QUALITY.get_or_init(|| get_quality_query(SHEBOYGAN_SOUTH_QUALITY_ID))
-}
-
-fn get_racine_quality() -> &'static str {
-    static RACINE_QUALITY: OnceLock<String> = OnceLock::new();
-
-    RACINE_QUALITY.get_or_init(|| get_quality_query(RACINE_QUALITY_ID))
-}
-
-fn get_atwater_status() -> &'static str {
-    static ATWATER_STATUS: OnceLock<String> = OnceLock::new();
-
-    ATWATER_STATUS.get_or_init(|| get_status_query(ATWATER_QUALITY_ID))
-}
-
-fn get_bradford_status() -> &'static str {
-    static BRADFORD_STATUS: OnceLock<String> = OnceLock::new();
-
-    BRADFORD_STATUS.get_or_init(|| get_status_query(BRADFORD_QUALITY_ID))
-}
-
-fn get_port_washington_status() -> &'static str {
-    static PORT_WASHINGTON_STATUS: OnceLock<String> = OnceLock::new();
-
-    PORT_WASHINGTON_STATUS.get_or_init(|| get_status_query(PORT_WASHINGTON_QUALITY_ID))
-}
-
-fn get_sheboygan_north_status() -> &'static str {
-    static SHEBOYGAN_NORTH_STATUS: OnceLock<String> = OnceLock::new();
-
-    SHEBOYGAN_NORTH_STATUS.get_or_init(|| get_status_query(SHEBOYGAN_NORTH_QUALITY_ID))
-}
-
-fn get_sheboygan_south_status() -> &'static str {
-    static SHEBOYGAN_SOUTH_STATUS: OnceLock<String> = OnceLock::new();
-
-    SHEBOYGAN_SOUTH_STATUS.get_or_init(|| get_status_query(SHEBOYGAN_SOUTH_QUALITY_ID))
-}
-
-fn get_racine_status() -> &'static str {
-    static RACINE_STATUS: OnceLock<String> = OnceLock::new();
-
-    RACINE_STATUS.get_or_init(|| get_status_query(RACINE_QUALITY_ID))
-}
-
-fn get_status_query(id: &str) -> String {
-    format!("?f=json&objectIds={}&outFields=MAP_STATUS", id)
-}
-
-fn get_quality_query(id: &str) -> String {
-    format!("?f=json&objectIds={}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID", id)
-}
-
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum Location {
     Atwater,
     Bradford,
+    #[serde(rename = "Sheboygan - North")]
     Sheboygan,
+    #[serde(rename = "Sheboygan - South")]
     SheboyganSouth,
+    #[serde(rename = "Port Washington")]
     PortWashington,
     Racine,
 }
 
 impl Location {
-    pub fn get_all() -> Vec<String> {
-        Self::into_iter().map(|v| v.to_string()).collect()
+    pub fn get_all() -> Vec<Location> {
+        Self::into_iter().collect()
     }
 
     fn into_iter() -> core::array::IntoIter<Self, 6> {
@@ -266,19 +199,6 @@ impl Location {
             Self::PortWashington | Self::Racine | Self::SheboyganSouth => {
                 Quality::north(wave_height, wind_speed, wind_direction)
             }
-        }
-    }
-}
-
-impl Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Atwater => write!(f, "Atwater"),
-            Self::Bradford => write!(f, "Bradford"),
-            Self::Sheboygan => write!(f, "Sheboygan - North"),
-            Self::SheboyganSouth => write!(f, "Sheboygan - South"),
-            Self::PortWashington => write!(f, "Port Washington"),
-            Self::Racine => write!(f, "Racine"),
         }
     }
 }

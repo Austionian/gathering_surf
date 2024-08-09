@@ -292,6 +292,9 @@ function parseForecastData(data) {
   document.getElementById("forecast")?.classList.remove("hidden");
   document.getElementById("wave-quality")?.classList.remove("hidden");
   document.getElementById("legend-container")?.classList.remove("hidden");
+  document
+    .getElementById("forecast-as-of-container")
+    ?.classList.remove("animate-pulse");
 
   // -- Init temperature legend --
   document
