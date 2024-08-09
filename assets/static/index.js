@@ -149,6 +149,10 @@ function parseLatestData(data) {
       "style",
       `color: ${data.quality_color}`,
     );
+
+    document
+      .querySelectorAll(".wave-quality-loader")
+      .forEach((e) => e.remove());
   }
 
   NonNull(document.getElementById("current-water-temp")).innerText =
@@ -267,6 +271,10 @@ function parseForecastData(data) {
       const text = NonNull(document.getElementById("wave-quality-text"));
       text.innerText = qualityMap[FLAT_COLOR];
       text.setAttribute("style", `color: ${FLAT_COLOR}`);
+
+      document
+        .querySelectorAll(".wave-quality-loader")
+        .forEach((e) => e.remove());
     }
 
     document
