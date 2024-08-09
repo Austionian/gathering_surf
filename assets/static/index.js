@@ -124,16 +124,33 @@ function parseLatestData(data) {
     document.getElementById("wavey-period-loader")?.remove();
   }
 
-  NonNull(document.getElementById("wave-quality")).setAttribute(
-    "style",
-    `background-color: ${data.quality_color};`,
-  );
-  NonNull(document.getElementById("wave-quality-text")).innerText =
-    data.quality_text;
-  NonNull(document.getElementById("wave-quality-text")).setAttribute(
-    "style",
-    `color: ${data.quality_color}`,
-  );
+  // Sometimes the forecast will have loaded before the realtime data.
+  // Most of the time realtime quality should supersede forecast.
+  if (
+    // If it hasn't been set yet, always set it.
+    NonNull(document.getElementById("wave-quality-text")).innerText === "" ||
+    // Otherwise if realtime has wave height, this always supersedes forecast estimates
+    // and 'Flat' condition will be handled appropriately
+    data.wave_height ||
+    // If the forecast data has loaded and the computed wave height is greater than
+    // or equal to one, then load the realtime computed quality. If this isn't here
+    // forecasted 'Flat' conditions wouldn't be handled correctly.
+    parseFloat(
+      NonNull(document.getElementById("current-wave-height")).innerText ?? "0",
+    ) >= 1
+  ) {
+    NonNull(document.getElementById("wave-quality")).setAttribute(
+      "style",
+      `background-color: ${data.quality_color};`,
+    );
+    NonNull(document.getElementById("wave-quality-text")).innerText =
+      data.quality_text;
+    NonNull(document.getElementById("wave-quality-text")).setAttribute(
+      "style",
+      `color: ${data.quality_color}`,
+    );
+  }
+
   NonNull(document.getElementById("current-water-temp")).innerText =
     data.water_temp;
   NonNull(document.getElementById("current-air-temp")).innerText =
