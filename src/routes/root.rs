@@ -18,7 +18,6 @@ pub async fn root(
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
-    let tx = Arc::new(tx);
     let context = Arc::new(Mutex::new(tera::Context::new()));
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());

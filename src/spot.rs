@@ -34,18 +34,20 @@ fn get_quality_query(id: &str) -> String {
 }
 
 macro_rules! quality_once_lock {
-    ($id:expr, $name:ident) => {{
-        static $name: OnceLock<String> = OnceLock::new();
+    ($id:expr) => {{
+        // Identities created in Rust macros are hygienic, attaching invisible syntax context to
+        // all indentifiers so repeated static QUALITYs never collide
+        static QUALITY: OnceLock<String> = OnceLock::new();
 
-        $name.get_or_init(|| get_quality_query($id))
+        QUALITY.get_or_init(|| get_quality_query($id))
     }};
 }
 
 macro_rules! status_once_lock {
-    ($id:expr, $name:ident) => {{
-        static $name: OnceLock<String> = OnceLock::new();
+    ($id:expr) => {{
+        static STATUS: OnceLock<String> = OnceLock::new();
 
-        $name.get_or_init(|| get_status_query($id))
+        STATUS.get_or_init(|| get_status_query($id))
     }};
 }
 
@@ -55,8 +57,8 @@ impl From<SpotParam> for Spot {
             Location::Bradford => Spot {
                 forecast_path: BRADFORD_PATH,
                 realtime_path: BRADFORD_REALTIME_PATH,
-                quality_query: quality_once_lock!(BRADFORD_QUALITY_ID, BRADFORD_QUERY),
-                status_query: status_once_lock!(BRADFORD_QUALITY_ID, BRADFORD_STATUS),
+                quality_query: quality_once_lock!(BRADFORD_QUALITY_ID),
+                status_query: status_once_lock!(BRADFORD_QUALITY_ID),
                 fallback_realtime_path: None,
                 location: Location::Bradford,
                 live_feed_url: None,
@@ -65,8 +67,8 @@ impl From<SpotParam> for Spot {
             Location::PortWashington => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
                 realtime_path: PORT_WASHINGTON_REALTIME_PATH,
-                quality_query: quality_once_lock!(PORT_WASHINGTON_QUALITY_ID, PORT_WASHINGTON_QUERY),
-                status_query: status_once_lock!(PORT_WASHINGTON_QUALITY_ID, PORT_WASHINGTON_STATUS),
+                quality_query: quality_once_lock!(PORT_WASHINGTON_QUALITY_ID),
+                status_query: status_once_lock!(PORT_WASHINGTON_QUALITY_ID),
                 fallback_realtime_path: None,
                 location: Location::PortWashington,
                 live_feed_url: None,
@@ -75,8 +77,8 @@ impl From<SpotParam> for Spot {
             Location::Sheboygan => Spot {
                 forecast_path: SHEBOYGAN_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: quality_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID, SHEBOYGAN_NORTH_QUERY),
-                status_query: status_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID, SHEBOYGAN_NORTH_STATUS),
+                quality_query: quality_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID),
+                status_query: status_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
@@ -85,8 +87,8 @@ impl From<SpotParam> for Spot {
             Location::SheboyganSouth => Spot {
                 forecast_path: SHEBOYGAN_SOUTH_PATH,
                 realtime_path: SHEBOYGAN_REALTIME_PATH,
-                quality_query: quality_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID, SHEBOYGAN_SOUTH_QUERY),
-                status_query: status_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID, SHEBOYGAN_SOUTH_STATUS),
+                quality_query: quality_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID),
+                status_query: status_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
@@ -95,22 +97,22 @@ impl From<SpotParam> for Spot {
             Location::Racine => Spot {
                 forecast_path: RACINE_PATH,
                 realtime_path: RACINE_REALTIME_PATH,
-                quality_query: quality_once_lock!(RACINE_QUALITY_ID, RACINE_QUERY),
-                status_query: status_once_lock!(RACINE_QUALITY_ID, RACINE_STATUS),
+                quality_query: quality_once_lock!(RACINE_QUALITY_ID),
+                status_query: status_once_lock!(RACINE_QUALITY_ID),
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine,
                 live_feed_url: None,
                 name: "Racine"
             },
             Location::Atwater => Spot {
-            forecast_path: ATWATER_PATH,
-            realtime_path: ATWATER_REALTIME_PATH,
-            quality_query: quality_once_lock!(ATWATER_QUALITY_ID, ATWATER_QUERY),
-            status_query: status_once_lock!(ATWATER_QUALITY_ID, ATWATER_STATUS),
-            fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
-            location: Location::Atwater,
-            live_feed_url: None,
-            name: "Atwater",
+                forecast_path: ATWATER_PATH,
+                realtime_path: ATWATER_REALTIME_PATH,
+                quality_query: quality_once_lock!(ATWATER_QUALITY_ID),
+                status_query: status_once_lock!(ATWATER_QUALITY_ID),
+                fallback_realtime_path: Some(BRADFORD_REALTIME_PATH),
+                location: Location::Atwater,
+                live_feed_url: None,
+                name: "Atwater",
             },
         }
     }
