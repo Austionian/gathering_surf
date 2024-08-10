@@ -11,10 +11,10 @@
     <link rel="preload" href="/assets/styles.css" as="style" />
     <link
       rel="preload"
-      href="https://cdn.jsdelivr.net/npm/chart.js"
+      href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
       as="script"
     />
-    <link rel="preload" href="/assets/static/index.js?v=6" as="script" />
+    <link rel="preload" href="/assets/static/index.js?v=7" as="script" />
 
     <link href="/assets/styles.css" rel="stylesheet" type="text/css" />
     <style>
@@ -29,7 +29,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.js?v=6"></script>
+    <script src="/assets/static/index.js?v=7"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %}
   </body>
 </html>

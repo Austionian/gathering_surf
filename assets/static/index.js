@@ -311,7 +311,7 @@ function parseForecastData(data) {
   NonNull(document.getElementById("legend-wind-gust")).innerText =
     wind_gusts[startingAt];
   NonNull(document.getElementById("forecast-as-of")).innerText =
-    `Last updated at ${data.forecast_as_of}`;
+    `Updated @ ${data.forecast_as_of}`;
 
   document.querySelectorAll(".loader").forEach((e) => e.remove());
   document.getElementById("forecast")?.classList.remove("hidden");
