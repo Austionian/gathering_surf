@@ -8,7 +8,6 @@ use axum::{
 };
 use std::{convert::Infallible, ops::Deref, sync::Arc};
 use tokio::sync::{mpsc, Mutex};
-use tracing::info;
 
 /// Handler to return the website's index
 pub async fn root(
@@ -30,7 +29,6 @@ pub async fn root(
     ))
     .await?;
 
-    // Figure out a better way than unwraping in the spawned tasks
     let realtime_tx = tx.clone();
     let realtime_context = context.clone();
     let realtime_spot = spot.clone();
@@ -40,7 +38,6 @@ pub async fn root(
             Ok(realtime) => {
                 let mut context = realtime_context.lock().await;
                 context.insert("latest_json", &serde_json::to_string(&realtime).unwrap());
-                info!("realtime data parsed");
 
                 realtime_tx
                     .send(Ok(templates().render("latest.html", &context).unwrap()))
@@ -73,7 +70,6 @@ pub async fn root(
                     "water_quality_json",
                     &serde_json::to_string(&water_quality).unwrap(),
                 );
-                info!("water quality data parsed");
 
                 water_quality_tx
                     .send(Ok(templates()
@@ -101,7 +97,6 @@ pub async fn root(
             Ok(forecast) => {
                 let mut context = context.lock().await;
                 context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
-                info!("forecast data parsed");
 
                 tx.send(Ok(templates().render("forecast.html", &context).unwrap()))
                     .await
