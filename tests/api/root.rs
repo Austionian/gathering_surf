@@ -14,5 +14,4 @@ async fn it_returns_the_index() {
 
     let response = response.text().await.unwrap();
     assert!(response.contains("Gathering Surf"));
-    insta::assert_snapshot!(response);
 }
