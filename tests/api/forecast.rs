@@ -13,8 +13,6 @@ async fn it_returns_the_forecast_data_as_json() {
         .await
         .expect("Unable to start test server.");
 
-    // Arrange the behaviour of the MockServer adding a Mock:
-    // when it receives a GET request on '/hello' it will respond with a 200.
     Mock::given(method("GET"))
         .and(path(ATWATER_PATH))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!(
@@ -137,6 +135,8 @@ async fn it_returns_the_forecast_data_as_json() {
     assert!(data.contains("forecast_as_of"));
     assert!(data.contains("graph_max"));
     assert!(data.contains("qualities"));
+
+    insta::assert_snapshot!(data);
 }
 
 #[tokio::test]

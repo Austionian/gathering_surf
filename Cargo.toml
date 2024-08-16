@@ -26,4 +26,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] } 
 
 [dev-dependencies]
+insta = { version = "1", features = ["yaml"] }
 wiremock = "0.6.0"
+
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3

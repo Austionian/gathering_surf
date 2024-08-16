@@ -11,5 +11,8 @@ async fn it_returns_the_index() {
         .unwrap();
 
     assert_eq!(response.status().as_u16(), 200);
-    assert!(response.text().await.unwrap().contains("Gathering Surf"));
+
+    let response = response.text().await.unwrap();
+    assert!(response.contains("Gathering Surf"));
+    insta::assert_snapshot!(response);
 }
