@@ -4,7 +4,7 @@ use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
-use reqwest::{Client, Response};
+use reqwest::Response;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::cmp::Ordering;
 use tracing::{error, info, warn};
@@ -30,13 +30,7 @@ pub struct Forecast {
 
 impl Forecast {
     pub async fn try_get(spot: &Spot, forecast_url: &str) -> anyhow::Result<Self> {
-        info!("fetching forecast");
-        let client = reqwest::Client::builder()
-            .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
-            .build()
-            .unwrap();
-
-        let data = Self::fetch_data(&client, spot, forecast_url).await?;
+        let data = Self::fetch_data(spot.forecast_path, forecast_url).await?;
 
         let mut forecast: Self = (data.json::<serde_json::Value>().await?).try_into()?;
 
@@ -45,15 +39,16 @@ impl Forecast {
         Ok(forecast)
     }
 
-    async fn fetch_data(
-        client: &Client,
-        spot: &Spot,
-        forecast_url: &str,
-    ) -> anyhow::Result<Response> {
+    async fn fetch_data(forecast_path: &str, forecast_url: &str) -> anyhow::Result<Response> {
+        let client = reqwest::Client::builder()
+            .user_agent("GatheringSurf/0.1 (+https://gathering.surf)")
+            .build()
+            .unwrap();
+
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
             let response = client
-                .get(format!("{}{}", forecast_url, spot.forecast_path))
+                .get(format!("{}{}", forecast_url, forecast_path))
                 .timeout(std::time::Duration::from_secs(10))
                 .send()
                 .await?;
@@ -61,6 +56,7 @@ impl Forecast {
                 info!("NOAA 200 success.");
                 return Ok(response);
             }
+            println!("{:?}", response);
             warn!("NOAA non-200, retrying.");
         }
 

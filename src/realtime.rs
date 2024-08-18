@@ -24,7 +24,6 @@ pub struct Realtime {
 
 impl Realtime {
     pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
-        info!("fetching realtime");
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
         // Fallback to Atwater bouy for now.

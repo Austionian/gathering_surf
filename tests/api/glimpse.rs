@@ -1,8 +1,8 @@
-use crate::helpers::start_integration_test_app;
+use crate::helpers::TestApp;
 
 #[tokio::test]
 async fn it_returns_the_glimpse_view() {
-    let app = start_integration_test_app()
+    let app = TestApp::try_new()
         .await
         .expect("Unable to start test server.");
 

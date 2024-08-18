@@ -1,16 +1,8 @@
-use gathering_surf::ATWATER_REALTIME_PATH;
-use wiremock::{
-    matchers::{method, path},
-    Mock, ResponseTemplate,
-};
-
-use crate::helpers::{start_integration_test_app, start_test_app};
+use crate::{helpers::TestApp, integration_test_app, mocked_unhappy_path_test_app};
 
 #[tokio::test]
 async fn integration_it_returns_the_latest_data_as_json() {
-    let app = start_integration_test_app()
-        .await
-        .expect("Unable to start test server.");
+    let app = integration_test_app!();
 
     let response = reqwest::get(format!("http://{}/api/realtime", &app.addr))
         .await
@@ -29,17 +21,7 @@ async fn integration_it_returns_the_latest_data_as_json() {
 
 #[tokio::test]
 async fn it_handles_a_non_200_response_from_realtime_client_and_retries_once() {
-    let app = start_test_app()
-        .await
-        .expect("Unable to start test server.");
-
-    let mock_client = &app.mock_client.unwrap();
-    Mock::given(method("GET"))
-        .and(path(ATWATER_REALTIME_PATH))
-        .respond_with(ResponseTemplate::new(502).set_body_string("Bad gateway"))
-        .expect(2)
-        .mount(mock_client)
-        .await;
+    let app = mocked_unhappy_path_test_app!(realtime);
 
     let response = reqwest::get(format!("http://{}/api/realtime", &app.addr))
         .await

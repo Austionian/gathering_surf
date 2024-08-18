@@ -12,8 +12,6 @@ pub struct WaterQuality {
 
 impl WaterQuality {
     pub async fn try_get(spot: Arc<Spot>, quality_url: &'static str) -> anyhow::Result<Self> {
-        info!("fetching water_quality");
-
         let (water_quality, water_quality_text) =
             Self::get_quality_data(spot.quality_query, spot.status_query, quality_url).await?;
 

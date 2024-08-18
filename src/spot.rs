@@ -13,7 +13,7 @@ impl SpotParam {
     }
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, Debug)]
 pub struct Spot {
     pub forecast_path: &'static str,
     pub realtime_path: &'static str,

@@ -1,8 +1,8 @@
-use crate::helpers::start_test_app;
+use crate::helpers::TestApp;
 
 #[tokio::test]
 async fn an_invalid_url_returns_the_404_not_found() {
-    let app = start_test_app()
+    let app = TestApp::try_new()
         .await
         .expect("Unable to start test server.");
 

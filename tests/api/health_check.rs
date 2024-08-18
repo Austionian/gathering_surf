@@ -1,8 +1,8 @@
-use crate::helpers::start_test_app;
+use crate::helpers::TestApp;
 
 #[tokio::test]
 async fn the_health_check_works() {
-    let app = start_test_app()
+    let app = TestApp::try_new()
         .await
         .expect("Unable to start test server.");
 

@@ -1,8 +1,8 @@
-use crate::helpers::start_test_app;
+use crate::helpers::TestApp;
 
 #[tokio::test]
 async fn it_returns_the_index() {
-    let app = start_test_app()
+    let app = TestApp::try_new_mocked()
         .await
         .expect("Unable to start test server.");
 
