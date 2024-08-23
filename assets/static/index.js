@@ -48,6 +48,8 @@ const qualityMap = {
   "#a8a29e": "Flat",
 };
 
+/* Utility Functions */
+
 /**
  * Convenient non-null assertion helper function allows asserting that something is not
  * null or undefined without having to write a JSDoc type cast that has to
@@ -62,6 +64,75 @@ function NonNull(item) {
 }
 
 /**
+ * Sets an html element's innerText
+ *
+ * @param {string} id
+ * @param {string} text
+ */
+function setText(id, text) {
+  NonNull(document.getElementById(id)).innerText = text;
+}
+
+/**
+ * Sets an html element's attribute
+ *
+ * @param {string} id
+ * @param {string} attribute
+ * @param {string} value
+ */
+function setAttribute(id, attribute, value) {
+  document.getElementById(id)?.setAttribute(attribute, value);
+}
+
+/**
+ * Sets an html element's style attribute
+ *
+ * @param {string} id
+ * @param {string} value
+ */
+function setStyleAttribute(id, value) {
+  setAttribute(id, "style", value);
+}
+
+/**
+ * Removes all elements with the given class name.
+ *
+ * @param {string} className
+ */
+function removeElements(className) {
+  document.querySelectorAll(className).forEach((e) => e.remove());
+}
+
+/**
+ * Removes an element with the given id.
+ *
+ * @param {string} id
+ */
+function removeElement(id) {
+  document.getElementById(id)?.remove();
+}
+
+/**
+ *
+ * Removes an element's style from its classList
+ *
+ * @param {string} id
+ * @param {string} style
+ */
+function removeStyle(id, style) {
+  document.getElementById(id)?.classList.remove(style);
+}
+
+/**
+ * Removes the hidden classname from an element's classlist
+ *
+ * @param {string} id
+ */
+function removeHidden(id) {
+  removeStyle(id, "hidden");
+}
+
+/**
  * @typedef {Object} WaterQualityData
  * @property {string} water_quality - The latest water quality.
  * @property {string} water_quality_text - The latest water quality information.
@@ -73,18 +144,13 @@ function NonNull(item) {
  * @param {WaterQualityData} data
  */
 function parseWaterQualityData(data) {
-  NonNull(
-    document.getElementById(
-      `current-water-quality-${data.water_quality.toLowerCase()}`,
-    ),
-  )?.classList.remove("hidden");
-  NonNull(
-    document.getElementById(
-      `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
-    ),
-  ).innerText = data.water_quality_text;
+  removeHidden(`current-water-quality-${data.water_quality.toLowerCase()}`);
+  setText(
+    `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
+    data.water_quality_text,
+  );
 
-  document.querySelectorAll(".water-quality-loader").forEach((e) => e.remove());
+  removeElements(".water-quality-loader");
 }
 
 /**
@@ -109,19 +175,17 @@ function parseWaterQualityData(data) {
  */
 function parseLatestData(data) {
   if (data.wave_height) {
-    NonNull(document.getElementById("current-wave-height")).innerText =
-      data.wave_height;
-    document
-      .getElementById("wave-icon")
-      ?.setAttribute("style", `transform: rotate(${data.wave_direction}deg);`);
-
-    document.querySelectorAll(".wavey").forEach((e) => e.remove());
+    setText("current-wave-height", data.wave_height);
+    setStyleAttribute(
+      "wave-icon",
+      `transform: rotate(${data.wave_direction}deg);`,
+    );
+    removeElements(".wavey");
   }
 
   if (data.wave_period) {
-    NonNull(document.getElementById("current-wave-period")).innerText =
-      data.wave_period;
-    document.getElementById("wavey-period-loader")?.remove();
+    setText("current-wave-period", data.wave_period);
+    removeElement("wavey-period-loader");
   }
 
   // Sometimes the forecast will have loaded before the realtime data.
@@ -139,45 +203,30 @@ function parseLatestData(data) {
       NonNull(document.getElementById("current-wave-height")).innerText ?? "0",
     ) >= 1
   ) {
-    NonNull(document.getElementById("wave-quality")).setAttribute(
-      "style",
+    setStyleAttribute(
+      "wave-quality",
       `background-color: ${data.quality_color};`,
     );
-    NonNull(document.getElementById("wave-quality-text")).innerText =
-      data.quality_text;
-    NonNull(document.getElementById("wave-quality-text")).setAttribute(
-      "style",
-      `color: ${data.quality_color}`,
-    );
-
-    document
-      .querySelectorAll(".wave-quality-loader")
-      .forEach((e) => e.remove());
+    setText("wave-quality-text", data.quality_text);
+    setStyleAttribute("wave-quality-text", `color: ${data.quality_color}`);
+    removeElements(".wave-quality-loader");
   }
 
-  NonNull(document.getElementById("current-water-temp")).innerText =
-    data.water_temp;
-  NonNull(document.getElementById("current-air-temp")).innerText =
-    data.air_temp;
+  setText("current-water-temp", data.water_temp);
+  setText("current-air-temp", data.air_temp);
 
-  NonNull(document.getElementById("wind")).innerText = getWindData(data);
-  NonNull(document.getElementById("as-of")).innerText = `As of ${data.as_of}`;
-  document
-    .getElementById("wind-icon")
-    ?.setAttribute(
-      "style",
-      `transform: rotate(${data.wind_direction + 180}deg);`,
-    );
+  setText("wind", getWindData(data));
+  setText("as-of", `As of ${data.as_of}`);
+  setStyleAttribute(
+    "wind_icon",
+    `transform: rotate(${data.wind_direction + 180}deg);`,
+  );
 
-  // document
-  //   .getElementById("legend")
-  //   ?.setAttribute("style", `background-color: ${data.quality_color};`);
-  //
-  document.querySelectorAll(".latest-loader").forEach((e) => e.remove());
-  document.getElementById("wind-icon-container")?.classList.remove("hidden");
-  document.getElementById("wave-icon-container")?.classList.remove("hidden");
-  document.getElementById("as-of-container")?.classList.remove("animate-pulse");
-  document.getElementById("wave-quality")?.classList.remove("hidden");
+  removeElements(".latest-loader");
+  removeHidden("wind-icon-container");
+  removeHidden("wave-icon-container");
+  removeStyle("as-of-container", "animate-pulse");
+  removeHidden("wave-quality");
 }
 
 /**
@@ -263,94 +312,63 @@ function parseForecastData(data) {
     // if the current wave height data is under a foot, update the
     // quality to be Flat
     if (data.current_wave_height == "0") {
-      NonNull(document.getElementById("wave-quality"))?.setAttribute(
-        "style",
-        `background-color: ${FLAT_COLOR}`,
-      );
+      setStyleAttribute("wave-quality", `background-color: ${FLAT_COLOR}`);
 
-      const text = NonNull(document.getElementById("wave-quality-text"));
-      text.innerText = qualityMap[FLAT_COLOR];
-      text.setAttribute("style", `color: ${FLAT_COLOR}`);
+      setText("wave-quality-text", qualityMap[FLAT_COLOR]);
+      setStyleAttribute("wave-quality-text", `color: ${FLAT_COLOR}`);
 
-      document
-        .querySelectorAll(".wave-quality-loader")
-        .forEach((e) => e.remove());
+      removeElements(".wave-quality-loader");
     }
 
-    document
-      .getElementById("wave-icon")
-      ?.setAttribute(
-        "style",
-        `transform: rotate(${data.current_wave_direction}deg);`,
-      );
-
-    document.querySelectorAll(".wavey").forEach((e) => e.remove());
+    setStyleAttribute(
+      "wave-icon",
+      `transform: rotate(${data.current_wave_direction}deg);`,
+    );
+    removeElements(".wavey");
   }
 
   // The period can be undefined separate from the wave height
   const wave_period_container = document.getElementById("current-wave-period");
   if (wave_period_container?.innerText === "") {
     wave_period_container.innerText = data.current_wave_period;
-    document.getElementById("wavey-period-loader")?.remove();
+    removeElement("wavey-period-loader");
   }
 
-  NonNull(document.getElementById("legend-label")).innerText =
-    wave_height_labels[startingAt];
-  NonNull(document.getElementById("legend-quality")).innerText =
-    qualityMap[qualities[startingAt]];
-  NonNull(document.getElementById("legend-wave-height")).innerText =
-    wave_heights[startingAt];
-  NonNull(document.getElementById("legend-wind-speed")).innerText =
-    wind_speeds[startingAt];
-  NonNull(document.getElementById("legend-wind-icon")).setAttribute(
-    "style",
+  setText("legend-label", wave_height_labels[startingAt]);
+  setText("legend-quality", qualityMap[qualities[startingAt]]);
+  setText("legend-wave-height", wave_heights[startingAt]);
+  setText("legend-wind-speed", wind_speeds[startingAt]);
+  setStyleAttribute(
+    "legend-wind-icon",
     `transform: rotate(${wind_directions[startingAt]}deg);`,
   );
-  NonNull(document.getElementById("legend-wave-period")).innerText =
-    wave_period[startingAt];
-  NonNull(document.getElementById("legend-wind-gust")).innerText =
-    wind_gusts[startingAt];
-  NonNull(document.getElementById("forecast-as-of")).innerText =
-    `Updated @ ${data.forecast_as_of}`;
+  setText("legend-wave-period", wave_period[startingAt]);
+  setText("legend-wind-gust", wind_gusts[startingAt]);
+  setText("forecast-as-of", `Updated @ ${data.forecast_as_of}`);
 
-  document.querySelectorAll(".loader").forEach((e) => e.remove());
-  document.getElementById("forecast")?.classList.remove("hidden");
-  document.getElementById("wave-quality")?.classList.remove("hidden");
-  document.getElementById("legend-container")?.classList.remove("hidden");
-  document
-    .getElementById("forecast-as-of-container")
-    ?.classList.remove("animate-pulse");
+  removeElements(".loader");
+  removeHidden("forecast");
+  removeHidden("wave-quality");
+  removeHidden("legend-container");
+  removeStyle("forecast-as-of-container", "animate-pulse");
 
   // -- Init temperature legend --
-  document
-    .getElementById("temperature-legend-container")
-    ?.classList.remove("hidden");
-  NonNull(document.getElementById("temperature-legend-label")).innerText =
-    wave_height_labels[startingAt];
-  NonNull(document.getElementById("temperature-legend-temperature")).innerText =
-    temperature[startingAt];
-  NonNull(document.getElementById("temperature-legend-dewpoint")).innerText =
-    dewpoint[startingAt];
+  removeHidden("temperature-legend-container");
+  setText("temperature-legend-label", wave_height_labels[startingAt]);
+  setText("temperature-legend-temperature", temperature[startingAt]);
+  setText("temperature-legend-dewpoint", dewpoint[startingAt]);
 
   // -- Init precipitation legend --
-  document
-    .getElementById("precipitation-legend-container")
-    ?.classList.remove("hidden");
-  NonNull(document.getElementById("precipitation-legend-label")).innerText =
-    wave_height_labels[startingAt];
-  NonNull(
-    document.getElementById("precipitation-legend-precipitation"),
-  ).innerText = probability_of_precipitation[startingAt];
-  NonNull(document.getElementById("precipitation-legend-thunder")).innerText =
-    probability_of_thunder[startingAt];
-  NonNull(
-    document.getElementById("precipitation-legend-cloud-cover"),
-  ).innerText = cloud_cover[startingAt];
-
-  NonNull(document.getElementById("legend")).setAttribute(
-    "style",
-    `background-color: ${qualities[startingAt]};`,
+  removeHidden("precipitation-legend-container");
+  setText("precipitation-legend-label", wave_height_labels[startingAt]);
+  setText(
+    "precipitation-legend-precipitation",
+    probability_of_precipitation[startingAt],
   );
+  setText("precipitation-legend-thunder", probability_of_thunder[startingAt]);
+  setText("precipitation-legend-cloud-cover", cloud_cover[startingAt]);
+
+  setStyleAttribute("legend", `background-color: ${qualities[startingAt]};`);
 
   const ctx = document.getElementById("forecast");
 
@@ -399,47 +417,31 @@ function parseForecastData(data) {
     const color = qualities[x];
 
     // Update wave legend
-    NonNull(document.getElementById("legend")).setAttribute(
-      "style",
-      `background-color: ${color}`,
-    );
-    NonNull(document.getElementById("legend-label")).innerText =
-      wave_height_labels[x];
-    NonNull(document.getElementById("legend-quality")).innerText =
-      qualityMap[color];
-    NonNull(document.getElementById("legend-wave-height")).innerText =
-      wave_heights[x];
-    NonNull(document.getElementById("legend-wind-speed")).innerText =
-      wind_speeds[x];
-    NonNull(document.getElementById("legend-wind-icon")).setAttribute(
-      "style",
+    setStyleAttribute("legend", `background-color: ${color}`);
+    setText("legend-label", wave_height_labels[x]);
+    setText("legend-quality", qualityMap[color]);
+    setText("legend-wave-height", wave_heights[x]);
+    setText("legend-wind-speed", wind_speeds[x]);
+    setStyleAttribute(
+      "legend-wind-icon",
       `transform: rotate(${wind_directions[x]}deg);`,
     );
-    NonNull(document.getElementById("legend-wave-period")).innerText =
-      wave_period[x];
-    NonNull(document.getElementById("legend-wind-gust")).innerText =
-      wind_gusts[x];
+    setText("legend-wave-period", wave_period[x]);
+    setText("legend-wind-gust", wind_gusts[x]);
 
     // Update temperature legend
-    NonNull(document.getElementById("temperature-legend-label")).innerText =
-      wave_height_labels[x];
-    NonNull(
-      document.getElementById("temperature-legend-temperature"),
-    ).innerText = temperature[x];
-    NonNull(document.getElementById("temperature-legend-dewpoint")).innerText =
-      dewpoint[x];
+    setText("temperature-legend-label", wave_height_labels[x]);
+    setText("temperature-legend-temperature", temperature[x]);
+    setText("temperature-legend-dewpoint", dewpoint[x]);
 
     // Update precipitation legend
-    NonNull(document.getElementById("precipitation-legend-label")).innerText =
-      wave_height_labels[x];
-    NonNull(
-      document.getElementById("precipitation-legend-precipitation"),
-    ).innerText = probability_of_precipitation[x];
-    NonNull(document.getElementById("precipitation-legend-thunder")).innerText =
-      probability_of_thunder[x];
-    NonNull(
-      document.getElementById("precipitation-legend-cloud-cover"),
-    ).innerText = cloud_cover[x];
+    setText("precipitation-legend-label", wave_height_labels[x]);
+    setText(
+      "precipitation-legend-precipitation",
+      probability_of_precipitation[x],
+    );
+    setText("precipitation-legend-thunder", probability_of_thunder[x]);
+    setText("precipitation-legend-cloud-cover", cloud_cover[x]);
   };
 
   const xTicksCallback = (_value, i, _ticks) =>
