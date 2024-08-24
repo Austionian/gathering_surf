@@ -352,6 +352,7 @@ function parseForecastData(data) {
   }
 
   let startingAt = new Date().getHours();
+  const dataStartingAt = new Date(data.starting_at).getHours();
 
   // If the forecast starting_at time hasn't been updated in a while, it will show
   // a PM time the follow morning.
@@ -504,34 +505,38 @@ function parseForecastData(data) {
    * @param {number} x
    */
   function updateLegends(x) {
+    const beginning = start === 0 ? dataStartingAt : start;
     const color = qualities[x + start];
 
     // Update wave legend
     setStyleAttribute("legend", `background-color: ${color}`);
-    setText("legend-label", wave_height_labels[x + start]);
+    setText("legend-label", wave_height_labels[x + beginning]);
     setText("legend-quality", qualityMap[color]);
-    setText("legend-wave-height", wave_heights[x + start]);
-    setText("legend-wind-speed", wind_speeds[x + start]);
+    setText("legend-wave-height", wave_heights[x + beginning]);
+    setText("legend-wind-speed", wind_speeds[x + beginning]);
     setStyleAttribute(
       "legend-wind-icon",
-      `transform: rotate(${wind_directions[x + start]}deg);`,
+      `transform: rotate(${wind_directions[x + beginning]}deg);`,
     );
-    setText("legend-wave-period", wave_period[x + start]);
-    setText("legend-wind-gust", wind_gusts[x + start]);
+    setText("legend-wave-period", wave_period[x + beginning]);
+    setText("legend-wind-gust", wind_gusts[x + beginning]);
 
     // Update temperature legend
-    setText("temperature-legend-label", wave_height_labels[x + start]);
-    setText("temperature-legend-temperature", temperature[x + start]);
-    setText("temperature-legend-dewpoint", dewpoint[x + start]);
+    setText("temperature-legend-label", wave_height_labels[x + beginning]);
+    setText("temperature-legend-temperature", temperature[x + beginning]);
+    setText("temperature-legend-dewpoint", dewpoint[x + beginning]);
 
     // Update precipitation legend
-    setText("precipitation-legend-label", wave_height_labels[x + start]);
+    setText("precipitation-legend-label", wave_height_labels[x + beginning]);
     setText(
       "precipitation-legend-precipitation",
-      probability_of_precipitation[x + start],
+      probability_of_precipitation[x + beginning],
     );
-    setText("precipitation-legend-thunder", probability_of_thunder[x + start]);
-    setText("precipitation-legend-cloud-cover", cloud_cover[x + start]);
+    setText(
+      "precipitation-legend-thunder",
+      probability_of_thunder[x + beginning],
+    );
+    setText("precipitation-legend-cloud-cover", cloud_cover[x + beginning]);
   }
 
   const onHover = (e, _, chart) => {
@@ -544,13 +549,14 @@ function parseForecastData(data) {
   };
 
   const xTicksCallback = (_value, i, _ticks) => {
+    const beginning = start === 0 ? dataStartingAt : start;
     if (stepBy === 24) {
-      return i % 6 === 0 ? wave_height_labels[i + start] : null;
+      return i % 6 === 0 ? wave_height_labels[i + beginning] : null;
     }
     if (stepBy === 48) {
-      return i % 8 === 0 ? wave_height_labels[i + start] : null;
+      return i % 8 === 0 ? wave_height_labels[i + beginning] : null;
     }
-    return i % 24 === 0 ? wave_height_labels[i + start] : null;
+    return i % 24 === 0 ? wave_height_labels[i + beginning] : null;
   };
 
   function colorize() {
@@ -579,11 +585,17 @@ function parseForecastData(data) {
     type: "bar",
     plugins: [plugin],
     data: {
-      labels: wave_height_labels.slice(start, end),
+      labels:
+        start === 0
+          ? wave_height_labels.slice(dataStartingAt, end)
+          : wave_height_labels.slice(start, end),
       datasets: [
         {
           label: "wave height (feet)",
-          data: wave_heights.slice(start, end),
+          data:
+            start === 0
+              ? wave_heights.slice(dataStartingAt, end)
+              : wave_heights.slice(start, end),
           pointStyle: false,
           minBarLength: 0.1,
         },
@@ -671,18 +683,23 @@ function parseForecastData(data) {
   getForecastRangeLabel();
 
   function updateCharts() {
-    let labels = wave_height_labels.slice(start, end);
+    const beginning = start === 0 ? dataStartingAt : start;
+    let labels = wave_height_labels.slice(beginning, end);
+
     waveForecast.data.labels = labels;
-    waveForecast.data.datasets[0].data = wave_heights.slice(start, end);
+    waveForecast.data.datasets[0].data = wave_heights.slice(beginning, end);
     waveForecast.update();
 
     temperatureForecast.data.labels = labels;
-    temperatureForecast.data.datasets[0].data = temperature.slice(start, end);
+    temperatureForecast.data.datasets[0].data = temperature.slice(
+      beginning,
+      end,
+    );
     temperatureForecast.update();
 
     precipitationForecast.data.labels = labels;
     precipitationForecast.data.datasets[0].data =
-      probability_of_precipitation.slice(start, end);
+      probability_of_precipitation.slice(beginning, end);
     precipitationForecast.update();
   }
 
@@ -767,7 +784,10 @@ function parseForecastData(data) {
     type: "bar",
     plugins: [plugin],
     data: {
-      labels: wave_height_labels.slice(start, end),
+      labels:
+        start === 0
+          ? wave_height_labels.slice(dataStartingAt, end)
+          : wave_height_labels.slice(start, end),
       datasets: [
         {
           label,
@@ -823,13 +843,27 @@ function parseForecastData(data) {
   const temperatureCanvas = document.getElementById("temperature-forecast");
   const temperatureForecast = new Chart(
     temperatureCanvas,
-    getConfig(temperature.slice(start, end), "pink", "F", null),
+    getConfig(
+      start === 0
+        ? temperature.slice(dataStartingAt, end)
+        : temperature.slice(start, end),
+      "pink",
+      "F",
+      null,
+    ),
   );
 
   const precipitationCanvas = document.getElementById("precipitation-forecast");
   const precipitationForecast = new Chart(
     precipitationCanvas,
-    getConfig(probability_of_precipitation.slice(start, end), null, "%", 100),
+    getConfig(
+      start === 0
+        ? probability_of_precipitation.slice(dataStartingAt, end)
+        : probability_of_precipitation.slice(start, end),
+      null,
+      "%",
+      100,
+    ),
   );
 
   function waveHover(e) {
