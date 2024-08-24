@@ -288,44 +288,66 @@ function parseForecastData(data) {
 
   const prefillLength = new Date(data.starting_at).getHours();
 
-  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const dayLabel = weekday[new Date(data.starting_at).getDay()];
+  if (prefillLength > 20) {
+    let offset = 24 - prefillLength;
+    wave_height_labels = data.wave_height_labels.slice(offset);
 
-  const prefillLabels = [`${dayLabel} 12 AM`];
-  for (let i = 1; i < prefillLength; i++) {
-    if (i < 10) {
-      prefillLabels.push(`${dayLabel} 0${i} AM`);
+    qualities = data.qualities.slice(offset);
+    wave_heights = data.wave_height_data.slice(offset);
+    wind_speeds = data.wind_speed_data.slice(offset);
+    wind_directions = data.wind_direction_data.slice(offset);
+    wind_gusts = data.wind_gust_data.slice(offset);
+    wave_period = data.wave_period_data.slice(offset);
+    temperature = data.temperature.slice(offset);
+    dewpoint = data.dewpoint.slice(offset);
+    cloud_cover = data.cloud_cover.slice(offset);
+    probability_of_precipitation =
+      data.probability_of_precipitation.slice(offset);
+    probability_of_thunder = data.probability_of_thunder.slice(offset);
+  } else {
+    const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayLabel = weekday[new Date(data.starting_at).getDay()];
+
+    const prefillLabels = [`${dayLabel} 12 AM`];
+    for (let i = 1; i < prefillLength; i++) {
+      if (i < 10) {
+        prefillLabels.push(`${dayLabel} 0${i} AM`);
+      }
+      if (i >= 10 && i < 12) {
+        prefillLabels.push(`${dayLabel} ${i} AM`);
+      }
+      if (i === 12) {
+        prefillLabels.push(`${dayLabel} ${i} PM`);
+      }
+      if (i > 12) {
+        prefillLabels.push(`${dayLabel} 0${i - 12} PM`);
+      }
     }
-    if (i >= 10 && i < 12) {
-      prefillLabels.push(`${dayLabel} ${i} AM`);
-    }
-    if (i === 12) {
-      prefillLabels.push(`${dayLabel} ${i} PM`);
-    }
-    if (i > 12) {
-      prefillLabels.push(`${dayLabel} 0${i - 12} PM`);
-    }
+
+    wave_height_labels = prefillLabels.concat(data.wave_height_labels);
+
+    qualities = new Array(prefillLength).fill("#a8a29e").concat(data.qualities);
+    wave_heights = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wave_height_data);
+    wind_speeds = new Array(prefillLength).fill(0).concat(data.wind_speed_data);
+    wind_directions = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wind_direction_data);
+    wind_gusts = new Array(prefillLength).fill(0).concat(data.wind_gust_data);
+    wave_period = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wave_period_data);
+    temperature = new Array(prefillLength).fill(0).concat(data.temperature);
+    dewpoint = new Array(prefillLength).fill(0).concat(data.dewpoint);
+    cloud_cover = new Array(prefillLength).fill(0).concat(data.cloud_cover);
+    probability_of_precipitation = new Array(prefillLength)
+      .fill(0)
+      .concat(data.probability_of_precipitation);
+    probability_of_thunder = new Array(prefillLength)
+      .fill(0)
+      .concat(data.probability_of_thunder);
   }
-
-  wave_height_labels = prefillLabels.concat(data.wave_height_labels);
-
-  qualities = new Array(prefillLength).fill("#a8a29e").concat(data.qualities);
-  wave_heights = new Array(prefillLength).fill(0).concat(data.wave_height_data);
-  wind_speeds = new Array(prefillLength).fill(0).concat(data.wind_speed_data);
-  wind_directions = new Array(prefillLength)
-    .fill(0)
-    .concat(data.wind_direction_data);
-  wind_gusts = new Array(prefillLength).fill(0).concat(data.wind_gust_data);
-  wave_period = new Array(prefillLength).fill(0).concat(data.wave_period_data);
-  temperature = new Array(prefillLength).fill(0).concat(data.temperature);
-  dewpoint = new Array(prefillLength).fill(0).concat(data.dewpoint);
-  cloud_cover = new Array(prefillLength).fill(0).concat(data.cloud_cover);
-  probability_of_precipitation = new Array(prefillLength)
-    .fill(0)
-    .concat(data.probability_of_precipitation);
-  probability_of_thunder = new Array(prefillLength)
-    .fill(0)
-    .concat(data.probability_of_thunder);
 
   let startingAt = new Date().getHours();
 
@@ -618,10 +640,15 @@ function parseForecastData(data) {
   }
   function getForecastRangeLabel() {
     if (start === 0) {
+      let dayOffset = prefillLength > 20 && new Date().getHours() > 20;
       if (stepBy === 24) {
-        setForecastRange("Today");
+        dayOffset ? setForecastRange("Tomorrow") : setForecastRange("Today");
       } else {
-        setForecastRange("Today - Tomorrow");
+        dayOffset
+          ? setForecastRange(
+              `Tomorrow - ${wave_height_labels[start + 25].split(" ")[0]}`,
+            )
+          : setForecastRange("Today - Tomorrow");
       }
     } else {
       if (stepBy === 24) {
