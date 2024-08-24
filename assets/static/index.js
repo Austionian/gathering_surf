@@ -219,7 +219,7 @@ function parseLatestData(data) {
   setText("wind", getWindData(data));
   setText("as-of", `As of ${data.as_of}`);
   setStyleAttribute(
-    "wind_icon",
+    "wind-icon",
     `transform: rotate(${data.wind_direction + 180}deg);`,
   );
 
@@ -288,6 +288,8 @@ function parseForecastData(data) {
 
   const prefillLength = new Date(data.starting_at).getHours();
 
+  // Might be simpler to just align this to be the same day no matter what, then the
+  // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
   if (prefillLength > 20) {
     let offset = 24 - prefillLength;
     wave_height_labels = data.wave_height_labels.slice(offset);
