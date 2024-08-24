@@ -27,30 +27,6 @@ pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     Err(anyhow!("no hour found!"))
 }
 
-pub fn convert_military_to_standard_full(time: &str) -> String {
-    let (hour, min) = time.split_once(':').unwrap();
-
-    let hour = hour.parse::<u8>().unwrap();
-
-    if hour == 12 {
-        return format!("12:{min} PM");
-    }
-    if hour == 0 {
-        return format!("12:{min} AM");
-    }
-
-    if hour < 12 {
-        return format!("{time}:{min} AM");
-    }
-
-    let hour = hour - 12;
-    if hour < 10 {
-        return format!("0{hour}:{min} PM");
-    }
-
-    format!("{hour}:{min} PM")
-}
-
 fn convert_military_to_standard(time: &str) -> String {
     let time = time.split(':').next().unwrap();
 

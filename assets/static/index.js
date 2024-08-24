@@ -283,22 +283,39 @@ let probability_of_thunder;
  * @param {ForecastData} data
  */
 function parseForecastData(data) {
-  qualities = data.qualities;
-  wave_height_labels = data.wave_height_labels;
-  wave_heights = data.wave_height_data;
-  wind_speeds = data.wind_speed_data;
-  wind_directions = data.wind_direction_data;
-  wind_gusts = data.wind_gust_data;
-  wave_period = data.wave_period_data;
   graph_max = data.graph_max;
-  temperature = data.temperature;
-  dewpoint = data.dewpoint;
-  cloud_cover = data.cloud_cover;
-  probability_of_precipitation = data.probability_of_precipitation;
-  probability_of_thunder = data.probability_of_thunder;
 
-  let startingAt =
-    new Date().getHours() - new Date(data.starting_at).getHours();
+  const prefillLength = new Date(data.starting_at).getHours();
+
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayLabel = weekday[new Date(data.starting_at).getDay()];
+
+  const prefillLabels = [`${dayLabel} 12 AM`];
+  for (let i = 1; i < prefillLength; i++) {
+    prefillLabels.push(`${dayLabel} 0${i} AM`);
+  }
+
+  wave_height_labels = prefillLabels.concat(data.wave_height_labels);
+
+  qualities = new Array(prefillLength).fill("#a8a29e").concat(data.qualities);
+  wave_heights = new Array(prefillLength).fill(0).concat(data.wave_height_data);
+  wind_speeds = new Array(prefillLength).fill(0).concat(data.wind_speed_data);
+  wind_directions = new Array(prefillLength)
+    .fill(0)
+    .concat(data.wind_direction_data);
+  wind_gusts = new Array(prefillLength).fill(0).concat(data.wind_gust_data);
+  wave_period = new Array(prefillLength).fill(0).concat(data.wave_period_data);
+  temperature = new Array(prefillLength).fill(0).concat(data.temperature);
+  dewpoint = new Array(prefillLength).fill(0).concat(data.dewpoint);
+  cloud_cover = new Array(prefillLength).fill(0).concat(data.cloud_cover);
+  probability_of_precipitation = new Array(prefillLength)
+    .fill(0)
+    .concat(data.probability_of_precipitation);
+  probability_of_thunder = new Array(prefillLength)
+    .fill(0)
+    .concat(data.probability_of_thunder);
+
+  let startingAt = new Date().getHours();
 
   // If the forecast starting_at time hasn't been updated in a while, it will show
   // a PM time the follow morning.
@@ -372,7 +389,7 @@ function parseForecastData(data) {
 
   const ctx = document.getElementById("forecast");
 
-  const quality = (ctx) => qualities[ctx.p0.parsed.x];
+  const quality = (ctx) => qualities[ctx.dataIndex + start];
 
   const plugin = {
     id: "vert",
@@ -401,6 +418,23 @@ function parseForecastData(data) {
         ctx.stroke();
         ctx.restore();
       }
+      // Draw a vertical line representing the current time on the graph
+      if (startingAt > start) {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+
+        const xValue = xAxis.getPixelForValue(startingAt);
+        ctx.save();
+        ctx.strokeStyle = "#3b3b42";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(xValue, 0);
+        ctx.lineTo(xValue, chart.height);
+        ctx.stroke();
+        ctx.fillStyle = "#3b3b42";
+        ctx.fillText("Now", xValue + 5, 15);
+        ctx.restore();
+      }
     },
   };
 
@@ -414,58 +448,80 @@ function parseForecastData(data) {
           ? wave_heights.length - 1
           : x_value
         : 0;
-    const color = qualities[x];
+    const color = qualities[x + start];
 
     // Update wave legend
     setStyleAttribute("legend", `background-color: ${color}`);
-    setText("legend-label", wave_height_labels[x]);
+    setText("legend-label", wave_height_labels[x + start]);
     setText("legend-quality", qualityMap[color]);
-    setText("legend-wave-height", wave_heights[x]);
-    setText("legend-wind-speed", wind_speeds[x]);
+    setText("legend-wave-height", wave_heights[x + start]);
+    setText("legend-wind-speed", wind_speeds[x + start]);
     setStyleAttribute(
       "legend-wind-icon",
-      `transform: rotate(${wind_directions[x]}deg);`,
+      `transform: rotate(${wind_directions[x + start]}deg);`,
     );
-    setText("legend-wave-period", wave_period[x]);
-    setText("legend-wind-gust", wind_gusts[x]);
+    setText("legend-wave-period", wave_period[x + start]);
+    setText("legend-wind-gust", wind_gusts[x + start]);
 
     // Update temperature legend
-    setText("temperature-legend-label", wave_height_labels[x]);
-    setText("temperature-legend-temperature", temperature[x]);
-    setText("temperature-legend-dewpoint", dewpoint[x]);
+    setText("temperature-legend-label", wave_height_labels[x + start]);
+    setText("temperature-legend-temperature", temperature[x + start]);
+    setText("temperature-legend-dewpoint", dewpoint[x + start]);
 
     // Update precipitation legend
-    setText("precipitation-legend-label", wave_height_labels[x]);
+    setText("precipitation-legend-label", wave_height_labels[x + start]);
     setText(
       "precipitation-legend-precipitation",
-      probability_of_precipitation[x],
+      probability_of_precipitation[x + start],
     );
-    setText("precipitation-legend-thunder", probability_of_thunder[x]);
-    setText("precipitation-legend-cloud-cover", cloud_cover[x]);
+    setText("precipitation-legend-thunder", probability_of_thunder[x + start]);
+    setText("precipitation-legend-cloud-cover", cloud_cover[x + start]);
   };
 
-  const xTicksCallback = (_value, i, _ticks) =>
-    i % 48 === 0 ? wave_height_labels[i] : null;
+  const xTicksCallback = (_value, i, _ticks) => {
+    if (stepBy === 24) {
+      return i % 6 === 0 ? wave_height_labels[i + start] : null;
+    }
+    if (stepBy === 48) {
+      return i % 8 === 0 ? wave_height_labels[i + start] : null;
+    }
+    return i % 24 === 0 ? wave_height_labels[i + start] : null;
+  };
+
+  function colorize() {
+    return (ctx) => quality(ctx) || "#4ade80";
+  }
+
+  // window widths align with tailwind md and lg
+  const getStepBy = () =>
+    window.innerWidth < 768
+      ? 24
+      : window.innerWidth < 1024
+        ? 48
+        : wave_heights.length;
+
+  let stepBy = getStepBy();
+
+  let start = 0;
+  let end = start + stepBy;
 
   const waveForecast = new Chart(ctx, {
-    type: "line",
+    type: "bar",
     plugins: [plugin],
     data: {
-      labels: wave_height_labels,
+      labels: wave_height_labels.slice(start, end),
       datasets: [
         {
           label: "wave height (feet)",
-          data: wave_heights,
+          data: wave_heights.slice(start, end),
           pointStyle: false,
-          segment: {
-            backgroundColor: (ctx) => quality(ctx) || "#4ade80",
-            borderColor: (ctx) => quality(ctx) || "#4ade80",
-          },
+          minBarLength: 0.1,
         },
       ],
     },
     options: {
       onHover,
+      borderRadius: 5,
       maintainAspectRatio: false,
       plugins: {
         legend: {
@@ -476,8 +532,8 @@ function parseForecastData(data) {
         },
       },
       elements: {
-        line: {
-          tension: 0.4,
+        bar: {
+          backgroundColor: colorize(),
         },
       },
       responsive: true,
@@ -511,28 +567,146 @@ function parseForecastData(data) {
     },
   });
 
+  /**
+   * function to set update the dom with the forecast's range.
+   *
+   * @param {string} label
+   */
+  function setForecastRange(label) {
+    setText("forecast-range", label);
+  }
+  function getForecastRangeLabel() {
+    if (start === 0) {
+      if (stepBy === 24) {
+        setForecastRange("Today");
+      } else {
+        setForecastRange("Today - Tomorrow");
+      }
+    } else {
+      if (stepBy === 24) {
+        setForecastRange(wave_height_labels[start].split(" ")[0]);
+      } else {
+        console.log(end);
+        const last =
+          wave_height_labels[end - 1] ??
+          wave_height_labels[wave_height_labels.length - 1];
+        setForecastRange(
+          `${wave_height_labels[start].split(" ")[0]} - ${last.split(" ")[0]}`,
+        );
+      }
+    }
+  }
+  getForecastRangeLabel();
+
+  function updateCharts() {
+    let labels = wave_height_labels.slice(start, end);
+    waveForecast.data.labels = labels;
+    waveForecast.data.datasets[0].data = wave_heights.slice(start, end);
+    waveForecast.update();
+
+    temperatureForecast.data.labels = labels;
+    temperatureForecast.data.datasets[0].data = temperature.slice(start, end);
+    temperatureForecast.update();
+
+    precipitationForecast.data.labels = labels;
+    precipitationForecast.data.datasets[0].data =
+      probability_of_precipitation.slice(start, end);
+    precipitationForecast.update();
+  }
+
+  window.addEventListener("resize", () => {
+    stepBy = getStepBy();
+
+    if (start + stepBy > wave_height_labels.length) {
+      end = wave_height_labels.length;
+      start = wave_height_labels.length - stepBy;
+    } else {
+      end = start + stepBy;
+    }
+
+    updateCharts();
+
+    if (start === 0) {
+      NonNull(document.getElementById("forecast-backward")).disabled = true;
+    }
+    if (start + stepBy < wave_heights.length) {
+      NonNull(document.getElementById("forecast-foreward")).disabled = false;
+    }
+    if (start + stepBy >= wave_heights.length) {
+      NonNull(document.getElementById("forecast-foreward")).disabled = true;
+    }
+    if (start > 0) {
+      NonNull(document.getElementById("forecast-backward")).disabled = false;
+    }
+
+    getForecastRangeLabel();
+  });
+
+  document
+    .getElementById("forecast-backward")
+    ?.addEventListener("click", () => {
+      if (start - stepBy < 0) {
+        start = 0;
+        end = stepBy;
+      } else {
+        end -= stepBy;
+        start -= stepBy;
+      }
+
+      updateCharts();
+
+      if (start === 0) {
+        NonNull(document.getElementById("forecast-backward")).disabled = true;
+      }
+      if (start + stepBy < wave_heights.length) {
+        NonNull(document.getElementById("forecast-foreward")).disabled = false;
+      }
+
+      getForecastRangeLabel();
+    });
+
+  document
+    .getElementById("forecast-foreward")
+    ?.addEventListener("click", () => {
+      if (end + stepBy > wave_height_labels.length) {
+        end = wave_height_labels.length;
+        start = end - stepBy;
+      } else {
+        start += stepBy;
+        end += stepBy;
+      }
+
+      updateCharts();
+
+      if (start + stepBy >= wave_heights.length) {
+        NonNull(document.getElementById("forecast-foreward")).disabled = true;
+      }
+      if (start > 0) {
+        NonNull(document.getElementById("forecast-backward")).disabled = false;
+      }
+
+      getForecastRangeLabel();
+    });
+
   const getConfig = (data, color, label, max) => ({
-    type: "line",
+    type: "bar",
     plugins: [plugin],
     data: {
-      labels: wave_height_labels,
+      labels: wave_height_labels.slice(start, end),
       datasets: [
         {
           label,
           data,
           pointStyle: false,
-          segment: color
-            ? {
-                backgroundColor: color,
-                borderColor: color,
-              }
-            : {},
+          minBarLength: 0.1,
         },
       ],
     },
     options: {
+      stacked: true,
       onHover,
       maintainAspectRatio: false,
+      borderRadius: 5,
       plugins: {
         legend: {
           display: false,
@@ -542,9 +716,12 @@ function parseForecastData(data) {
         },
       },
       elements: {
-        line: {
-          tension: 0.4,
-        },
+        bar: color
+          ? {
+              backgroundColor: color,
+              borderColor: color,
+            }
+          : {},
       },
       responsive: true,
       interaction: {
@@ -574,13 +751,13 @@ function parseForecastData(data) {
   const temperatureCanvas = document.getElementById("temperature-forecast");
   const temperatureForecast = new Chart(
     temperatureCanvas,
-    getConfig(temperature, "pink", "F", null),
+    getConfig(temperature.slice(start, end), "pink", "F", null),
   );
 
   const precipitationCanvas = document.getElementById("precipitation-forecast");
   const precipitationForecast = new Chart(
     precipitationCanvas,
-    getConfig(probability_of_precipitation, null, "%", 100),
+    getConfig(probability_of_precipitation.slice(start, end), null, "%", 100),
   );
 
   function waveHover(e) {

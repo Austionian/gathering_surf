@@ -235,20 +235,38 @@
       <div id="forecast-container" class="mt-16">
         <div>
           <div
-            class="border-b border-white/15 mb-10 z-10 bg-black/90 sticky top-[64px] flex flex-col-reverse items-start justify-between gap-x-8 gap-y-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
+            class="border-b border-white/15 mb-10 z-10 bg-black/90 sticky top-[64px] flex items-start justify-between gap-x-8 gap-y-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
           >
-            <div class="flex items-center">
-              <h1
-                class="text-white flex sm:self-center gap-x-3 text-xl sm:text-2xl leading-7 mb-0"
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:w-full">
+              <div>
+                <h1
+                  class="text-white flex sm:self-center gap-x-3 text-xl sm:text-2xl leading-7 mb-0"
+                >
+                  Forecast
+                </h1>
+              </div>
+              <div
+                id="forecast-as-of-container"
+                class="hidden lg:flex font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
               >
-                Forecast
-              </h1>
+                <span id="forecast-as-of">____________________________</span>
+              </div>
             </div>
-            <div
-              id="forecast-as-of-container"
-              class="font-mono animate-pulse flex order-first rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
-            >
-              <span id="forecast-as-of">____________________________</span>
+            <div class="flex space-x-1 lg:hidden">
+              <button
+                disabled
+                id="forecast-backward"
+                class="group px-2 border border-white rounded-full hover:text-secondary-500 hover:border-secondary-500 hover:fill-secondary-500 disabled:border-zinc-700 disabled:text-zinc-700"
+              >
+              &larr;
+              </button>
+              <span id="forecast-range">__________</span>
+              <button
+                id="forecast-foreward"
+                class="group px-2 border border-white rounded-full hover:text-secondary-500 hover:border-secondary-500 hover:fill-secondary-500 disabled:border-zinc-700 disabled:text-zinc-700"
+              >
+              &rarr;
+              </button>
             </div>
           </div>
           <div class="px-4 sm:px-6 lg:px-8 md:space-y-16">
