@@ -12,7 +12,7 @@
           >
             <div class="flex items-center">
               <h1
-                class="text-white flex sm:self-center gap-x-3 text-xl leading-7 mb-0"
+                class="text-white flex sm:self-center gap-x-3 text-lg sm:text-xl leading-7 mb-0"
               >
                 Right Now
               </h1>
@@ -46,7 +46,7 @@
 
           <!-- Stats -->
           <div class="grid grid-cols-1 bg-gray-700/10 lg:grid-cols-3">
-            <div class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
+            <div class="border-t border-white/5 py-3 px-4 sm:p-6 lg:px-8">
               <p class="text-sm font-medium leading-6 text-gray-400">Waves</p>
               <div class="mt-2 flex items-baseline gap-x-2">
                 <div
@@ -69,7 +69,7 @@
                     ></div>
                     <span
                       id="current-wave-height"
-                      class="text-4xl font-semibold tracking-tight text-white"
+                      class="text-2xl sm:text-4xl font-semibold tracking-tight text-white"
                     >
                     </span>
                     <span class="text-sm text-gray-400">ft</span>
@@ -116,13 +116,13 @@
               </div>
             </div>
             <div
-              class="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+              class="border-t border-white/5 py-3 px-4 sm:p-6 lg:px-8 sm:border-l"
             >
               <p class="text-sm font-medium leading-6 text-gray-400">Wind</p>
               <div
-                class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
               >
-                <div class="w-8 h-8 fill-white mr-2" id="wind-icon-container">
+                <div class="w-6 h-6 sm:w-8 sm:h-8 fill-white mr-2" id="wind-icon-container">
                   <svg
                     id="wind-icon"
                     class="transition"
@@ -147,7 +147,7 @@
                   Water Temp
                 </p>
                 <div
-                  class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                  class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
                 >
                   <div
                     class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
@@ -163,7 +163,7 @@
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 bg-gray-700/10">
             <div
-              class="border-t border-b border-white/5 py-6 px-4 sm:px-6 lg:px-8 text-gray-300"
+              class="border-t border-b border-white/5 py-3 px-4 sm:p-6 lg:px-8 text-gray-300"
             >
               <div id="water-quality-container">
                 <p class="text-sm font-medium leading-6 text-gray-400 mr-2">
@@ -174,7 +174,7 @@
                 ></div>
                 <div class="hidden" id="current-water-quality-open">
                   <div
-                    class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                    class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
                   >
                     OPEN
                     <span
@@ -185,7 +185,7 @@
                 </div>
                 <div class="hidden" id="current-water-quality-advisory">
                   <div
-                    class="text-4xl font-semibold tracking-tight mt-2 flex items-baseline gap-x-2 text-yellow-400"
+                    class="text-2xl sm:text-4xl font-semibold tracking-tight mt-2 flex items-baseline gap-x-2 text-yellow-400"
                   >
                     ADVISORY
                     <span
@@ -196,7 +196,7 @@
                 </div>
                 <div class="hidden" id="current-water-quality-closed">
                   <div
-                    class="text-4xl font-semibold tracking-tight text-red-500 mt-2 flex items-baseline gap-x-2"
+                    class="text-2xl sm:text-4xl font-semibold tracking-tight text-red-500 mt-2 flex items-baseline gap-x-2"
                   >
                     CLOSED
                     <span
@@ -209,13 +209,13 @@
               <div id="water-quality-error"></div>
             </div>
             <div
-              class="border-t border-b border-white/5 py-6 px-4 sm:px-6 lg:px-8 sm:border-l"
+              class="border-t border-b border-white/5 py-3 px-4 sm:p-6 lg:px-8 sm:border-l"
             >
               <p class="text-sm font-medium leading-6 text-gray-400">
                 Air Temp
               </p>
               <div
-                class="text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
               >
                 <div
                   class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
@@ -232,7 +232,7 @@
       <div id="latest-error"></div>
 
       <!-- Forecast Chart -->
-      <div id="forecast-container" class="mt-16">
+      <div id="forecast-container" class="mt-8 sm:mt-16">
         <div>
           <div
             class="border-b border-white/15 mb-10 z-10 bg-black/90 sticky top-[64px] flex items-start justify-between gap-x-8 gap-y-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"

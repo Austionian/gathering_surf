@@ -432,22 +432,38 @@ function parseForecastData(data) {
         ctx.lineTo(xValue, chart.height);
         ctx.stroke();
         ctx.fillStyle = "#3b3b42";
-        ctx.fillText("Now", xValue + 5, 15);
+        ctx.font = "bold 1rem ui-sans-serif, system-ui, sans-serif";
+        ctx.fillText("Now", startingAt > 14 ? xValue - 45 : xValue + 5, 15);
         ctx.restore();
       }
     },
   };
 
+  /**
+   * Gets the correct x based on the data to be displayed
+   *
+   * @param {number} x_value
+   */
+  function getX(x_value) {
+    if (stepBy === 24 || stepBy === 48) {
+      return x_value && x_value > 0
+        ? x_value >= wave_heights.length - start
+          ? wave_heights.length - start - 1
+          : x_value
+        : 0;
+    }
+    return x_value && x_value > 0
+      ? x_value >= wave_heights.length
+        ? wave_heights.length - 1
+        : x_value
+      : 0;
+  }
+
   const onHover = (e, _, chart) => {
     const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
     // Substitute the appropriate scale IDs
     const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
-    const x =
-      x_value && x_value > 0
-        ? x_value >= wave_heights.length
-          ? wave_heights.length - 1
-          : x_value
-        : 0;
+    const x = getX(x_value);
     const color = qualities[x + start];
 
     // Update wave legend
@@ -505,6 +521,11 @@ function parseForecastData(data) {
   let start = 0;
   let end = start + stepBy;
 
+  const font = {
+    size: stepBy === 24 ? 14 : 18,
+    weight: stepBy === 24 ? "lighter" : "bold",
+  };
+
   const waveForecast = new Chart(ctx, {
     type: "bar",
     plugins: [plugin],
@@ -557,10 +578,7 @@ function parseForecastData(data) {
               }
               return value;
             },
-            font: {
-              size: 18,
-              weight: "bold",
-            },
+            font,
           },
         },
       },
@@ -738,10 +756,7 @@ function parseForecastData(data) {
           beginAtZero: true,
           max,
           ticks: {
-            font: {
-              size: 18,
-              weight: "bold",
-            },
+            font,
           },
         },
       },
