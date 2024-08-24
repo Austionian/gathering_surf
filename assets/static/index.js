@@ -214,6 +214,7 @@ function parseLatestData(data) {
 
   setText("current-water-temp", data.water_temp);
   setText("current-air-temp", data.air_temp);
+  setText("current-air-temp-2", data.air_temp);
 
   setText("wind", getWindData(data));
   setText("as-of", `As of ${data.as_of}`);
@@ -292,7 +293,18 @@ function parseForecastData(data) {
 
   const prefillLabels = [`${dayLabel} 12 AM`];
   for (let i = 1; i < prefillLength; i++) {
-    prefillLabels.push(`${dayLabel} 0${i} AM`);
+    if (i < 10) {
+      prefillLabels.push(`${dayLabel} 0${i} AM`);
+    }
+    if (i >= 10 && i < 12) {
+      prefillLabels.push(`${dayLabel} ${i} AM`);
+    }
+    if (i === 12) {
+      prefillLabels.push(`${dayLabel} ${i} PM`);
+    }
+    if (i > 12) {
+      prefillLabels.push(`${dayLabel} 0${i - 12} PM`);
+    }
   }
 
   wave_height_labels = prefillLabels.concat(data.wave_height_labels);
@@ -459,11 +471,13 @@ function parseForecastData(data) {
       : 0;
   }
 
-  const onHover = (e, _, chart) => {
-    const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
-    // Substitute the appropriate scale IDs
-    const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
-    const x = getX(x_value);
+  /**
+   * Updates values shown in legends with selected indicy of
+   * data.
+   *
+   * @param {number} x
+   */
+  function updateLegends(x) {
     const color = qualities[x + start];
 
     // Update wave legend
@@ -492,6 +506,15 @@ function parseForecastData(data) {
     );
     setText("precipitation-legend-thunder", probability_of_thunder[x + start]);
     setText("precipitation-legend-cloud-cover", cloud_cover[x + start]);
+  }
+
+  const onHover = (e, _, chart) => {
+    const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+    // Substitute the appropriate scale IDs
+    const x_value = chart.scales.x.getValueForPixel(canvasPosition.x);
+    const x = getX(x_value);
+
+    updateLegends(x);
   };
 
   const xTicksCallback = (_value, i, _ticks) => {
@@ -523,7 +546,7 @@ function parseForecastData(data) {
 
   const font = {
     size: stepBy === 24 ? 14 : 18,
-    weight: stepBy === 24 ? "lighter" : "bold",
+    weight: stepBy === 24 ? "lighter" : "semi-bold",
   };
 
   const waveForecast = new Chart(ctx, {
@@ -643,6 +666,7 @@ function parseForecastData(data) {
     }
 
     updateCharts();
+    updateLegends(0);
 
     if (start === 0) {
       NonNull(document.getElementById("forecast-backward")).disabled = true;
@@ -672,6 +696,7 @@ function parseForecastData(data) {
       }
 
       updateCharts();
+      updateLegends(start === 0 ? startingAt : 0);
 
       if (start === 0) {
         NonNull(document.getElementById("forecast-backward")).disabled = true;
@@ -695,6 +720,7 @@ function parseForecastData(data) {
       }
 
       updateCharts();
+      updateLegends(0);
 
       if (start + stepBy >= wave_heights.length) {
         NonNull(document.getElementById("forecast-foreward")).disabled = true;
