@@ -458,11 +458,11 @@ function parseForecastData(data) {
         ctx.restore();
       }
       // Draw a vertical line representing the current time on the graph
-      if (startingAt > start) {
+      if (startingAt - dataStartingAt > start) {
         const ctx = chart.ctx;
         const xAxis = chart.scales.x;
 
-        const xValue = xAxis.getPixelForValue(startingAt);
+        const xValue = xAxis.getPixelForValue(startingAt - dataStartingAt);
         ctx.save();
         ctx.strokeStyle = "#3b3b42";
         ctx.lineWidth = 1;
@@ -472,7 +472,11 @@ function parseForecastData(data) {
         ctx.stroke();
         ctx.fillStyle = "#3b3b42";
         ctx.font = "bold 1rem ui-sans-serif, system-ui, sans-serif";
-        ctx.fillText("Now", startingAt > 14 ? xValue - 45 : xValue + 5, 15);
+        ctx.fillText(
+          "Now",
+          startingAt - startingAt > 14 ? xValue - 45 : xValue + 5,
+          15,
+        );
         ctx.restore();
       }
     },
