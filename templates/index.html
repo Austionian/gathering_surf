@@ -195,7 +195,7 @@
                 ></div>
                 <div class="hidden" id="current-water-quality-open">
                   <div
-                    class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
+                    class="text-xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
                   >
                     OPEN
                     <span
@@ -206,7 +206,7 @@
                 </div>
                 <div class="hidden" id="current-water-quality-advisory">
                   <div
-                    class="text-2xl sm:text-4xl font-semibold tracking-tight mt-2 flex items-baseline gap-x-2 text-yellow-400"
+                    class="text-xl sm:text-4xl font-semibold tracking-tight mt-2 flex items-baseline gap-x-2 text-yellow-400"
                   >
                     ADVISORY
                     <span
@@ -217,7 +217,7 @@
                 </div>
                 <div class="hidden" id="current-water-quality-closed">
                   <div
-                    class="text-2xl sm:text-4xl font-semibold tracking-tight text-red-500 mt-2 flex items-baseline gap-x-2"
+                    class="text-xl sm:text-4xl font-semibold tracking-tight text-red-500 mt-2 flex items-baseline gap-x-2"
                   >
                     CLOSED
                     <span
@@ -253,7 +253,7 @@
       <div id="latest-error"></div>
 
       <!-- Forecast Chart -->
-      <div id="forecast-container" class="mt-8 sm:mt-16">
+      <div id="forecast-container" class="mt-14 sm:mt-16">
         <div>
           <div
             class="border-b border-white/15 mb-10 z-10 bg-black/90 sticky top-[64px] flex items-start justify-between gap-x-8 gap-y-2 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
@@ -325,6 +325,12 @@
               </div>
               {% include "includes/precipitationLegend.html" %}
             </div>
+          </div>
+          <div
+              id="forecast-as-of-container-2"
+              class="w-fit m-auto flex lg:hidden font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
+              >
+              <span id="forecast-as-of-2">____________________________</span>
           </div>
         </div>
       </div>

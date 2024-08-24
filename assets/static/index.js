@@ -398,12 +398,14 @@ function parseForecastData(data) {
   setText("legend-wave-period", wave_period[startingAt]);
   setText("legend-wind-gust", wind_gusts[startingAt]);
   setText("forecast-as-of", `Updated @ ${data.forecast_as_of}`);
+  setText("forecast-as-of-2", `Forecast Last Ran @ ${data.forecast_as_of}`);
 
   removeElements(".loader");
   removeHidden("forecast");
   removeHidden("wave-quality");
   removeHidden("legend-container");
   removeStyle("forecast-as-of-container", "animate-pulse");
+  removeStyle("forecast-as-of-container-2", "animate-pulse");
 
   // -- Init temperature legend --
   removeHidden("temperature-legend-container");
