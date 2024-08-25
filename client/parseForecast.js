@@ -68,9 +68,11 @@ export function parseForecast(data) {
 
   // Might be simpler to just align this to be the same day no matter what, then the
   // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
+  // if (new Date(data.starting_at).getDay() < new Date().getDay()) {
   if (prefillLength > 20) {
     let offset = 24 - prefillLength;
-    const dayAlign = wave_height_labels - ((wave_height_labels - offset) % 24);
+    const dayAlign =
+      wave_height_labels.length - ((wave_height_labels.length - offset) % 24);
     wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
 
     qualities = data.qualities.slice(offset, dayAlign);
