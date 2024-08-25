@@ -288,7 +288,7 @@ export function parseForecast(data) {
         ctx.font = "bold 1rem ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(
           "Now",
-          startingAt - startingAt > 14 ? xValue - 45 : xValue + 5,
+          startingAt > 14 && stepBy === 24 ? xValue - 45 : xValue + 5,
           15,
         );
         ctx.restore();
@@ -323,38 +323,44 @@ export function parseForecast(data) {
    * @param {number} x
    */
   function updateLegends(x) {
+    let v;
+    if (x >= wave_height_labels.length - prefillLength) {
+      v = wave_height_labels.length - prefillLength - 1;
+    } else {
+      v = x;
+    }
     const beginning = start === 0 ? dataStartingAt : start;
-    const color = qualities[x + start];
+    const color = qualities[v + start];
 
     // Update wave legend
     setStyleAttribute("legend", `background-color: ${color}`);
-    setText("legend-label", wave_height_labels[x + beginning]);
+    setText("legend-label", wave_height_labels[v + beginning]);
     setText("legend-quality", QUALITY_MAP[color]);
-    setText("legend-wave-height", wave_heights[x + beginning]);
-    setText("legend-wind-speed", wind_speeds[x + beginning]);
+    setText("legend-wave-height", wave_heights[v + beginning]);
+    setText("legend-wind-speed", wind_speeds[v + beginning]);
     setStyleAttribute(
       "legend-wind-icon",
-      `transform: rotate(${wind_directions[x + beginning]}deg);`,
+      `transform: rotate(${wind_directions[v + beginning]}deg);`,
     );
-    setText("legend-wave-period", wave_period[x + beginning]);
-    setText("legend-wind-gust", wind_gusts[x + beginning]);
+    setText("legend-wave-period", wave_period[v + beginning]);
+    setText("legend-wind-gust", wind_gusts[v + beginning]);
 
     // Update temperature legend
-    setText("temperature-legend-label", wave_height_labels[x + beginning]);
-    setText("temperature-legend-temperature", temperature[x + beginning]);
-    setText("temperature-legend-dewpoint", dewpoint[x + beginning]);
+    setText("temperature-legend-label", wave_height_labels[v + beginning]);
+    setText("temperature-legend-temperature", temperature[v + beginning]);
+    setText("temperature-legend-dewpoint", dewpoint[v + beginning]);
 
     // Update precipitation legend
-    setText("precipitation-legend-label", wave_height_labels[x + beginning]);
+    setText("precipitation-legend-label", wave_height_labels[v + beginning]);
     setText(
       "precipitation-legend-precipitation",
-      probability_of_precipitation[x + beginning],
+      probability_of_precipitation[v + beginning],
     );
     setText(
       "precipitation-legend-thunder",
-      probability_of_thunder[x + beginning],
+      probability_of_thunder[v + beginning],
     );
-    setText("precipitation-legend-cloud-cover", cloud_cover[x + beginning]);
+    setText("precipitation-legend-cloud-cover", cloud_cover[v + beginning]);
   }
 
   const onHover = (e, _, chart) => {
