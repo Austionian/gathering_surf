@@ -8,9 +8,22 @@
  * @template {any} T
  * @param {T} item
  */
-export function NonNull(item) {
+export function nonNull(item) {
   if (item === null || item === undefined) throw "item is null or undefined";
   return item;
+}
+
+/**
+ * Convenient button assertion helper function allows asserting that something is
+ * an HTMLButtonElement
+ *
+ * @template {any} T
+ * @param {T} item
+ */
+export function asButton(item) {
+  if (item === null || item === undefined) throw "item is null or undefined";
+  if (item instanceof HTMLButtonElement) return item;
+  throw "item is not a button";
 }
 
 /**
@@ -20,7 +33,7 @@ export function NonNull(item) {
  * @param {string} text
  */
 export function setText(id, text) {
-  NonNull(document.getElementById(id)).innerText = text;
+  nonNull(document.getElementById(id)).innerText = text;
 }
 
 /**

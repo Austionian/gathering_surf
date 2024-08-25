@@ -11,7 +11,7 @@ import { removeHidden, removeElements, setText } from "./utilities";
  *
  * @param {WaterQualityData} data
  */
-export function parseWaterQualityData(data) {
+export function parseWaterQuality(data) {
   removeHidden(`current-water-quality-${data.water_quality.toLowerCase()}`);
   setText(
     `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
