@@ -17,9 +17,9 @@ primary_region = 'ord'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  memory = '512MB'
   cpu_kind = 'shared'
-  cpus = 1
+  cpus = 2
 
 [[http_service.checks]]
   grace_period = "10s"
