@@ -1,3 +1,14 @@
+import {
+  setText,
+  setStyleAttribute,
+  removeStyle,
+  removeHidden,
+  removeElement,
+  removeElements,
+  NonNull,
+} from "./utilities";
+import { parseWaterQualityData } from "./parseWaterQuality";
+
 // Select the node that will be observed for mutations
 const targetNode = /** @type {HTMLElement} */ (document.querySelector("body"));
 
@@ -47,111 +58,6 @@ const qualityMap = {
   "#f4496d": "Very Poor",
   "#a8a29e": "Flat",
 };
-
-/* Utility Functions */
-
-/**
- * Convenient non-null assertion helper function allows asserting that something is not
- * null or undefined without having to write a JSDoc type cast that has to
- * explicitly know the non-null type (which is error prone).
- *
- * @template {any} T
- * @param {T} item
- */
-function NonNull(item) {
-  if (item === null || item === undefined) throw "item is null or undefined";
-  return item;
-}
-
-/**
- * Sets an html element's innerText
- *
- * @param {string} id
- * @param {string} text
- */
-function setText(id, text) {
-  NonNull(document.getElementById(id)).innerText = text;
-}
-
-/**
- * Sets an html element's attribute
- *
- * @param {string} id
- * @param {string} attribute
- * @param {string} value
- */
-function setAttribute(id, attribute, value) {
-  document.getElementById(id)?.setAttribute(attribute, value);
-}
-
-/**
- * Sets an html element's style attribute
- *
- * @param {string} id
- * @param {string} value
- */
-function setStyleAttribute(id, value) {
-  setAttribute(id, "style", value);
-}
-
-/**
- * Removes all elements with the given class name.
- *
- * @param {string} className
- */
-function removeElements(className) {
-  document.querySelectorAll(className).forEach((e) => e.remove());
-}
-
-/**
- * Removes an element with the given id.
- *
- * @param {string} id
- */
-function removeElement(id) {
-  document.getElementById(id)?.remove();
-}
-
-/**
- *
- * Removes an element's style from its classList
- *
- * @param {string} id
- * @param {string} style
- */
-function removeStyle(id, style) {
-  document.getElementById(id)?.classList.remove(style);
-}
-
-/**
- * Removes the hidden classname from an element's classlist
- *
- * @param {string} id
- */
-function removeHidden(id) {
-  removeStyle(id, "hidden");
-}
-
-/**
- * @typedef {Object} WaterQualityData
- * @property {string} water_quality - The latest water quality.
- * @property {string} water_quality_text - The latest water quality information.
- */
-
-/**
- * Takes the latest data JSON and updates the HTML
- *
- * @param {WaterQualityData} data
- */
-function parseWaterQualityData(data) {
-  removeHidden(`current-water-quality-${data.water_quality.toLowerCase()}`);
-  setText(
-    `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
-    data.water_quality_text,
-  );
-
-  removeElements(".water-quality-loader");
-}
 
 /**
  * @typedef {Object} LatestData
@@ -292,20 +198,26 @@ function parseForecastData(data) {
   // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
   if (prefillLength > 20) {
     let offset = 24 - prefillLength;
-    wave_height_labels = data.wave_height_labels.slice(offset);
+    const dayAlign = wave_height_labels - ((wave_height_labels - offset) % 24);
+    wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
 
-    qualities = data.qualities.slice(offset);
-    wave_heights = data.wave_height_data.slice(offset);
-    wind_speeds = data.wind_speed_data.slice(offset);
-    wind_directions = data.wind_direction_data.slice(offset);
-    wind_gusts = data.wind_gust_data.slice(offset);
-    wave_period = data.wave_period_data.slice(offset);
-    temperature = data.temperature.slice(offset);
-    dewpoint = data.dewpoint.slice(offset);
-    cloud_cover = data.cloud_cover.slice(offset);
-    probability_of_precipitation =
-      data.probability_of_precipitation.slice(offset);
-    probability_of_thunder = data.probability_of_thunder.slice(offset);
+    qualities = data.qualities.slice(offset, dayAlign);
+    wave_heights = data.wave_height_data.slice(offset, dayAlign);
+    wind_speeds = data.wind_speed_data.slice(offset, dayAlign);
+    wind_directions = data.wind_direction_data.slice(offset, dayAlign);
+    wind_gusts = data.wind_gust_data.slice(offset, dayAlign);
+    wave_period = data.wave_period_data.slice(offset, dayAlign);
+    temperature = data.temperature.slice(offset, dayAlign);
+    dewpoint = data.dewpoint.slice(offset, dayAlign);
+    cloud_cover = data.cloud_cover.slice(offset, dayAlign);
+    probability_of_precipitation = data.probability_of_precipitation.slice(
+      offset,
+      dayAlign,
+    );
+    probability_of_thunder = data.probability_of_thunder.slice(
+      offset,
+      dayAlign,
+    );
   } else {
     const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dayLabel = weekday[new Date(data.starting_at).getDay()];
@@ -326,29 +238,59 @@ function parseForecastData(data) {
       }
     }
 
-    wave_height_labels = prefillLabels.concat(data.wave_height_labels);
+    const dayAlign =
+      data.wave_height_labels.length +
+      prefillLength -
+      ((data.wave_height_labels.length + prefillLength) % 24);
 
-    qualities = new Array(prefillLength).fill("#a8a29e").concat(data.qualities);
+    wave_height_labels = prefillLabels
+      .concat(data.wave_height_labels)
+      .slice(0, dayAlign);
+
+    qualities = new Array(prefillLength)
+      .fill("#a8a29e")
+      .concat(data.qualities)
+      .slice(0, dayAlign);
     wave_heights = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_height_data);
-    wind_speeds = new Array(prefillLength).fill(0).concat(data.wind_speed_data);
+      .concat(data.wave_height_data)
+      .slice(0, dayAlign);
+    wind_speeds = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wind_speed_data)
+      .slice(0, dayAlign);
     wind_directions = new Array(prefillLength)
       .fill(0)
-      .concat(data.wind_direction_data);
-    wind_gusts = new Array(prefillLength).fill(0).concat(data.wind_gust_data);
+      .concat(data.wind_direction_data)
+      .slice(0, dayAlign);
+    wind_gusts = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wind_gust_data)
+      .slice(0, dayAlign);
     wave_period = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_period_data);
-    temperature = new Array(prefillLength).fill(0).concat(data.temperature);
-    dewpoint = new Array(prefillLength).fill(0).concat(data.dewpoint);
-    cloud_cover = new Array(prefillLength).fill(0).concat(data.cloud_cover);
+      .concat(data.wave_period_data)
+      .slice(0, dayAlign);
+    temperature = new Array(prefillLength)
+      .fill(0)
+      .concat(data.temperature)
+      .slice(0, dayAlign);
+    dewpoint = new Array(prefillLength)
+      .fill(0)
+      .concat(data.dewpoint)
+      .slice(0, dayAlign);
+    cloud_cover = new Array(prefillLength)
+      .fill(0)
+      .concat(data.cloud_cover)
+      .slice(0, dayAlign);
     probability_of_precipitation = new Array(prefillLength)
       .fill(0)
-      .concat(data.probability_of_precipitation);
+      .concat(data.probability_of_precipitation)
+      .slice(0, dayAlign);
     probability_of_thunder = new Array(prefillLength)
       .fill(0)
-      .concat(data.probability_of_thunder);
+      .concat(data.probability_of_thunder)
+      .slice(0, dayAlign);
   }
 
   let startingAt = new Date().getHours();
@@ -674,7 +616,6 @@ function parseForecastData(data) {
       if (stepBy === 24) {
         setForecastRange(wave_height_labels[start].split(" ")[0]);
       } else {
-        console.log(end);
         const last =
           wave_height_labels[end - 1] ??
           wave_height_labels[wave_height_labels.length - 1];

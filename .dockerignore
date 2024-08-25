@@ -6,3 +6,4 @@ scripts/
 migrations/
 src/bin
 tailwindcss
+client/
