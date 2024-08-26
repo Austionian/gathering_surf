@@ -96,8 +96,12 @@ export function parseForecast(data) {
     const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dayLabel = weekday[new Date(data.starting_at).getDay()];
 
-    const prefillLabels = [`${dayLabel} 12 AM`];
-    for (let i = 1; i < prefillLength; i++) {
+    const prefillLabels = [];
+    for (let i = 0; i < prefillLength; i++) {
+      if (i === 0) {
+        prefillLabels.push(`${dayLabel} 12 AM`);
+        continue;
+      }
       if (i < 10) {
         prefillLabels.push(`${dayLabel} 0${i} AM`);
       }

@@ -14,7 +14,7 @@
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
       as="script"
     />
-    <link rel="preload" href="/assets/static/index.min.js?v=2" as="script" />
+    <link rel="preload" href="/assets/static/index.min.js?v=3" as="script" />
 
     <link href="/assets/styles.css?v=3" rel="stylesheet" type="text/css" />
     <style>
@@ -29,7 +29,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?v=2"></script>
+    <script src="/assets/static/index.min.js?v=3"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %}
   </body>
 </html>
