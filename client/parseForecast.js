@@ -1,246 +1,22 @@
-// Select the node that will be observed for mutations
-const targetNode = /** @type {HTMLElement} */ (document.querySelector("body"));
-
-// Options for the observer (which mutations to observe)
-const config = { attributes: true, childList: true, subtree: true };
-
-/**
- * Callback function to execute when mutations are observed
- *
- * @param {MutationRecord[]} mutationList
- */
-const observerCallback = (mutationList) => {
-  for (const mutation of mutationList) {
-    if (mutation.target.id === "latest-data") {
-      parseLatestData(JSON.parse(mutation.target.innerText));
-    }
-    if (mutation.target.id === "water-quality-data") {
-      parseWaterQualityData(JSON.parse(mutation.target.innerText));
-    }
-    if (mutation.target.id === "forecast-data") {
-      try {
-        const data = JSON.parse(mutation.target.innerText);
-        parseForecastData(data);
-      } catch {
-        console.log("failed to parse forecast, trying again.");
-        setTimeout(() => {
-          const data = JSON.parse(mutation.target.innerText);
-          parseForecastData(data);
-        }, 100);
-      }
-    }
-  }
-};
-
-// Create an observer instance linked to the callback function
-const observer = new MutationObserver(observerCallback);
-
-// Start observing the target node for configured mutations
-observer.observe(targetNode, config);
+import {
+  setText,
+  setStyleAttribute,
+  removeHidden,
+  removeStyle,
+  removeElement,
+  removeElements,
+  asButton,
+} from "./utilities";
 
 const FLAT_COLOR = "#a8a29e";
 
-const qualityMap = {
+const QUALITY_MAP = {
   "#0bd674": "Good",
   "#ffcd1e": "Fair to Good",
   "#ff9500": "Poor",
   "#f4496d": "Very Poor",
   "#a8a29e": "Flat",
 };
-
-/* Utility Functions */
-
-/**
- * Convenient non-null assertion helper function allows asserting that something is not
- * null or undefined without having to write a JSDoc type cast that has to
- * explicitly know the non-null type (which is error prone).
- *
- * @template {any} T
- * @param {T} item
- */
-function NonNull(item) {
-  if (item === null || item === undefined) throw "item is null or undefined";
-  return item;
-}
-
-/**
- * Sets an html element's innerText
- *
- * @param {string} id
- * @param {string} text
- */
-function setText(id, text) {
-  NonNull(document.getElementById(id)).innerText = text;
-}
-
-/**
- * Sets an html element's attribute
- *
- * @param {string} id
- * @param {string} attribute
- * @param {string} value
- */
-function setAttribute(id, attribute, value) {
-  document.getElementById(id)?.setAttribute(attribute, value);
-}
-
-/**
- * Sets an html element's style attribute
- *
- * @param {string} id
- * @param {string} value
- */
-function setStyleAttribute(id, value) {
-  setAttribute(id, "style", value);
-}
-
-/**
- * Removes all elements with the given class name.
- *
- * @param {string} className
- */
-function removeElements(className) {
-  document.querySelectorAll(className).forEach((e) => e.remove());
-}
-
-/**
- * Removes an element with the given id.
- *
- * @param {string} id
- */
-function removeElement(id) {
-  document.getElementById(id)?.remove();
-}
-
-/**
- *
- * Removes an element's style from its classList
- *
- * @param {string} id
- * @param {string} style
- */
-function removeStyle(id, style) {
-  document.getElementById(id)?.classList.remove(style);
-}
-
-/**
- * Removes the hidden classname from an element's classlist
- *
- * @param {string} id
- */
-function removeHidden(id) {
-  removeStyle(id, "hidden");
-}
-
-/**
- * @typedef {Object} WaterQualityData
- * @property {string} water_quality - The latest water quality.
- * @property {string} water_quality_text - The latest water quality information.
- */
-
-/**
- * Takes the latest data JSON and updates the HTML
- *
- * @param {WaterQualityData} data
- */
-function parseWaterQualityData(data) {
-  removeHidden(`current-water-quality-${data.water_quality.toLowerCase()}`);
-  setText(
-    `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
-    data.water_quality_text,
-  );
-
-  removeElements(".water-quality-loader");
-}
-
-/**
- * @typedef {Object} LatestData
- * @property {string} quality_color - The hexcode of the quality.
- * @property {string} quality_text - The computed text of the quality.
- * @property {string} water_temp - The latest water temperature.
- * @property {number} wind_direction - The current wind direction.
- * @property {string} wind_speed - The current wind speed.
- * @property {string} gusts - The current wind gust.
- * @property {string} air_temp
- * @property {?string} wave_height
- * @property {?string} wave_direction
- * @property {?string} wave_period
- * @property {string} as_of
- */
-
-/**
- * Takes the latest data JSON and updates the HTML
- *
- * @param {LatestData} data
- */
-function parseLatestData(data) {
-  if (data.wave_height) {
-    setText("current-wave-height", data.wave_height);
-    setStyleAttribute(
-      "wave-icon",
-      `transform: rotate(${data.wave_direction}deg);`,
-    );
-    removeElements(".wavey");
-  }
-
-  if (data.wave_period) {
-    setText("current-wave-period", data.wave_period);
-    removeElement("wavey-period-loader");
-  }
-
-  // Sometimes the forecast will have loaded before the realtime data.
-  // Most of the time realtime quality should supersede forecast.
-  if (
-    // If it hasn't been set yet, always set it.
-    NonNull(document.getElementById("wave-quality-text")).innerText === "" ||
-    // Otherwise if realtime has wave height, this always supersedes forecast estimates
-    // and 'Flat' condition will be handled appropriately
-    data.wave_height ||
-    // If the forecast data has loaded and the computed wave height is greater than
-    // or equal to one, then load the realtime computed quality. If this isn't here
-    // forecasted 'Flat' conditions wouldn't be handled correctly.
-    parseFloat(
-      NonNull(document.getElementById("current-wave-height")).innerText ?? "0",
-    ) >= 1
-  ) {
-    setStyleAttribute(
-      "wave-quality",
-      `background-color: ${data.quality_color};`,
-    );
-    setText("wave-quality-text", data.quality_text);
-    setStyleAttribute("wave-quality-text", `color: ${data.quality_color}`);
-    removeElements(".wave-quality-loader");
-  }
-
-  setText("current-water-temp", data.water_temp);
-  setText("current-air-temp", data.air_temp);
-  setText("current-air-temp-2", data.air_temp);
-
-  setText("wind", getWindData(data));
-  setText("as-of", `As of ${data.as_of}`);
-  setStyleAttribute(
-    "wind-icon",
-    `transform: rotate(${data.wind_direction + 180}deg);`,
-  );
-
-  removeElements(".latest-loader");
-  removeHidden("wind-icon-container");
-  removeHidden("wave-icon-container");
-  removeStyle("as-of-container", "animate-pulse");
-  removeHidden("wave-quality");
-}
-
-/**
- * Takes the latest data JSON and creates the wind string
- *
- * @param {LatestData} data
- */
-const getWindData = (data) =>
-  data.wind_speed === data.gusts
-    ? data.wind_speed
-    : data.gusts === "0"
-      ? data.wind_speed
-      : `${data.wind_speed}-${data.gusts}`;
 
 let qualities;
 let wave_height_labels;
@@ -283,35 +59,49 @@ let probability_of_thunder;
  *
  * @param {ForecastData} data
  */
-function parseForecastData(data) {
+export function parseForecast(data) {
   graph_max = data.graph_max;
 
+  // prefillLength represents the time in hours that the data from the forecast starts at, e.g.
+  // if the forecast data starts at 2 PM, prefillLength = 14;
   const prefillLength = new Date(data.starting_at).getHours();
 
   // Might be simpler to just align this to be the same day no matter what, then the
   // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
+  // if (new Date(data.starting_at).getDay() < new Date().getDay()) {
   if (prefillLength > 20) {
     let offset = 24 - prefillLength;
-    wave_height_labels = data.wave_height_labels.slice(offset);
+    const dayAlign =
+      wave_height_labels.length - ((wave_height_labels.length - offset) % 24);
+    wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
 
-    qualities = data.qualities.slice(offset);
-    wave_heights = data.wave_height_data.slice(offset);
-    wind_speeds = data.wind_speed_data.slice(offset);
-    wind_directions = data.wind_direction_data.slice(offset);
-    wind_gusts = data.wind_gust_data.slice(offset);
-    wave_period = data.wave_period_data.slice(offset);
-    temperature = data.temperature.slice(offset);
-    dewpoint = data.dewpoint.slice(offset);
-    cloud_cover = data.cloud_cover.slice(offset);
-    probability_of_precipitation =
-      data.probability_of_precipitation.slice(offset);
-    probability_of_thunder = data.probability_of_thunder.slice(offset);
+    qualities = data.qualities.slice(offset, dayAlign);
+    wave_heights = data.wave_height_data.slice(offset, dayAlign);
+    wind_speeds = data.wind_speed_data.slice(offset, dayAlign);
+    wind_directions = data.wind_direction_data.slice(offset, dayAlign);
+    wind_gusts = data.wind_gust_data.slice(offset, dayAlign);
+    wave_period = data.wave_period_data.slice(offset, dayAlign);
+    temperature = data.temperature.slice(offset, dayAlign);
+    dewpoint = data.dewpoint.slice(offset, dayAlign);
+    cloud_cover = data.cloud_cover.slice(offset, dayAlign);
+    probability_of_precipitation = data.probability_of_precipitation.slice(
+      offset,
+      dayAlign,
+    );
+    probability_of_thunder = data.probability_of_thunder.slice(
+      offset,
+      dayAlign,
+    );
   } else {
     const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dayLabel = weekday[new Date(data.starting_at).getDay()];
 
-    const prefillLabels = [`${dayLabel} 12 AM`];
-    for (let i = 1; i < prefillLength; i++) {
+    const prefillLabels = [];
+    for (let i = 0; i < prefillLength; i++) {
+      if (i === 0) {
+        prefillLabels.push(`${dayLabel} 12 AM`);
+        continue;
+      }
       if (i < 10) {
         prefillLabels.push(`${dayLabel} 0${i} AM`);
       }
@@ -326,29 +116,59 @@ function parseForecastData(data) {
       }
     }
 
-    wave_height_labels = prefillLabels.concat(data.wave_height_labels);
+    const dayAlign =
+      data.wave_height_labels.length +
+      prefillLength -
+      ((data.wave_height_labels.length + prefillLength) % 24);
 
-    qualities = new Array(prefillLength).fill("#a8a29e").concat(data.qualities);
+    wave_height_labels = prefillLabels
+      .concat(data.wave_height_labels)
+      .slice(0, dayAlign);
+
+    qualities = new Array(prefillLength)
+      .fill("#a8a29e")
+      .concat(data.qualities)
+      .slice(0, dayAlign);
     wave_heights = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_height_data);
-    wind_speeds = new Array(prefillLength).fill(0).concat(data.wind_speed_data);
+      .concat(data.wave_height_data)
+      .slice(0, dayAlign);
+    wind_speeds = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wind_speed_data)
+      .slice(0, dayAlign);
     wind_directions = new Array(prefillLength)
       .fill(0)
-      .concat(data.wind_direction_data);
-    wind_gusts = new Array(prefillLength).fill(0).concat(data.wind_gust_data);
+      .concat(data.wind_direction_data)
+      .slice(0, dayAlign);
+    wind_gusts = new Array(prefillLength)
+      .fill(0)
+      .concat(data.wind_gust_data)
+      .slice(0, dayAlign);
     wave_period = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_period_data);
-    temperature = new Array(prefillLength).fill(0).concat(data.temperature);
-    dewpoint = new Array(prefillLength).fill(0).concat(data.dewpoint);
-    cloud_cover = new Array(prefillLength).fill(0).concat(data.cloud_cover);
+      .concat(data.wave_period_data)
+      .slice(0, dayAlign);
+    temperature = new Array(prefillLength)
+      .fill(0)
+      .concat(data.temperature)
+      .slice(0, dayAlign);
+    dewpoint = new Array(prefillLength)
+      .fill(0)
+      .concat(data.dewpoint)
+      .slice(0, dayAlign);
+    cloud_cover = new Array(prefillLength)
+      .fill(0)
+      .concat(data.cloud_cover)
+      .slice(0, dayAlign);
     probability_of_precipitation = new Array(prefillLength)
       .fill(0)
-      .concat(data.probability_of_precipitation);
+      .concat(data.probability_of_precipitation)
+      .slice(0, dayAlign);
     probability_of_thunder = new Array(prefillLength)
       .fill(0)
-      .concat(data.probability_of_thunder);
+      .concat(data.probability_of_thunder)
+      .slice(0, dayAlign);
   }
 
   let startingAt = new Date().getHours();
@@ -368,7 +188,7 @@ function parseForecastData(data) {
     if (data.current_wave_height == "0") {
       setStyleAttribute("wave-quality", `background-color: ${FLAT_COLOR}`);
 
-      setText("wave-quality-text", qualityMap[FLAT_COLOR]);
+      setText("wave-quality-text", QUALITY_MAP[FLAT_COLOR]);
       setStyleAttribute("wave-quality-text", `color: ${FLAT_COLOR}`);
 
       removeElements(".wave-quality-loader");
@@ -389,7 +209,7 @@ function parseForecastData(data) {
   }
 
   setText("legend-label", wave_height_labels[startingAt]);
-  setText("legend-quality", qualityMap[qualities[startingAt]]);
+  setText("legend-quality", QUALITY_MAP[qualities[startingAt]]);
   setText("legend-wave-height", wave_heights[startingAt]);
   setText("legend-wind-speed", wind_speeds[startingAt]);
   setStyleAttribute(
@@ -474,7 +294,7 @@ function parseForecastData(data) {
         ctx.font = "bold 1rem ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(
           "Now",
-          startingAt - startingAt > 14 ? xValue - 45 : xValue + 5,
+          startingAt > 14 && stepBy === 24 ? xValue - 45 : xValue + 5,
           15,
         );
         ctx.restore();
@@ -509,38 +329,44 @@ function parseForecastData(data) {
    * @param {number} x
    */
   function updateLegends(x) {
+    let v;
+    if (x >= wave_height_labels.length - prefillLength) {
+      v = wave_height_labels.length - prefillLength - 1;
+    } else {
+      v = x;
+    }
     const beginning = start === 0 ? dataStartingAt : start;
-    const color = qualities[x + start];
+    const color = qualities[v + start];
 
     // Update wave legend
     setStyleAttribute("legend", `background-color: ${color}`);
-    setText("legend-label", wave_height_labels[x + beginning]);
-    setText("legend-quality", qualityMap[color]);
-    setText("legend-wave-height", wave_heights[x + beginning]);
-    setText("legend-wind-speed", wind_speeds[x + beginning]);
+    setText("legend-label", wave_height_labels[v + beginning]);
+    setText("legend-quality", QUALITY_MAP[color]);
+    setText("legend-wave-height", wave_heights[v + beginning]);
+    setText("legend-wind-speed", wind_speeds[v + beginning]);
     setStyleAttribute(
       "legend-wind-icon",
-      `transform: rotate(${wind_directions[x + beginning]}deg);`,
+      `transform: rotate(${wind_directions[v + beginning]}deg);`,
     );
-    setText("legend-wave-period", wave_period[x + beginning]);
-    setText("legend-wind-gust", wind_gusts[x + beginning]);
+    setText("legend-wave-period", wave_period[v + beginning]);
+    setText("legend-wind-gust", wind_gusts[v + beginning]);
 
     // Update temperature legend
-    setText("temperature-legend-label", wave_height_labels[x + beginning]);
-    setText("temperature-legend-temperature", temperature[x + beginning]);
-    setText("temperature-legend-dewpoint", dewpoint[x + beginning]);
+    setText("temperature-legend-label", wave_height_labels[v + beginning]);
+    setText("temperature-legend-temperature", temperature[v + beginning]);
+    setText("temperature-legend-dewpoint", dewpoint[v + beginning]);
 
     // Update precipitation legend
-    setText("precipitation-legend-label", wave_height_labels[x + beginning]);
+    setText("precipitation-legend-label", wave_height_labels[v + beginning]);
     setText(
       "precipitation-legend-precipitation",
-      probability_of_precipitation[x + beginning],
+      probability_of_precipitation[v + beginning],
     );
     setText(
       "precipitation-legend-thunder",
-      probability_of_thunder[x + beginning],
+      probability_of_thunder[v + beginning],
     );
-    setText("precipitation-legend-cloud-cover", cloud_cover[x + beginning]);
+    setText("precipitation-legend-cloud-cover", cloud_cover[v + beginning]);
   }
 
   const onHover = (e, _, chart) => {
@@ -552,7 +378,13 @@ function parseForecastData(data) {
     updateLegends(x);
   };
 
-  const xTicksCallback = (_value, i, _ticks) => {
+  /**
+   * Returns x ticks according to the labels and starting value.
+   *
+   * @param {string} _value
+   * @param {number} i
+   */
+  const xTicksCallback = (_value, i) => {
     const beginning = start === 0 ? dataStartingAt : start;
     if (stepBy === 24) {
       return i % 6 === 0 ? wave_height_labels[i + beginning] : null;
@@ -637,7 +469,12 @@ function parseForecastData(data) {
           beginAtZero: true,
           max: graph_max,
           ticks: {
-            callback: function (value, _index, _ticks) {
+            /**
+             * Function to return only even y ticks
+             *
+             * @param {number} value
+             */
+            callback: function (value) {
               if (value % 2 !== 0) {
                 return "";
               }
@@ -658,6 +495,7 @@ function parseForecastData(data) {
   function setForecastRange(label) {
     setText("forecast-range", label);
   }
+
   function getForecastRangeLabel() {
     if (start === 0) {
       let dayOffset = prefillLength > 20 && new Date().getHours() > 20;
@@ -674,7 +512,6 @@ function parseForecastData(data) {
       if (stepBy === 24) {
         setForecastRange(wave_height_labels[start].split(" ")[0]);
       } else {
-        console.log(end);
         const last =
           wave_height_labels[end - 1] ??
           wave_height_labels[wave_height_labels.length - 1];
@@ -684,6 +521,7 @@ function parseForecastData(data) {
       }
     }
   }
+
   getForecastRangeLabel();
 
   function updateCharts() {
@@ -721,16 +559,16 @@ function parseForecastData(data) {
     updateLegends(0);
 
     if (start === 0) {
-      NonNull(document.getElementById("forecast-backward")).disabled = true;
+      asButton(document.getElementById("forecast-backward")).disabled = true;
     }
     if (start + stepBy < wave_heights.length) {
-      NonNull(document.getElementById("forecast-foreward")).disabled = false;
+      asButton(document.getElementById("forecast-foreward")).disabled = false;
     }
     if (start + stepBy >= wave_heights.length) {
-      NonNull(document.getElementById("forecast-foreward")).disabled = true;
+      asButton(document.getElementById("forecast-foreward")).disabled = true;
     }
     if (start > 0) {
-      NonNull(document.getElementById("forecast-backward")).disabled = false;
+      asButton(document.getElementById("forecast-backward")).disabled = false;
     }
 
     getForecastRangeLabel();
@@ -751,10 +589,10 @@ function parseForecastData(data) {
       updateLegends(start === 0 ? startingAt : 0);
 
       if (start === 0) {
-        NonNull(document.getElementById("forecast-backward")).disabled = true;
+        asButton(document.getElementById("forecast-backward")).disabled = true;
       }
       if (start + stepBy < wave_heights.length) {
-        NonNull(document.getElementById("forecast-foreward")).disabled = false;
+        asButton(document.getElementById("forecast-foreward")).disabled = false;
       }
 
       getForecastRangeLabel();
@@ -775,15 +613,23 @@ function parseForecastData(data) {
       updateLegends(0);
 
       if (start + stepBy >= wave_heights.length) {
-        NonNull(document.getElementById("forecast-foreward")).disabled = true;
+        asButton(document.getElementById("forecast-foreward")).disabled = true;
       }
       if (start > 0) {
-        NonNull(document.getElementById("forecast-backward")).disabled = false;
+        asButton(document.getElementById("forecast-backward")).disabled = false;
       }
 
       getForecastRangeLabel();
     });
 
+  /**
+   * Creates a config for a chart for ChartJS
+   *
+   * @param {number[]} data
+   * @param {string | null} color
+   * @param {string} label
+   * @param {number | null} max
+   */
   const getConfig = (data, color, label, max) => ({
     type: "bar",
     plugins: [plugin],
@@ -853,7 +699,7 @@ function parseForecastData(data) {
         : temperature.slice(start, end),
       "pink",
       "F",
-      null,
+      100,
     ),
   );
 
