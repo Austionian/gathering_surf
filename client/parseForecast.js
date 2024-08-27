@@ -66,15 +66,19 @@ export function parseForecast(data) {
   // if the forecast data starts at 2 PM, prefillLength = 14;
   const prefillLength = new Date(data.starting_at).getHours();
 
+  let dataStartingAt = new Date(data.starting_at).getHours();
   // Might be simpler to just align this to be the same day no matter what, then the
   // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
   // if (new Date(data.starting_at).getDay() < new Date().getDay()) {
   if (prefillLength > 20) {
     let offset = 24 - prefillLength;
     const dayAlign =
-      wave_height_labels.length - ((wave_height_labels.length - offset) % 24);
-    wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
+      data.wave_height_labels.length -
+      ((data.wave_height_labels.length - offset) % 24);
 
+    dataStartingAt = 0;
+    wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
+    console.log(wave_height_labels);
     qualities = data.qualities.slice(offset, dayAlign);
     wave_heights = data.wave_height_data.slice(offset, dayAlign);
     wind_speeds = data.wind_speed_data.slice(offset, dayAlign);
@@ -172,7 +176,6 @@ export function parseForecast(data) {
   }
 
   let startingAt = new Date().getHours();
-  const dataStartingAt = new Date(data.starting_at).getHours();
 
   // If the forecast starting_at time hasn't been updated in a while, it will show
   // a PM time the follow morning.
