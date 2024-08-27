@@ -248,7 +248,10 @@ export function parseForecast(data) {
 
   const ctx = document.getElementById("forecast");
 
-  const quality = (ctx) => qualities[ctx.dataIndex + start];
+  const quality = (ctx) =>
+    start === 0
+      ? qualities[ctx.dataIndex + dataStartingAt]
+      : qualities[ctx.dataIndex + start];
 
   const plugin = {
     id: "vert",
