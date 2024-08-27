@@ -17,7 +17,7 @@ run-tailwind:
 build-tailwind:
     #!/bin/bash
     echo -e "\nMinifying css"
-    sh -c './tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --minify'
+    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --minify
 
 # Script to run the axum server in watch mode.
 run-axum:
@@ -27,13 +27,22 @@ run-axum:
     export API_TOKEN=$API_TOKEN
 
     # Start cargo watch in the background
-    sh -c 'cargo watch -w src -w templates -x run &'
+    cargo watch -w src -w templates -x run
 
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     
-    sh -c 'rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser --watch --watch.exclude "src/**" --no-watch.clearScreen &'
+    rollup client/index.js --file assets/static/index.min.js --format iife --watch --watch.exclude "src/**" --no-watch.clearScreen
+
+build-rollup:
+    #!/bin/bash
+    echo -e "\nBuilding JS"
+    rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser 
+
+build:
+    #!/bin/bash
+    just build-tailwind && just build-rollup
 
 # Script to run the axum server and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css.
@@ -42,7 +51,7 @@ run-rollup:
 dev:
     #!/bin/bash
     minify() {
-        just build-tailwind
+        just build
     }
 
     # Add a trap to run the minify function before exiting
@@ -50,11 +59,8 @@ dev:
 
     open 'http://127.0.0.1:8080'
 
-    just run-axum
-    
-    just run-rollup
+    just run-axum & just run-rollup & just run-tailwind
 
-    just run-tailwind
     TAILWIND_PID=$!
 
     wait $TAILWIND_PID
