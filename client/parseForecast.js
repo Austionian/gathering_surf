@@ -245,6 +245,14 @@ export function parseForecast(data) {
   setText("precipitation-legend-cloud-cover", cloud_cover[startingAt]);
 
   setStyleAttribute("legend", `background-color: ${qualities[startingAt]};`);
+  setStyleAttribute(
+    [
+      "legend-container",
+      "precipitation-legend-container",
+      "temperature-legend-container",
+    ],
+    "margin-top: 1rem;",
+  );
 
   const ctx = document.getElementById("forecast");
 
@@ -287,13 +295,13 @@ export function parseForecast(data) {
 
         const xValue = xAxis.getPixelForValue(startingAt - dataStartingAt);
         ctx.save();
-        ctx.strokeStyle = "#3b3b42";
+        ctx.strokeStyle = "#5b5b58";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(xValue, 0);
         ctx.lineTo(xValue, chart.height);
         ctx.stroke();
-        ctx.fillStyle = "#3b3b42";
+        ctx.fillStyle = "#5b5b58";
         ctx.font = "bold 1rem ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(
           "Now",
@@ -450,6 +458,7 @@ export function parseForecast(data) {
       ],
     },
     options: {
+      aspectRatio: 1.75,
       onHover,
       borderRadius: 5,
       maintainAspectRatio: false,
@@ -478,8 +487,11 @@ export function parseForecast(data) {
           },
         },
         y: {
+          grid: {
+            color: "#1B1B1B",
+          },
           beginAtZero: true,
-          max: graph_max,
+          max: 10,
           ticks: {
             /**
              * Function to return only even y ticks
@@ -660,7 +672,7 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      stacked: true,
+      aspectRatio: 1.75,
       onHover,
       maintainAspectRatio: false,
       borderRadius: 5,
@@ -692,6 +704,9 @@ export function parseForecast(data) {
           },
         },
         y: {
+          grid: {
+            color: "#1B1B1B",
+          },
           beginAtZero: true,
           max,
           ticks: {

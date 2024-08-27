@@ -122,7 +122,10 @@
               <div
                 class="text-2xl sm:text-4xl font-semibold tracking-tight text-white mt-2 flex items-baseline gap-x-2"
               >
-                <div class="w-6 h-6 sm:w-8 sm:h-8 fill-white mr-2" id="wind-icon-container">
+                <div
+                  class="w-6 h-6 sm:w-8 sm:h-8 fill-white mr-2"
+                  id="wind-icon-container"
+                >
                   <svg
                     id="wind-icon"
                     class="transition"
@@ -135,6 +138,9 @@
                     />
                   </svg>
                 </div>
+                <div
+                  class="latest-loader w-[40px] h-[40px] animate-pulse rounded-xl bg-gray-700"
+                ></div>
                 <span id="wind"></span>
                 <span class="text-sm text-gray-400">mph</span>
               </div>
@@ -279,14 +285,14 @@
                 id="forecast-backward"
                 class="group px-2 border border-white rounded-full hover:text-secondary-500 hover:border-secondary-500 hover:fill-secondary-500 disabled:border-zinc-700 disabled:text-zinc-700"
               >
-              &larr;
+                &larr;
               </button>
               <span id="forecast-range">__________</span>
               <button
                 id="forecast-foreward"
                 class="group px-2 border border-white rounded-full hover:text-secondary-500 hover:border-secondary-500 hover:fill-secondary-500 disabled:border-zinc-700 disabled:text-zinc-700"
               >
-              &rarr;
+                &rarr;
               </button>
             </div>
           </div>
@@ -327,10 +333,10 @@
             </div>
           </div>
           <div
-              id="forecast-as-of-container-2"
-              class="w-fit m-auto flex md:mt-10 lg:hidden font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
-              >
-              <span id="forecast-as-of-2">____________________________</span>
+            id="forecast-as-of-container-2"
+            class="w-fit m-auto flex md:mt-10 lg:hidden font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
+          >
+            <span id="forecast-as-of-2">____________________________</span>
           </div>
         </div>
       </div>

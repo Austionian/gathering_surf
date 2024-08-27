@@ -33,7 +33,7 @@ run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     
-    sh -c 'rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser --watch --watch.exclude "src/**" --no-watch.clearScreen'
+    sh -c 'rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser --watch --watch.exclude "src/**" --no-watch.clearScreen &'
 
 # Script to run the axum server and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css.

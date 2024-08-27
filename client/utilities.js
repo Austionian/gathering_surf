@@ -50,11 +50,17 @@ export function setAttribute(id, attribute, value) {
 /**
  * Sets an html element's style attribute
  *
- * @param {string} id
+ * @param {string | string[]} id
  * @param {string} value
  */
 export function setStyleAttribute(id, value) {
-  setAttribute(id, "style", value);
+  if (id instanceof Array) {
+    id.forEach((i) => {
+      setAttribute(i, "style", value);
+    });
+  } else {
+    setAttribute(id, "style", value);
+  }
 }
 
 /**
