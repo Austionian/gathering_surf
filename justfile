@@ -11,13 +11,13 @@ alias d := dev
 run-tailwind:
     #!/bin/bash
     echo "Starting the Tailwind binary."
-    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --watch
+    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --watch
 
 # Script to build and minify the Tailwind binary
 build-tailwind:
     #!/bin/bash
     echo -e "\nMinifying css"
-    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --minify
+    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --minify
 
 # Script to run the axum server in watch mode.
 run-axum:

@@ -2,7 +2,6 @@ use crate::{Spot, QUALITY_PATH};
 
 use anyhow::anyhow;
 use std::sync::Arc;
-use tracing::info;
 
 #[derive(serde::Serialize)]
 pub struct WaterQuality {
@@ -26,7 +25,6 @@ impl WaterQuality {
         status_query: &str,
         quality_url: &'static str,
     ) -> anyhow::Result<(String, String)> {
-        info!("fetching realtime water quality");
         let status = reqwest::get(format!("{quality_url}{QUALITY_PATH}{status_query}"))
             .await?
             .json::<serde_json::Value>()

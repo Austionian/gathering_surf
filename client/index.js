@@ -1,6 +1,8 @@
-import { parseWaterQuality } from "./parseWaterQuality";
-import { parseRealtime } from "./parseRealtime";
-import { parseForecast } from "./parseForecast";
+import {
+  parseWaterQuality,
+  parseRealtime,
+  parseForecast,
+} from "./parsers/index";
 import { nonNull } from "./utilities";
 
 // Select the node that will be observed for mutations

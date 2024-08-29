@@ -1,4 +1,4 @@
-import { removeHidden, removeElements, setText } from "./utilities";
+import { removeHidden, removeElements, setText } from "../utilities";
 
 /**
  * @typedef {Object} WaterQualityData

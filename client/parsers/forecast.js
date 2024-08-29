@@ -6,7 +6,7 @@ import {
   removeElement,
   removeElements,
   asButton,
-} from "./utilities";
+} from "../utilities";
 
 const FLAT_COLOR = "#a8a29e";
 
@@ -65,8 +65,8 @@ export function parseForecast(data) {
   // prefillLength represents the time in hours that the data from the forecast starts at, e.g.
   // if the forecast data starts at 2 PM, prefillLength = 14;
   const prefillLength = new Date(data.starting_at).getHours();
-
   let dataStartingAt = new Date(data.starting_at).getHours();
+
   // Might be simpler to just align this to be the same day no matter what, then the
   // dayoffset below isn't needed and this logic just ensures starting_at is within the current day of the user
   // if (new Date(data.starting_at).getDay() < new Date().getDay()) {
@@ -177,10 +177,6 @@ export function parseForecast(data) {
 
   let startingAt = new Date().getHours();
 
-  // If the forecast starting_at time hasn't been updated in a while, it will show
-  // a PM time the follow morning.
-  startingAt = startingAt < 0 ? new Date().getHours() : startingAt;
-
   // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
   if (wave_height_container?.innerText === "") {
@@ -257,8 +253,9 @@ export function parseForecast(data) {
     "margin-top: 1rem;",
   );
 
-  const ctx = document.getElementById("forecast");
-
+  /**
+   * @param {object} ctx
+   */
   const quality = (ctx) =>
     start === 0
       ? qualities[ctx.dataIndex + dataStartingAt]
@@ -337,14 +334,6 @@ export function parseForecast(data) {
   }
 
   /**
-   * Updates values shown in legends with the current time indicy of
-   * data.
-   */
-  function updateLegendsToStart() {
-    applyUpdateToLegends(startingAt);
-  }
-
-  /**
    * Updates values shown in legends with selected indicy of
    * data.
    *
@@ -358,8 +347,12 @@ export function parseForecast(data) {
       v = x;
     }
 
-    const beginning = start === 0 ? dataStartingAt : start;
-    applyUpdateToLegends(v + beginning);
+    if (start === 0) {
+      applyUpdateToLegends(startingAt);
+    } else {
+      const beginning = start === 0 ? dataStartingAt : start;
+      applyUpdateToLegends(v + beginning);
+    }
   }
 
   function applyUpdateToLegends(x) {
@@ -437,10 +430,64 @@ export function parseForecast(data) {
 
   const font = {
     size: stepBy === 24 ? 14 : 18,
-    weight: stepBy === 24 ? "lighter" : "semi-bold",
+    weight: "semi-bold",
   };
 
-  const waveForecast = new Chart(ctx, {
+  const plugins = {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      enabled: false,
+    },
+  };
+
+  /**
+   * @param {number | undefined} max - the max value of the graph
+   */
+  const scales = (max) => ({
+    x: {
+      ticks: {
+        callback: xTicksCallback,
+      },
+    },
+    y: {
+      grid: {
+        color: "#1B1B1B",
+      },
+      beginAtZero: true,
+      max: max ?? 100,
+      ticks: {
+        /**
+         * Function to return only even y ticks
+         *
+         * @param {number} value
+         */
+        callback: function (value) {
+          if (value % 2 !== 0) {
+            return "";
+          }
+          return value;
+        },
+        font,
+      },
+    },
+  });
+
+  const options = {
+    aspectRatio: 1.75,
+    onHover,
+    borderRadius: 5,
+    maintainAspectRatio: false,
+    plugins,
+    responsive: true,
+    interaction: {
+      intersect: false,
+      axis: "x",
+    },
+  };
+
+  const waveForecast = new Chart(document.getElementById("forecast"), {
     type: "bar",
     plugins: [plugin],
     data: {
@@ -461,56 +508,13 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      aspectRatio: 1.75,
-      onHover,
-      borderRadius: 5,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          enabled: false,
-        },
-      },
+      ...options,
       elements: {
         bar: {
           backgroundColor: colorize(),
         },
       },
-      responsive: true,
-      interaction: {
-        intersect: false,
-        axis: "x",
-      },
-      scales: {
-        x: {
-          ticks: {
-            callback: xTicksCallback,
-          },
-        },
-        y: {
-          grid: {
-            color: "#1B1B1B",
-          },
-          beginAtZero: true,
-          max: 10,
-          ticks: {
-            /**
-             * Function to return only even y ticks
-             *
-             * @param {number} value
-             */
-            callback: function (value) {
-              if (value % 2 !== 0) {
-                return "";
-              }
-              return value;
-            },
-            font,
-          },
-        },
-      },
+      scales: scales(10),
     },
   });
 
@@ -613,7 +617,7 @@ export function parseForecast(data) {
       }
 
       updateCharts();
-      updateLegendsToStart();
+      updateLegends(0);
 
       if (start === 0) {
         asButton(document.getElementById("forecast-backward")).disabled = true;
@@ -655,9 +659,8 @@ export function parseForecast(data) {
    * @param {number[]} data
    * @param {string | null} color
    * @param {string} label
-   * @param {number | null} max
    */
-  const getConfig = (data, color, label, max) => ({
+  const getConfig = (data, color, label) => ({
     type: "bar",
     plugins: [plugin],
     data: {
@@ -675,18 +678,7 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      aspectRatio: 1.75,
-      onHover,
-      maintainAspectRatio: false,
-      borderRadius: 5,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          enabled: false,
-        },
-      },
+      ...options,
       elements: {
         bar: color
           ? {
@@ -695,54 +687,29 @@ export function parseForecast(data) {
             }
           : {},
       },
-      responsive: true,
-      interaction: {
-        intersect: false,
-        axis: "x",
-      },
-      scales: {
-        x: {
-          ticks: {
-            callback: xTicksCallback,
-          },
-        },
-        y: {
-          grid: {
-            color: "#1B1B1B",
-          },
-          beginAtZero: true,
-          max,
-          ticks: {
-            font,
-          },
-        },
-      },
+      scales: scales(undefined),
     },
   });
 
-  const temperatureCanvas = document.getElementById("temperature-forecast");
   const temperatureForecast = new Chart(
-    temperatureCanvas,
+    document.getElementById("temperature-forecast"),
     getConfig(
       start === 0
         ? temperature.slice(dataStartingAt, end)
         : temperature.slice(start, end),
       "pink",
       "F",
-      100,
     ),
   );
 
-  const precipitationCanvas = document.getElementById("precipitation-forecast");
   const precipitationForecast = new Chart(
-    precipitationCanvas,
+    document.getElementById("precipitation-forecast"),
     getConfig(
       start === 0
         ? probability_of_precipitation.slice(dataStartingAt, end)
         : probability_of_precipitation.slice(start, end),
       null,
       "%",
-      100,
     ),
   );
 

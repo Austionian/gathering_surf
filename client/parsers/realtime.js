@@ -6,7 +6,7 @@ import {
   removeElement,
   removeStyle,
   removeHidden,
-} from "./utilities";
+} from "../utilities";
 
 /**
  * @typedef {Object} LatestData
