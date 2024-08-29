@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
                 .ok_or(anyhow!("no qutation mark found with version"))?
                 .0
                 .parse::<u32>()?;
-            let new_version = current_version + 1;
+            let new_version = current_version.wrapping_add(1);
 
             let line = line.replace(
                 &format!("version={current_version}"),
@@ -38,7 +38,7 @@ fn main() -> anyhow::Result<()> {
         .truncate(true)
         .open("templates/base.html")?;
 
-    file.write(new.as_bytes())?;
+    file.write_all(new.as_bytes())?;
 
     Ok(())
 }
