@@ -9,7 +9,7 @@ mod water_quality;
 
 use axum::{routing::get, Router};
 use std::sync::Arc;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
@@ -21,17 +21,14 @@ pub use spot::*;
 pub use utils::*;
 pub use water_quality::*;
 
-pub fn templates() -> &'static tera::Tera {
-    static TEMPLATES: OnceLock<tera::Tera> = OnceLock::new();
-
-    TEMPLATES.get_or_init(|| match tera::Tera::new("templates/**/*") {
+static TEMPLATES: LazyLock<tera::Tera> =
+    LazyLock::new(|| match tera::Tera::new("templates/**/*") {
         Ok(t) => t,
         Err(e) => {
             println!("Parsing error(s): {}", e);
             ::std::process::exit(1);
         }
-    })
-}
+    });
 
 #[derive(Clone, serde::Serialize)]
 pub struct AppState {

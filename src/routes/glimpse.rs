@@ -1,5 +1,5 @@
 use super::AppError;
-use crate::{templates, AppState, Realtime, Spot, SpotParam};
+use crate::{AppState, Realtime, Spot, SpotParam, TEMPLATES};
 use axum::{
     extract::{Query, State},
     response::Html,
@@ -40,7 +40,7 @@ pub async fn glimpse(
         }
     }
 
-    match templates().render("glimpse.html", &context) {
+    match TEMPLATES.render("glimpse.html", &context) {
         Ok(s) => Ok(Html(s)),
         Err(e) => {
             tracing::error!("{:?}", e);

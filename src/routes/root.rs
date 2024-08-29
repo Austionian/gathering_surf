@@ -1,4 +1,4 @@
-use crate::{templates, AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality};
+use crate::{AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality, TEMPLATES};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -25,7 +25,7 @@ pub async fn root(
     context.lock().await.insert("breaks", &state.breaks);
 
     tx.send(Ok(
-        templates().render("index.html", context.lock().await.deref())?
+        TEMPLATES.render("index.html", context.lock().await.deref())?
     ))
     .await?;
 
@@ -40,7 +40,7 @@ pub async fn root(
                 context.insert("latest_json", &serde_json::to_string(&realtime).unwrap());
 
                 realtime_tx
-                    .send(Ok(templates().render("latest.html", &context).unwrap()))
+                    .send(Ok(TEMPLATES.render("latest.html", &context).unwrap()))
                     .await
                     .unwrap();
             }
@@ -51,7 +51,7 @@ pub async fn root(
                 context.insert("container", &"latest-container");
                 context.insert("error_container", &"latest-error");
                 realtime_tx
-                    .send(Ok(templates().render("error.html", &context).unwrap()))
+                    .send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
                     .await
                     .unwrap();
             }
@@ -72,7 +72,7 @@ pub async fn root(
                 );
 
                 water_quality_tx
-                    .send(Ok(templates()
+                    .send(Ok(TEMPLATES
                         .render("water_quality.html", &context)
                         .unwrap()))
                     .await
@@ -85,7 +85,7 @@ pub async fn root(
                 context.insert("container", &"water-quality-container");
                 context.insert("error_container", &"water-quality-error");
                 water_quality_tx
-                    .send(Ok(templates().render("error.html", &context).unwrap()))
+                    .send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
                     .await
                     .unwrap();
             }
@@ -98,7 +98,7 @@ pub async fn root(
                 let mut context = context.lock().await;
                 context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
 
-                tx.send(Ok(templates().render("forecast.html", &context).unwrap()))
+                tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
                     .await
                     .unwrap();
 
@@ -110,7 +110,7 @@ pub async fn root(
                 context.insert("error_type", &"forecast");
                 context.insert("container", &"forecast-container");
                 context.insert("error_container", &"forecast-error");
-                tx.send(Ok(templates().render("error.html", &context).unwrap()))
+                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
                     .await
                     .unwrap();
 
