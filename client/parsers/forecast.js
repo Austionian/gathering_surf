@@ -78,7 +78,6 @@ export function parseForecast(data) {
 
     dataStartingAt = 0;
     wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
-    console.log(wave_height_labels);
     qualities = data.qualities.slice(offset, dayAlign);
     wave_heights = data.wave_height_data.slice(offset, dayAlign);
     wind_speeds = data.wind_speed_data.slice(offset, dayAlign);
@@ -253,9 +252,6 @@ export function parseForecast(data) {
     "margin-top: 1rem;",
   );
 
-  /**
-   * @param {object} ctx
-   */
   const quality = (ctx) =>
     start === 0
       ? qualities[ctx.dataIndex + dataStartingAt]
@@ -334,6 +330,14 @@ export function parseForecast(data) {
   }
 
   /**
+   * Updates values shown in legends with the current time indicy of
+   * data.
+   */
+  function updateLegendsToStart() {
+    start === 0 ? applyUpdateToLegends(startingAt) : updateLegends(0);
+  }
+
+  /**
    * Updates values shown in legends with selected indicy of
    * data.
    *
@@ -347,12 +351,8 @@ export function parseForecast(data) {
       v = x;
     }
 
-    if (start === 0) {
-      applyUpdateToLegends(startingAt);
-    } else {
-      const beginning = start === 0 ? dataStartingAt : start;
-      applyUpdateToLegends(v + beginning);
-    }
+    const beginning = start === 0 ? dataStartingAt : start;
+    applyUpdateToLegends(v + beginning);
   }
 
   function applyUpdateToLegends(x) {
@@ -433,59 +433,56 @@ export function parseForecast(data) {
     weight: "semi-bold",
   };
 
-  const plugins = {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      enabled: false,
-    },
-  };
-
   /**
-   * @param {number | undefined} max - the max value of the graph
+   * @param {number | undefined} max
    */
-  const scales = (max) => ({
-    x: {
-      ticks: {
-        callback: xTicksCallback,
-      },
-    },
-    y: {
-      grid: {
-        color: "#1B1B1B",
-      },
-      beginAtZero: true,
-      max: max ?? 100,
-      ticks: {
-        /**
-         * Function to return only even y ticks
-         *
-         * @param {number} value
-         */
-        callback: function (value) {
-          if (value % 2 !== 0) {
-            return "";
-          }
-          return value;
-        },
-        font,
-      },
-    },
-  });
-
-  const options = {
+  const options = (max) => ({
     aspectRatio: 1.75,
     onHover,
     borderRadius: 5,
     maintainAspectRatio: false,
-    plugins,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: false,
+      },
+    },
     responsive: true,
     interaction: {
       intersect: false,
       axis: "x",
     },
-  };
+    scales: {
+      x: {
+        ticks: {
+          callback: xTicksCallback,
+        },
+      },
+      y: {
+        grid: {
+          color: "#1B1B1B",
+        },
+        beginAtZero: true,
+        max: max ?? 10,
+        ticks: {
+          /**
+           * Function to return only even y ticks
+           *
+           * @param {number} value
+           */
+          callback: function (value) {
+            if (value % 2 !== 0) {
+              return "";
+            }
+            return value;
+          },
+          font,
+        },
+      },
+    },
+  });
 
   const waveForecast = new Chart(document.getElementById("forecast"), {
     type: "bar",
@@ -508,13 +505,13 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      ...options,
+      ...options(undefined),
+
       elements: {
         bar: {
           backgroundColor: colorize(),
         },
       },
-      scales: scales(10),
     },
   });
 
@@ -617,7 +614,7 @@ export function parseForecast(data) {
       }
 
       updateCharts();
-      updateLegends(0);
+      updateLegendsToStart();
 
       if (start === 0) {
         asButton(document.getElementById("forecast-backward")).disabled = true;
@@ -678,7 +675,7 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      ...options,
+      ...options(100),
       elements: {
         bar: color
           ? {
@@ -687,12 +684,12 @@ export function parseForecast(data) {
             }
           : {},
       },
-      scales: scales(undefined),
     },
   });
 
+  const temperatureCanvas = document.getElementById("temperature-forecast");
   const temperatureForecast = new Chart(
-    document.getElementById("temperature-forecast"),
+    temperatureCanvas,
     getConfig(
       start === 0
         ? temperature.slice(dataStartingAt, end)
@@ -702,8 +699,9 @@ export function parseForecast(data) {
     ),
   );
 
+  const precipitationCanvas = document.getElementById("precipitation-forecast");
   const precipitationForecast = new Chart(
-    document.getElementById("precipitation-forecast"),
+    precipitationCanvas,
     getConfig(
       start === 0
         ? probability_of_precipitation.slice(dataStartingAt, end)
