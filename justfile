@@ -7,19 +7,19 @@ default:
 alias u := update
 alias d := dev
 
-# Script to run the Tailwind binary in watch mode
+# Runs the Tailwind binary in watch mode
 run-tailwind:
     #!/bin/bash
     echo "Starting the Tailwind binary."
     ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --watch
 
-# Script to build and minify the Tailwind binary
+# Builds and minifies the CSS with the Tailwind binary
 build-tailwind:
     #!/bin/bash
     echo -e "\nMinifying css"
     ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --minify
 
-# Script to run the axum server in watch mode.
+# Runs the axum server in watch mode.
 run-axum:
     #!/bin/bash
     echo "Starting the Axum server."
@@ -29,23 +29,33 @@ run-axum:
     # Start cargo watch in the background
     cargo watch -w src -w templates -x run
 
+# Runs rollup in watch mode.
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     
     rollup client/index.js --file assets/static/index.min.js --format iife --watch --watch.exclude "src/**" --no-watch.clearScreen
 
+# Builds and minifies the JS with rollup 
 build-rollup:
     #!/bin/bash
     echo -e "\nBuilding JS"
     rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser 
 
+# Updates the requested versions of assets found in the 
+# base.html template to bust cached versions of old assets.
+bump-assets-references:
+    #!/bin/bash
+    echo -e "\nBumping static assets version numbers in base.html"
+    cargo run --bin bump-versions
+
+# Builds all the static assets and updates their requested versions
 build:
     #!/bin/bash
-    just build-tailwind && just build-rollup
+    just build-tailwind && just build-rollup && just bump-assets-references
 
-# Script to run the axum server and tailwind binary in watch mode so updates
-# will automatically be reflected. On exit, will minify tailwind's css.
+# Run the axum server, rollup, and tailwind binary in watch mode so updates
+# will automatically be reflected. On exit, will minify tailwind's css and js.
 #
 # Install Just and run with `just dev`
 dev:
