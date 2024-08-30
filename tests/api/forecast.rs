@@ -15,7 +15,6 @@ async fn it_returns_the_forecast_data_as_json() {
     assert!(data.contains("current_wave_direction"));
     assert!(data.contains("current_wave_height"));
     assert!(data.contains("forecast_as_of"));
-    assert!(data.contains("graph_max"));
     assert!(data.contains("qualities"));
 
     insta::assert_snapshot!(data);
@@ -54,6 +53,5 @@ async fn forecast_integration_test() {
     assert!(response.contains("current_wave_direction"));
     assert!(response.contains("current_wave_height"));
     assert!(response.contains("forecast_as_of"));
-    assert!(response.contains("graph_max"));
     assert!(response.contains("qualities"));
 }

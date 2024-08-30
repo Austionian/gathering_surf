@@ -1,6 +1,6 @@
 ---
 source: tests/api/forecast.rs
-assertion_line: 141
+assertion_line: 20
 expression: data
 ---
-{"forecast_as_of":"Mon, 10 Jun 2024 21:54:57","graph_max":4,"wave_height_data":[0.3048],"current_wave_height":"0","current_wave_direction":"","current_wave_period":"","wind_speed_data":[11.5],"wind_direction_data":[210.0],"wind_gust_data":[16.1],"wave_period_data":[4.0,4.0],"wave_height_labels":["Mon 03 PM"],"temperature":[60],"probability_of_precipitation":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"dewpoint":["44","44","44","44"],"cloud_cover":[4,4,4,4],"probability_of_thunder":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"starting_at":"2024-06-10T15:00:00-05:00","qualities":["#a8a29e"]}
+{"forecast_as_of":"Mon, 10 Jun 2024 21:54:57","wave_height_data":[0.3048],"current_wave_height":"0","current_wave_direction":"","current_wave_period":"","wind_speed_data":[11.5],"wind_direction_data":[210.0],"wind_gust_data":[16.1],"wave_period_data":[4.0,4.0],"wave_height_labels":["Mon 03 PM"],"temperature":[60],"probability_of_precipitation":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"dewpoint":["44","44","44","44"],"cloud_cover":[4,4,4,4],"probability_of_thunder":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"starting_at":"2024-06-10T15:00:00-05:00","qualities":["#a8a29e"]}

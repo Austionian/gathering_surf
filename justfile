@@ -6,18 +6,23 @@ default:
 
 alias u := update
 alias d := dev
+alias t := test
+alias t-u := test-update
+
+ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iife"
+TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content './templates/**/*.{html,js}'"
 
 # Runs the Tailwind binary in watch mode
 run-tailwind:
     #!/bin/bash
     echo "Starting the Tailwind binary."
-    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --watch
+    {{TAILWIND}} --watch
 
 # Builds and minifies the CSS with the Tailwind binary
 build-tailwind:
     #!/bin/bash
     echo -e "\nMinifying css"
-    ./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content "./templates/**/*.{html,js}" --minify
+    {{TAILWIND}} --minify
 
 # Runs the axum server in watch mode.
 run-axum:
@@ -34,13 +39,13 @@ run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     
-    rollup client/index.js --file assets/static/index.min.js --format iife --watch --watch.exclude "src/**" --no-watch.clearScreen
+    {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
 
 # Builds and minifies the JS with rollup 
 build-rollup:
     #!/bin/bash
     echo -e "\nBuilding JS"
-    rollup client/index.js --file assets/static/index.min.js --format iife -p @rollup/plugin-terser 
+    {{ROLLUP}} -p @rollup/plugin-terser 
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.
@@ -81,7 +86,17 @@ update:
     cargo update
     echo $'Dependencies updated!\n'
     cargo clippy
-    cargo test
+    just test
+
+test:
+    #!/bin/bash
+    # unseen: writes new snapshots and writes .snap.new for exisiting
+    INSTA_UPDATE=unseen cargo t
+
+test-update:
+    #!/bin/bash
+    # always: overwrites old snapshot files with new ones unasked
+    INSTA_UPDATE=always cargo t
 
 # Installs the projects dependencies required to run the project, other
 # than Just obviously. MacOS only.
