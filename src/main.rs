@@ -31,7 +31,9 @@ async fn main() {
         .parse::<SocketAddr>()
         .unwrap();
 
-    tracing::debug!("listening on {}", address);
+    #[cfg(debug_assertions)]
+    tracing::info!("listening on {}", address);
+
     let listener = TcpListener::bind(address).await.unwrap();
     axum::serve(listener, app.into_make_service())
         .await
