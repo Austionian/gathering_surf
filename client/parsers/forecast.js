@@ -25,7 +25,6 @@ let wind_speeds;
 let wind_directions;
 let wind_gusts;
 let wave_period;
-let graph_max;
 let temperature;
 let dewpoint;
 let cloud_cover;
@@ -34,7 +33,6 @@ let probability_of_thunder;
 
 /**
  * @typedef {Object} ForecastData
- * @property {string[]} graph_max
  * @property {string[]} wave_height_data
  * @property {string} current_wave_height
  * @property {string} current_wave_direction
@@ -60,8 +58,6 @@ let probability_of_thunder;
  * @param {ForecastData} data
  */
 export function parseForecast(data) {
-  graph_max = data.graph_max;
-
   // prefillLength represents the time in hours that the data from the forecast starts at, e.g.
   // if the forecast data starts at 2 PM, prefillLength = 14;
   const prefillLength = new Date(data.starting_at).getHours();

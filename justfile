@@ -44,15 +44,15 @@ build-rollup:
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.
-bump-assets-references:
+bump-assets:
     #!/bin/bash
     echo -e "\nBumping static assets version numbers in base.html"
-    cargo run --bin bump-versions
+    target/release/bump-versions
 
 # Builds all the static assets and updates their requested versions
 build:
     #!/bin/bash
-    just build-tailwind && just build-rollup && just bump-assets-references
+    just build-tailwind && just build-rollup && just bump-assets
 
 # Run the axum server, rollup, and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css and js.

@@ -25,7 +25,6 @@ pub struct Forecast {
     pub probability_of_thunder: Vec<ForecastValue>,
     pub starting_at: Option<String>,
     pub waves: Option<Vec<f64>>,
-    pub graph_max: Option<u8>,
 }
 
 impl Forecast {
@@ -116,22 +115,6 @@ impl Forecast {
             [x] => out.push(*x),
             _ => panic!("what dafuq is this?"),
         });
-
-        // Make sure the graph max is always an even number. Otherwise the graph
-        // won't display the y axis labels correctly
-        self.graph_max = if let Some(mut v) = smoothed_data.iter().map(|v| *v as u8).max() {
-            if (v & 1) == 0 {
-                v += 2;
-            } else {
-                v += 1;
-            }
-            if v < 4 {
-                v = 4;
-            }
-            Some(v)
-        } else {
-            Some(4)
-        };
 
         for (forecast, computed) in self.wave_height.iter_mut().zip(out.iter()) {
             forecast.value = Self::truncc(*computed);
@@ -270,7 +253,6 @@ impl Serialize for Forecast {
 
         let mut state = serializer.serialize_struct("Forecast", 17)?;
         state.serialize_field("forecast_as_of", &self.last_updated)?;
-        state.serialize_field("graph_max", &self.graph_max)?;
         state.serialize_field("wave_height_data", &self.get_waves())?;
         state.serialize_field("current_wave_height", &current_wave_height)?;
         state.serialize_field("current_wave_direction", &current_wave_direction)?;
@@ -399,7 +381,6 @@ impl TryFrom<serde_json::Value> for Forecast {
             probability_of_thunder,
             starting_at: None,
             waves: None,
-            graph_max: None,
         })
     }
 }

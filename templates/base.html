@@ -8,15 +8,15 @@
     <meta name="description" content="Lake Michigan surf forecasts" />
     <meta name="theme-color" content="#02050e" />
 
-    <link rel="preload" href="/assets/styles.css?version=7" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=11" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
       as="script"
     />
-    <link rel="preload" href="/assets/static/index.min.js?version=10" as="script" />
+    <link rel="preload" href="/assets/static/index.min.js?version=14" as="script" />
 
-    <link href="/assets/styles.css?version=7" rel="stylesheet" type="text/css" />
+    <link href="/assets/styles.css?version=11" rel="stylesheet" type="text/css" />
     <style>
       [x-cloak] {
         display: none !important;
@@ -29,7 +29,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=10"></script>
+    <script src="/assets/static/index.min.js?version=14"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %}
   </body>
 </html>
