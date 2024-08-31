@@ -21,8 +21,20 @@ pub async fn root(
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
 
-    context.lock().await.insert("spot", &*spot);
-    context.lock().await.insert("breaks", &state.breaks);
+    // Get the context lock.
+    let initial_context = context.clone();
+    let mut initial_context = initial_context.lock().await;
+
+    // Update with inital values.
+    initial_context.insert("spot", &*spot);
+    initial_context.insert("breaks", &state.breaks);
+    #[cfg(debug_assertions)]
+    initial_context.insert("live_reload", &true);
+    #[cfg(not(debug_assertions))]
+    initial_context.insert("live_reload", &false);
+
+    // Drop the lock
+    drop(initial_context);
 
     tx.send(Ok(
         TEMPLATES.render("index.html", context.lock().await.deref())?

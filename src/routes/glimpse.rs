@@ -19,6 +19,10 @@ pub async fn glimpse(
 
     context.insert("spot", &*spot);
     context.insert("breaks", &state.breaks);
+    #[cfg(debug_assertions)]
+    context.insert("live_reload", &true);
+    #[cfg(not(debug_assertions))]
+    context.insert("live_reload", &false);
 
     match Realtime::try_get(spot, state.realtime_url).await {
         Ok(latest) => {

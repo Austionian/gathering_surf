@@ -21,7 +21,7 @@ run-tailwind:
 # Builds and minifies the CSS with the Tailwind binary
 build-tailwind:
     #!/bin/bash
-    echo -e "\nMinifying css"
+    echo "minifying css"
     {{TAILWIND}} --minify
 
 # Runs the axum server in watch mode.
@@ -32,32 +32,35 @@ run-axum:
     export API_TOKEN=$API_TOKEN
 
     # Start cargo watch in the background
-    cargo watch -w src -w templates -x run
+    cargo watch -w src -x run
 
 # Runs rollup in watch mode.
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
-    
     {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
 
 # Builds and minifies the JS with rollup 
 build-rollup:
     #!/bin/bash
-    echo -e "\nBuilding JS"
+    echo "building JS"
     {{ROLLUP}} -p @rollup/plugin-terser 
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.
 bump-assets:
     #!/bin/bash
-    echo -e "\nBumping static assets version numbers in base.html"
+    echo "bumping static assets version numbers in base.html"
     target/release/bump-versions
 
-# Builds all the static assets and updates their requested versions
+# Builds all the static assets and bumps their versions
 build:
     #!/bin/bash
-    just build-tailwind && just build-rollup && just bump-assets
+    just build-tailwind &
+    just build-rollup &
+    just bump-assets &
+    wait
+    echo "complete!"
 
 # Run the axum server, rollup, and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css and js.

@@ -8,15 +8,23 @@
     <meta name="description" content="Lake Michigan surf forecasts" />
     <meta name="theme-color" content="#02050e" />
 
-    <link rel="preload" href="/assets/styles.css?version=11" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=47" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
       as="script"
     />
-    <link rel="preload" href="/assets/static/index.min.js?version=14" as="script" />
+    <link
+      rel="preload"
+      href="/assets/static/index.min.js?version=50"
+      as="script"
+    />
 
-    <link href="/assets/styles.css?version=11" rel="stylesheet" type="text/css" />
+    <link
+      href="/assets/styles.css?version=47"
+      rel="stylesheet"
+      type="text/css"
+    />
     <style>
       [x-cloak] {
         display: none !important;
@@ -29,7 +37,21 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=14"></script>
-    {% block body %} {% endblock %} {% include "includes/footer.html" %}
+    <script src="/assets/static/index.min.js?version=50"></script>
+    {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
+    live_reload %}
+    <script>
+      const socket = new WebSocket("ws://localhost:8080/watch");
+
+      // Reload when a message arrives, meaning a template has been updated.
+      socket.addEventListener("message", () => location.reload());
+
+      // Reload when the connection closes, meaning the server has changed and the 
+      // connection was lost.
+      socket.addEventListener("close", () => setTimeout(() => {
+          location.reload()
+      }, 2_000));
+    </script>
+    {% endif %}
   </body>
 </html>
