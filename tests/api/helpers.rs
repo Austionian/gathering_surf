@@ -90,7 +90,7 @@ impl TestApp {
 async fn init_app(config: Box<Settings>) -> Result<SocketAddr, String> {
     let config: &'static Settings = Box::leak(config);
 
-    let app = startup(&config).expect("Unable to start the server.");
+    let (_, app) = startup(&config).expect("Unable to start the server.");
     let listener = TcpListener::bind("127.0.0.1:0".parse::<SocketAddr>().unwrap())
         .await
         .unwrap();
