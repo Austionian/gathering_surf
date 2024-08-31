@@ -55,7 +55,6 @@ impl Forecast {
                 info!("NOAA 200 success.");
                 return Ok(response);
             }
-            println!("{:?}", response);
             warn!("NOAA non-200, retrying.");
         }
 

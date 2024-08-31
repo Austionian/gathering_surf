@@ -8,7 +8,7 @@
     <meta name="description" content="Lake Michigan surf forecasts" />
     <meta name="theme-color" content="#02050e" />
 
-    <link rel="preload" href="/assets/styles.css?version=48" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=54" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -16,12 +16,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=51"
+      href="/assets/static/index.min.js?version=57"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=48"
+      href="/assets/styles.css?version=54"
       rel="stylesheet"
       type="text/css"
     />
@@ -37,20 +37,34 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=51"></script>
+    <script src="/assets/static/index.min.js?version=57"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>
-      const socket = new WebSocket("ws://localhost:8080/watch");
+      function connect(reload = false) {
+        const socket = new WebSocket("ws://localhost:8080/watch");
 
-      // Reload when a message arrives, meaning a template has been updated.
-      socket.addEventListener("message", () => location.reload());
+        socket.onopen = () => {
+            if (reload) location.reload()
+        }
 
-      // Reload when the connection closes, meaning the server has changed and the 
-      // connection was lost.
-      socket.addEventListener("close", () => setTimeout(() => {
-          location.reload()
-      }, 2_000));
+        // Reload when a message arrives, meaning a template has been updated.
+        // Wait 50 ms for assets to be re-compilied.
+        socket.onmessage = () => {
+          setTimeout(() => location.reload(), 50);
+        };
+
+        // Reload when the connection closes, meaning the server has changed and the
+        // connection was lost.
+        socket.onclose = () => {
+          setTimeout(() => {
+            console.log("socket reconnecting...");
+            connect(true);
+          }, 1_000);
+        };
+      }
+
+      connect();
     </script>
     {% endif %}
   </body>

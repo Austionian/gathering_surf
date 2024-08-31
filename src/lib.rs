@@ -130,3 +130,65 @@ pub fn startup(
     // Create the Axum router.
     Ok((tx, app))
 }
+
+#[macro_export]
+macro_rules! init_watchers {
+    ($tx:expr) => {
+        use gathering_surf::TEMPLATES;
+        use notify::Watcher;
+
+        let tx = $tx.expect("available only in debug.");
+        let js_tx = tx.clone();
+
+        #[allow(unused_must_use)]
+        let mut watcher = notify::recommended_watcher(move |res| match res {
+            Ok(_) => {
+                // Get a writer lock to the templates struct
+                let mut tera = TEMPLATES.tera.write().unwrap();
+
+                // Reload tera with template changes
+                match tera.full_reload() {
+                    Ok(_) => tracing::trace!("templates reloaded"),
+                    Err(e) => tracing::error!("failed to reload templates: {e}"),
+                }
+
+                // Notify browswer to reload.
+                //
+                // The channel is thrown away after this so no need to
+                // unwrap as it will cause a poision lock error.
+                tx.send("reload");
+            }
+            Err(e) => tracing::warn!("watch error: {e:?}"),
+        })
+        .unwrap();
+
+        #[allow(unused_must_use)]
+        let mut js_watcher = notify::recommended_watcher(move |res| match res {
+            Ok(_) => {
+                // Notify browswer to reload.
+                //
+                // The channel is thrown away after this so no need to
+                // unwrap as it will cause a poision lock error.
+                js_tx.send("reload");
+            }
+            Err(e) => tracing::warn!("watch error: {e:?}"),
+        })
+        .unwrap();
+
+        tracing::info!("watching templates for changes");
+
+        watcher
+            .watch(
+                &std::path::PathBuf::from("templates"),
+                notify::RecursiveMode::Recursive,
+            )
+            .unwrap();
+
+        js_watcher
+            .watch(
+                &std::path::PathBuf::from("client"),
+                notify::RecursiveMode::Recursive,
+            )
+            .unwrap();
+    };
+}
