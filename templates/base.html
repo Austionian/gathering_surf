@@ -8,7 +8,7 @@
     <meta name="description" content="Lake Michigan surf forecasts" />
     <meta name="theme-color" content="#02050e" />
 
-    <link rel="preload" href="/assets/styles.css?version=54" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=55" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -16,12 +16,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=57"
+      href="/assets/static/index.min.js?version=58"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=54"
+      href="/assets/styles.css?version=55"
       rel="stylesheet"
       type="text/css"
     />
@@ -37,18 +37,20 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=57"></script>
+    <script src="/assets/static/index.min.js?version=58"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>
       function connect(reload = false) {
         const socket = new WebSocket("ws://localhost:8080/watch");
 
+        // Reload when connected. Means the server disconnected because
+        // it was re-compiling. Reload to run the latest.
         socket.onopen = () => {
             if (reload) location.reload()
         }
 
-        // Reload when a message arrives, meaning a template has been updated.
+        // Reload when a message arrives, meaning a template or js has been updated.
         // Wait 50 ms for assets to be re-compilied.
         socket.onmessage = () => {
           setTimeout(() => location.reload(), 50);
