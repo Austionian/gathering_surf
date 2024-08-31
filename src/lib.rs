@@ -36,7 +36,7 @@ static TEMPLATES: LazyLock<tera::Tera> =
 use std::sync::RwLock;
 
 #[cfg(debug_assertions)]
-pub static TEMPLATES: LazyLock<Template> = LazyLock::new(|| Template::new());
+pub static TEMPLATES: LazyLock<Template> = LazyLock::new(Template::new);
 
 #[cfg(debug_assertions)]
 pub struct Template {
