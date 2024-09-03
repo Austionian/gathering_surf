@@ -175,6 +175,7 @@ mod templates {
 
     /// Creates a TEMPLATES which reloads when /templates change so the
     /// whole binary doesn't need to be recompilied
+    #[cfg(debug_assertions)]
     macro_rules! debug {
         () => {
             use std::sync::RwLock;
@@ -207,6 +208,8 @@ mod templates {
         };
     }
 
+    #[cfg(debug_assertions)]
     pub(crate) use debug;
+
     pub(crate) use init;
 }
