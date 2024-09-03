@@ -13,5 +13,5 @@ async fn it_returns_the_index() {
     assert_eq!(response.status().as_u16(), 200);
 
     let response = response.text().await.unwrap();
-    assert!(response.contains("Gathering Surf"));
+    assert!(response.contains("gathering surf"));
 }

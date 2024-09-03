@@ -1,14 +1,18 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <title>Gathering Surf - {{ spot.name }}</title>
+    <title>gathering surf - {{ spot.name | lower }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <meta charset="utf-8" />
     <meta name="description" content="Lake Michigan surf forecasts" />
     <meta name="theme-color" content="#02050e" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
+    <link rel="manifest" href="/assets/site.webmanifest" />
 
-    <link rel="preload" href="/assets/styles.css?version=55" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=62" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -16,12 +20,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=58"
+      href="/assets/static/index.min.js?version=65"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=55"
+      href="/assets/styles.css?version=62"
       rel="stylesheet"
       type="text/css"
     />
@@ -37,7 +41,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=58"></script>
+    <script src="/assets/static/index.min.js?version=65"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>
@@ -47,8 +51,8 @@
         // Reload when connected. Means the server disconnected because
         // it was re-compiling. Reload to run the latest.
         socket.onopen = () => {
-            if (reload) location.reload()
-        }
+          if (reload) location.reload();
+        };
 
         // Reload when a message arrives, meaning a template or js has been updated.
         // Wait 50 ms for assets to be re-compilied.

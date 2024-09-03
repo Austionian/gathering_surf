@@ -9,7 +9,6 @@ mod water_quality;
 
 use axum::{routing::get, Router};
 use std::sync::Arc;
-use std::sync::LazyLock;
 use tokio::sync::broadcast::Sender;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
@@ -22,47 +21,7 @@ pub use spot::*;
 pub use utils::*;
 pub use water_quality::*;
 
-#[cfg(not(debug_assertions))]
-static TEMPLATES: LazyLock<tera::Tera> =
-    LazyLock::new(|| match tera::Tera::new("templates/**/*") {
-        Ok(t) => t,
-        Err(e) => {
-            println!("Parsing error(s): {}", e);
-            ::std::process::exit(1);
-        }
-    });
-
-#[cfg(debug_assertions)]
-use std::sync::RwLock;
-
-#[cfg(debug_assertions)]
-pub static TEMPLATES: LazyLock<Template> = LazyLock::new(Template::new);
-
-#[cfg(debug_assertions)]
-pub struct Template {
-    pub tera: Arc<RwLock<tera::Tera>>,
-}
-
-#[cfg(debug_assertions)]
-impl Template {
-    fn new() -> Self {
-        match tera::Tera::new("templates/**/*") {
-            Ok(t) => Self {
-                tera: Arc::new(RwLock::new(t)),
-            },
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
-        }
-    }
-
-    fn render(&self, path: &str, context: &tera::Context) -> tera::Result<String> {
-        let tera = self.tera.read().unwrap();
-
-        tera.render(path, context)
-    }
-}
+templates::init!();
 
 #[derive(Clone)]
 pub struct AppState {
@@ -191,4 +150,63 @@ macro_rules! init_watchers {
             )
             .unwrap();
     };
+}
+
+mod templates {
+    /// Creates a static TEMPLATES
+    macro_rules! init {
+        () => {
+            use std::sync::LazyLock;
+
+            #[cfg(debug_assertions)]
+            templates::debug!();
+
+            #[cfg(not(debug_assertions))]
+            static TEMPLATES: LazyLock<tera::Tera> =
+                LazyLock::new(|| match tera::Tera::new("templates/**/*") {
+                    Ok(t) => t,
+                    Err(e) => {
+                        println!("Parsing error(s): {}", e);
+                        ::std::process::exit(1);
+                    }
+                });
+        };
+    }
+
+    /// Creates a TEMPLATES which reloads when /templates change so the
+    /// whole binary doesn't need to be recompilied
+    macro_rules! debug {
+        () => {
+            use std::sync::RwLock;
+
+            pub static TEMPLATES: LazyLock<Template> = LazyLock::new(Template::new);
+
+            pub struct Template {
+                pub tera: Arc<RwLock<tera::Tera>>,
+            }
+
+            impl Template {
+                fn new() -> Self {
+                    match tera::Tera::new("templates/**/*") {
+                        Ok(t) => Self {
+                            tera: Arc::new(RwLock::new(t)),
+                        },
+                        Err(e) => {
+                            println!("Parsing error(s): {}", e);
+                            ::std::process::exit(1);
+                        }
+                    }
+                }
+
+                fn render(&self, path: &str, context: &tera::Context) -> tera::Result<String> {
+                    let tera = self.tera.read().unwrap();
+
+                    tera.render(path, context)
+                }
+            }
+        };
+    }
+
+    pub(crate) use debug;
+    pub(crate) use init;
 }

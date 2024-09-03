@@ -10,7 +10,7 @@ alias t := test
 alias t-u := test-update
 
 ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iife"
-TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css --content './templates/**/*.{html,js}'"
+TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
 
 # Runs the Tailwind binary in watch mode
 run-tailwind:
