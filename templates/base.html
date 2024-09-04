@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
     <link rel="manifest" href="/assets/site.webmanifest" />
 
-    <link rel="preload" href="/assets/styles.css?version=62" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=63" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -20,12 +20,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=65"
+      href="/assets/static/index.min.js?version=66"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=62"
+      href="/assets/styles.css?version=63"
       rel="stylesheet"
       type="text/css"
     />
@@ -41,7 +41,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=65"></script>
+    <script src="/assets/static/index.min.js?version=66"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>

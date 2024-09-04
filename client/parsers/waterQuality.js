@@ -1,8 +1,13 @@
-import { removeHidden, removeElements, setText } from "../utilities";
+import {
+  removeHidden,
+  removeElements,
+  setText,
+  setStyleAttribute,
+} from "../utilities";
 
 /**
  * @typedef {Object} WaterQualityData
- * @property {string} water_quality - The latest water quality.
+ * @property {'Open' | 'Closed' | 'Advisory' | 'Closed for season'} water_quality - The latest water quality.
  * @property {string} water_quality_text - The latest water quality information.
  */
 
@@ -12,11 +17,22 @@ import { removeHidden, removeElements, setText } from "../utilities";
  * @param {WaterQualityData} data
  */
 export function parseWaterQuality(data) {
-  removeHidden(`current-water-quality-${data.water_quality.toLowerCase()}`);
+  removeElements(".water-quality-loader");
+  removeHidden(`current-water-quality`);
   setText(
-    `current-water-quality-${data.water_quality.toLowerCase()}-status-text`,
-    data.water_quality_text,
+    "current-water-quality-title",
+    data.water_quality === "Closed for season"
+      ? "-----"
+      : data.water_quality.toUpperCase(),
   );
 
-  removeElements(".water-quality-loader");
+  setText(`current-water-quality-status-text`, data.water_quality_text);
+
+  if (data.water_quality === "Advisory") {
+    setStyleAttribute("current-water-quality-title", "color: #facc15;");
+  }
+
+  if (data.water_quality === "Closed") {
+    setStyleAttribute("current-water-quality-title", "color: #ef4444;");
+  }
 }

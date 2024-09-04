@@ -91,15 +91,36 @@ update:
     cargo clippy
     just test
 
+# Runs the tests, writes new snapshots
 test:
     #!/bin/bash
     # unseen: writes new snapshots and writes .snap.new for exisiting
     INSTA_UPDATE=unseen cargo t
 
+# Runs the tests, and updates all snapshots
 test-update:
     #!/bin/bash
     # always: overwrites old snapshot files with new ones unasked
     INSTA_UPDATE=always cargo t
+
+# Installs rollup and the terser plugin globally
+install-rollup:
+    #!/bin/bash
+    echo "Installing rollup"
+    npm install --global rollup
+    echo "Installing rollup terser plugin"
+    npm install --global @rollup/plugin-terser
+
+# Compiles the helper binary to bump static asset versions in base.html
+install-bump-versions:
+    #!/bin/bash 
+    FILE=./target/release/bump-versions
+
+    if [ ! -f "$FILE" ]
+    then
+        echo "Building bump-versions"
+        cargo build --bin bump-versions --release
+    fi
 
 # Installs the projects dependencies required to run the project, other
 # than Just obviously. MacOS only.
@@ -112,6 +133,15 @@ install:
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     fi
 
+    if command cargo watch --version &> /dev/null; then
+        echo "Cargo watch found, skipping install"
+    else
+        # install cargo watch
+        cargo install cargo-watch
+    fi
+
+    just install-bump-versions
+
     # install the Tailwind binary
     curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
     chmod +x tailwindcss-macos-arm64
@@ -119,9 +149,7 @@ install:
 
     # check if npm is available
     if command -v node &> /dev/null; then
-        # install rollup and minification plugin
-        npm install --global rollup
-        npm install --global @rollup/plugin-terser
+        just install-rollup
     else
         echo "npm not found. Installing fnm and node."
         # installs fnm (Fast Node Manager)
@@ -133,9 +161,5 @@ install:
         # download and install Node.js
         fnm use --install-if-missing 22
 
-        # install rollup and minification plugin
-        npm install --global rollup
-        npm install --global @rollup/plugin-terser
+        just install-rollup
     fi
-        
-
