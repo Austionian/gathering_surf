@@ -100,3 +100,13 @@ export function removeStyle(id, style) {
 export function removeHidden(id) {
   removeStyle(id, "hidden");
 }
+
+/**
+ * Appends an HTML string to the innerHTML of the given element
+ *
+ * @param {string} id
+ * @param {string} html
+ */
+export function appendElements(id, html) {
+  nonNull(document.getElementById(id)).innerHTML = html;
+}

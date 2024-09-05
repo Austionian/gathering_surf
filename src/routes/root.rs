@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use std::{convert::Infallible, ops::Deref, sync::Arc};
+use std::{convert::Infallible, sync::Arc};
 use tokio::sync::{mpsc, Mutex};
 
 /// Handler to return the website's index
@@ -21,25 +21,21 @@ pub async fn root(
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
 
-    // Get the context lock.
-    let initial_context = context.clone();
-    let mut initial_context = initial_context.lock().await;
+    // Add the initial context to the page for the loading state
+    {
+        let mut context = context.lock().await;
 
-    // Update with inital values.
-    initial_context.insert("spot", &*spot);
-    initial_context.insert("breaks", &state.breaks);
-    #[cfg(debug_assertions)]
-    initial_context.insert("live_reload", &true);
-    #[cfg(not(debug_assertions))]
-    initial_context.insert("live_reload", &false);
+        // Update with inital values.
+        context.insert("spot", &*spot);
+        context.insert("breaks", &state.breaks);
+        #[cfg(debug_assertions)]
+        context.insert("live_reload", &true);
+        #[cfg(not(debug_assertions))]
+        context.insert("live_reload", &false);
 
-    // Drop the lock
-    drop(initial_context);
-
-    tx.send(Ok(
-        TEMPLATES.render("index.html", context.lock().await.deref())?
-    ))
-    .await?;
+        tx.send(Ok(TEMPLATES.render("index.html", &context)?))
+            .await?;
+    }
 
     let realtime_tx = tx.clone();
     let realtime_context = context.clone();
@@ -49,10 +45,10 @@ pub async fn root(
         match Realtime::try_get(realtime_spot, realtime_state.realtime_url).await {
             Ok(realtime) => {
                 let mut context = realtime_context.lock().await;
-                context.insert("latest_json", &serde_json::to_string(&realtime).unwrap());
+                context.insert("realtime_json", &serde_json::to_string(&realtime).unwrap());
 
                 realtime_tx
-                    .send(Ok(TEMPLATES.render("latest.html", &context).unwrap()))
+                    .send(Ok(TEMPLATES.render("realtime.html", &context).unwrap()))
                     .await
                     .unwrap();
             }

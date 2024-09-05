@@ -3,6 +3,7 @@ import {
   parseRealtime,
   parseForecast,
 } from "./parsers/index";
+import { forecastFailed } from "./fallback";
 import { nonNull } from "./utilities";
 
 // Select the node that will be observed for mutations
@@ -19,7 +20,7 @@ const config = { attributes: true, childList: true, subtree: true };
 const observerCallback = (mutationList) => {
   for (const mutation of mutationList) {
     if (mutation.target instanceof HTMLElement) {
-      if (mutation.target.id === "latest-data") {
+      if (mutation.target.id === "realtime-data") {
         parseRealtime(JSON.parse(mutation.target.innerText));
       }
       if (mutation.target.id === "water-quality-data") {
@@ -27,14 +28,16 @@ const observerCallback = (mutationList) => {
       }
       if (mutation.target.id === "forecast-data") {
         try {
-          const data = JSON.parse(mutation.target.innerText);
-          parseForecast(data);
+          parseForecast(JSON.parse(mutation.target.innerText));
         } catch {
           console.log("failed to parse forecast, trying again.");
           setTimeout(() => {
             if (mutation.target instanceof HTMLElement) {
-              const data = JSON.parse(mutation.target.innerText);
-              parseForecast(data);
+              try {
+                parseForecast(JSON.parse(mutation.target.innerText));
+              } catch(e) {
+                forecastFailed(e);
+              }
             }
           }, 100);
         }
