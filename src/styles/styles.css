@@ -8,6 +8,10 @@
     scroll-behavior: smooth;
   }
 
+  body {
+      font-family: "Satoshi", sans-serif;
+  }
+
   h1 {
     font-size: 2rem;
     font-weight: bolder;

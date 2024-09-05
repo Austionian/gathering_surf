@@ -212,7 +212,7 @@ export function parseForecast(data) {
   );
   setText("legend-wave-period", wave_period[startingAt]);
   setText("legend-wind-gust", wind_gusts[startingAt]);
-  setText("forecast-as-of", `Updated @ ${data.forecast_as_of}`);
+  setText("forecast-as-of", `Updated ${data.forecast_as_of}`);
   setText("forecast-as-of-2", `Forecast Last Ran @ ${data.forecast_as_of}`);
 
   removeElements(".loader");

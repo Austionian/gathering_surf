@@ -12,7 +12,7 @@
           >
             <div class="flex items-center">
               <h1
-                class="text-white flex sm:self-center gap-x-3 text-lg sm:text-xl leading-7 mb-0"
+                class="text-white flex sm:self-center gap-x-3 text-xl sm:text-2xl leading-7 mb-0"
               >
                 Right Now
               </h1>
@@ -38,7 +38,7 @@
             </div>
             <div
               id="as-of-container"
-              class="font-mono animate-pulse flex order-first rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
+              class="font-mono animate-pulse flex order-first rounded-full bg-gray-400/10 px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-400/30 sm:order-none"
             >
               <span id="as-of">____________________________</span>
             </div>
@@ -46,7 +46,7 @@
 
           <!-- Stats -->
           <div class="grid grid-cols-2 bg-gray-700/10 lg:grid-cols-3">
-            <div class="border-t border-white/5 py-3 px-4 sm:p-6 lg:px-8">
+            <div class="border-t border-white/5 py-3 px-4 sm:p-3 lg:px-8">
               <p class="text-sm font-medium leading-6 text-gray-400">Waves</p>
               <div class="mt-2 flex items-baseline gap-x-2">
                 <div
@@ -116,7 +116,7 @@
               </div>
             </div>
             <div
-              class="border-t border-white/5 py-3 px-4 sm:p-6 lg:px-8 sm:border-l"
+              class="border-t border-white/5 py-3 px-4 sm:p-3 lg:px-8 sm:border-l"
             >
               <p class="text-sm font-medium leading-6 text-gray-400">Wind</p>
               <div
@@ -146,7 +146,7 @@
               </div>
             </div>
             <div
-              class="flex justify-between border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
+              class="flex justify-between border-t border-white/5 py-3 px-4 sm:px-6 lg:px-8 lg:border-l"
             >
               <div>
                 <p class="text-sm font-medium leading-6 text-gray-400">
@@ -167,7 +167,7 @@
               </div>
             </div>
             <div
-              class="lg:hidden flex justify-between border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8 lg:border-l"
+              class="lg:hidden flex justify-between border-t border-white/5 py-3 px-4 sm:px-6 lg:px-8 lg:border-l"
             >
               <div>
                 <p class="text-sm font-medium leading-6 text-gray-400">
@@ -190,7 +190,7 @@
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 bg-gray-700/10">
             <div
-              class="border-t border-b border-white/5 py-3 px-4 sm:p-6 lg:px-8 text-gray-300"
+              class="border-t border-b border-white/5 py-3 px-4 sm:p-3 lg:px-8 text-gray-300"
             >
               <div id="water-quality-container">
                 <p class="text-sm font-medium leading-6 text-gray-400 mr-2">
@@ -214,7 +214,7 @@
               <div id="water-quality-error"></div>
             </div>
             <div
-              class="hidden lg:block border-t border-b border-white/5 py-3 px-4 sm:p-6 lg:px-8 sm:border-l"
+              class="hidden lg:block border-t border-b border-white/5 py-3 px-4 sm:p-3 lg:px-8 sm:border-l"
             >
               <p class="text-sm font-medium leading-6 text-gray-400">
                 Air Temp
@@ -247,28 +247,30 @@
                 <h1
                   class="text-white flex sm:self-center gap-x-3 text-xl sm:text-2xl leading-7 mb-0"
                 >
-                  Forecast
+                  This Week
                 </h1>
               </div>
               <div
                 id="forecast-as-of-container"
-                class="hidden lg:flex font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/30 sm:order-none"
+                class="max-h-[24px] hidden lg:flex font-mono animate-pulse items-center rounded-full bg-gray-400/10 px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-400/30 sm:order-none"
               >
                 <span id="forecast-as-of">____________________________</span>
               </div>
             </div>
-            <div class="flex space-x-1 lg:hidden">
+            <div class="flex space-x-2 lg:hidden">
               <button
                 disabled
                 id="forecast-backward"
-                class="group px-2 border border-white rounded-full hover:text-gray-300 hover:border-gray-300 hover:fill-gray-300 disabled:border-zinc-700 disabled:text-zinc-700"
+                class="font-mono group px-2 border border-white rounded-full hover:text-gray-300 hover:border-gray-300 hover:fill-gray-300 disabled:border-zinc-700 disabled:text-zinc-700"
               >
                 &larr;
               </button>
-              <span id="forecast-range">__________</span>
+              <span id="forecast-range" class="min-w-10 md:min-w-32 text-center"
+                >__________</span
+              >
               <button
                 id="forecast-foreward"
-                class="group px-2 border border-white rounded-full hover:text-gray-300 hover:border-gray-300 hover:fill-gray-300 disabled:border-zinc-700 disabled:text-zinc-700"
+                class="font-mono group px-2 border border-white rounded-full hover:text-gray-300 hover:border-gray-300 hover:fill-gray-300 disabled:border-zinc-700 disabled:text-zinc-700"
               >
                 &rarr;
               </button>

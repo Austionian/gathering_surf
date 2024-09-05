@@ -12,7 +12,12 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
     <link rel="manifest" href="/assets/site.webmanifest" />
 
-    <link rel="preload" href="/assets/styles.css?version=66" as="style" />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link href="https://api.fontshare.com/css?f[]=satoshi&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/css?f[]=array&display=swap" rel="stylesheet">
+
+    <link rel="preload" href="/assets/styles.css?version=71" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -20,12 +25,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=69"
+      href="/assets/static/index.min.js?version=74"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=66"
+      href="/assets/styles.css?version=71"
       rel="stylesheet"
       type="text/css"
     />
@@ -41,7 +46,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=69"></script>
+    <script src="/assets/static/index.min.js?version=74"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>
