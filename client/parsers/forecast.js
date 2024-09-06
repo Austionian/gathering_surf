@@ -41,7 +41,7 @@ let probability_of_thunder;
  * @property {string[]} wind_direction
  * @property {string[]} wind_gust
  * @property {string[]} wave_period
- * @property {string[]} labels
+ * @property {string[]} wave_height_labels
  * @property {string[]} forecast_as_of
  * @property {string[]} temperature
  * @property {string[]} probability_of_precipitation
@@ -119,6 +119,7 @@ export function parseForecast(data) {
       data.wave_height_labels.length +
       prefillLength -
       ((data.wave_height_labels.length + prefillLength) % 24);
+    console.log(dayAlign);
 
     wave_height_labels = prefillLabels
       .concat(data.wave_height_labels)
@@ -172,7 +173,6 @@ export function parseForecast(data) {
 
   let startingAt = new Date().getHours();
 
-  // -- Init wave legend --
   const wave_height_container = document.getElementById("current-wave-height");
   if (wave_height_container?.innerText === "") {
     wave_height_container.innerText = data.current_wave_height;
@@ -202,6 +202,7 @@ export function parseForecast(data) {
     removeElement("wavey-period-loader");
   }
 
+  // -- Init wave legend --
   setText("legend-label", wave_height_labels[startingAt]);
   setText("legend-quality", QUALITY_MAP[qualities[startingAt]]);
   setText("legend-wave-height", wave_heights[startingAt]);
