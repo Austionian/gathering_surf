@@ -68,7 +68,6 @@ impl Forecast {
 
     fn compute_and_condense(&mut self, location: &Location) {
         self.condense();
-        self.get_wave_data();
         self.compute_quality(location);
     }
 
@@ -95,25 +94,6 @@ impl Forecast {
         let _ = self.wind_gust.split_off(*min);
         let _ = self.wind_direction.split_off(*min);
         let _ = self.wave_height.split_off(*min);
-    }
-
-    fn get_wave_data(&mut self) {
-        let mut smoothed_data = Vec::with_capacity(self.wave_height.len());
-        let mut out = Vec::with_capacity(self.wave_height.len());
-        self.wave_height
-            .iter()
-            .for_each(|data| smoothed_data.push(utils::convert_meter_to_feet(*data)));
-
-        smoothed_data.windows(3).for_each(|window| match window {
-            [x, y, z] => out.push((x + y + z) / 3.0),
-            [x, y] => out.push((x + y) / 2.0),
-            [x] => out.push(*x),
-            _ => panic!("what dafuq is this?"),
-        });
-
-        for (forecast, computed) in self.wave_height.iter_mut().zip(out.iter()) {
-            *forecast = truncate_to_two_decimals(*computed);
-        }
     }
 
     pub fn compute_quality(&mut self, location: &Location) {
@@ -161,6 +141,8 @@ impl TryFrom<serde_json::Value> for Forecast {
             .to_string();
 
         let wave_height = try_from_value(properties, "waveHeight", &|v| v)?;
+        let wave_height = smooth_wave_data(&wave_height);
+
         let wave_period = try_from_value(properties, "wavePeriod", &|v| v)?;
         let wave_direction = try_from_value(properties, "waveDirection", &|v| v)?;
         let wind_speed = try_from_value(properties, "windSpeed", &|v| {
@@ -234,19 +216,19 @@ fn get_current_wave_data(
     wave_period: &Vec<f64>,
     wave_direction: &Vec<f64>,
 ) -> anyhow::Result<(String, f64, f64)> {
-    let current_time_index = get_current_time_index(properties)?;
+    let current_time_index = get_current_time_index(properties)? + 1;
 
     if current_time_index > wave_height.len() {
         bail!("Invalid accessing index found!");
     }
 
-    let height = wave_height.get(current_time_index).unwrap().round() as u8;
+    let height = *wave_height.get(current_time_index).unwrap() as u8;
     let period = wave_period.get(current_time_index).unwrap();
     let direction = wave_direction.get(current_time_index).unwrap();
 
     // Try to get range of current surf
     if let Some(last_hour) = wave_height.get(current_time_index - 1) {
-        let last_hour = last_hour.round() as u8;
+        let last_hour = *last_hour as u8;
         return match height.partial_cmp(&last_hour) {
             Some(Ordering::Less) => Ok((
                 format!("{:.0}-{:.0}", height, last_hour),
@@ -267,7 +249,7 @@ fn get_current_wave_data(
 }
 
 fn get_current_time_index(value: &serde_json::Value) -> anyhow::Result<usize> {
-    let diff = DateTime::parse_from_str(
+    let starting_at: DateTime<Utc> = DateTime::parse_from_str(
         value
             .get("validTimes")
             .unwrap()
@@ -280,10 +262,9 @@ fn get_current_time_index(value: &serde_json::Value) -> anyhow::Result<usize> {
         "%+",
     )
     .unwrap()
-    .time()
-        - Utc::now().time();
+    .with_timezone(&Utc);
 
-    Ok(diff.num_hours().try_into()?)
+    Ok((Utc::now() - starting_at).num_hours().try_into()?)
 }
 
 fn try_from_value<T>(
@@ -384,4 +365,21 @@ fn get_time(v: &serde_json::Value) -> anyhow::Result<Vec<String>> {
     }
 
     Ok(out)
+}
+
+fn smooth_wave_data(wave_height: &Vec<f64>) -> Vec<f64> {
+    let mut smoothed_data = Vec::with_capacity(wave_height.len());
+    let mut out = Vec::with_capacity(wave_height.len());
+    wave_height
+        .iter()
+        .for_each(|data| smoothed_data.push(utils::convert_meter_to_feet(*data)));
+
+    smoothed_data.windows(3).for_each(|window| match window {
+        [x, y, z] => out.push(truncate_to_two_decimals((x + y + z) / 3.0)),
+        [x, y] => out.push(truncate_to_two_decimals((x + y) / 2.0)),
+        [x] => out.push(truncate_to_two_decimals(*x)),
+        _ => panic!("what dafuq is this?"),
+    });
+
+    out
 }

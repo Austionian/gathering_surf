@@ -119,7 +119,6 @@ export function parseForecast(data) {
       data.wave_height_labels.length +
       prefillLength -
       ((data.wave_height_labels.length + prefillLength) % 24);
-    console.log(dayAlign);
 
     wave_height_labels = prefillLabels
       .concat(data.wave_height_labels)
