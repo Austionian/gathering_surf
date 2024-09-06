@@ -33,22 +33,22 @@ let probability_of_thunder;
 
 /**
  * @typedef {Object} ForecastData
- * @property {string[]} wave_height_data
+ * @property {string[]} wave_height
  * @property {string} current_wave_height
  * @property {string} current_wave_direction
  * @property {string} current_wave_period
- * @property {string[]} wind_speed_data
- * @property {string[]} wind_direction_data
- * @property {string[]} wind_gust_data
- * @property {string[]} wave_period_data
- * @property {string[]} wave_height_labels
+ * @property {string[]} wind_speed
+ * @property {string[]} wind_direction
+ * @property {string[]} wind_gust
+ * @property {string[]} wave_period
+ * @property {string[]} labels
  * @property {string[]} forecast_as_of
  * @property {string[]} temperature
  * @property {string[]} probability_of_precipitation
  * @property {string[]} dewpoint
  * @property {string[]} cloud_cover
  * @property {string[]} probability_of_thunder
- * @property {string[]} qualities
+ * @property {string[]} quality
  * @property {string} starting_at
  */
 
@@ -74,12 +74,12 @@ export function parseForecast(data) {
 
     dataStartingAt = 0;
     wave_height_labels = data.wave_height_labels.slice(offset, dayAlign);
-    qualities = data.qualities.slice(offset, dayAlign);
-    wave_heights = data.wave_height_data.slice(offset, dayAlign);
-    wind_speeds = data.wind_speed_data.slice(offset, dayAlign);
-    wind_directions = data.wind_direction_data.slice(offset, dayAlign);
-    wind_gusts = data.wind_gust_data.slice(offset, dayAlign);
-    wave_period = data.wave_period_data.slice(offset, dayAlign);
+    qualities = data.quality.slice(offset, dayAlign);
+    wave_heights = data.wave_height.slice(offset, dayAlign);
+    wind_speeds = data.wind_speed.slice(offset, dayAlign);
+    wind_directions = data.wind_direction.slice(offset, dayAlign);
+    wind_gusts = data.wind_gust.slice(offset, dayAlign);
+    wave_period = data.wave_period.slice(offset, dayAlign);
     temperature = data.temperature.slice(offset, dayAlign);
     dewpoint = data.dewpoint.slice(offset, dayAlign);
     cloud_cover = data.cloud_cover.slice(offset, dayAlign);
@@ -126,27 +126,27 @@ export function parseForecast(data) {
 
     qualities = new Array(prefillLength)
       .fill("#a8a29e")
-      .concat(data.qualities)
+      .concat(data.quality)
       .slice(0, dayAlign);
     wave_heights = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_height_data)
+      .concat(data.wave_height)
       .slice(0, dayAlign);
     wind_speeds = new Array(prefillLength)
       .fill(0)
-      .concat(data.wind_speed_data)
+      .concat(data.wind_speed)
       .slice(0, dayAlign);
     wind_directions = new Array(prefillLength)
       .fill(0)
-      .concat(data.wind_direction_data)
+      .concat(data.wind_direction)
       .slice(0, dayAlign);
     wind_gusts = new Array(prefillLength)
       .fill(0)
-      .concat(data.wind_gust_data)
+      .concat(data.wind_gust)
       .slice(0, dayAlign);
     wave_period = new Array(prefillLength)
       .fill(0)
-      .concat(data.wave_period_data)
+      .concat(data.wave_period)
       .slice(0, dayAlign);
     temperature = new Array(prefillLength)
       .fill(0)
@@ -208,7 +208,7 @@ export function parseForecast(data) {
   setText("legend-wind-speed", wind_speeds[startingAt]);
   setStyleAttribute(
     "legend-wind-icon",
-    `transform: rotate(${wind_directions[startingAt]}deg);`,
+    `transform: rotate(${wind_directions[startingAt] + 180}deg);`,
   );
   setText("legend-wave-period", wave_period[startingAt]);
   setText("legend-wind-gust", wind_gusts[startingAt]);
@@ -361,7 +361,7 @@ export function parseForecast(data) {
     setText("legend-wind-speed", wind_speeds[x]);
     setStyleAttribute(
       "legend-wind-icon",
-      `transform: rotate(${wind_directions[x]}deg);`,
+      `transform: rotate(${wind_directions[x] + 180}deg);`,
     );
     setText("legend-wave-period", wave_period[x]);
     setText("legend-wind-gust", wind_gusts[x]);
