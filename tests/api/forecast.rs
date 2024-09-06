@@ -52,6 +52,6 @@ async fn forecast_integration_test() {
 
     assert!(response.contains("current_wave_direction"));
     assert!(response.contains("current_wave_height"));
-    assert!(response.contains("forecast_as_of"));
+    assert!(response.contains("as_of"));
     assert!(response.contains("qualities"));
 }

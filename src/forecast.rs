@@ -11,24 +11,25 @@ use tracing::{error, info, warn};
 
 #[derive(serde::Serialize)]
 pub struct Forecast {
-    pub last_updated: String,
+    pub as_of: String,
+    pub cloud_cover: Vec<u8>,
+    pub current_wave_height: String,
+    pub current_wave_period: f64,
+    pub current_wave_direction: f64,
+    pub dewpoint: Vec<String>,
     pub probability_of_precipitation: Vec<u8>,
+    pub probability_of_thunder: Vec<u8>,
     pub quality: Option<Vec<String>>,
+    pub starting_at: String,
     pub temperature: Vec<u8>,
-    pub wave_height: Vec<f64>,
+    #[serde(skip_serializing)]
     pub wave_direction: Vec<f64>,
+    pub wave_height: Vec<f64>,
+    pub wave_height_labels: Vec<String>,
     pub wave_period: Vec<f64>,
     pub wind_speed: Vec<f64>,
     pub wind_gust: Vec<f64>,
     pub wind_direction: Vec<f64>,
-    pub dewpoint: Vec<String>,
-    pub cloud_cover: Vec<u8>,
-    pub probability_of_thunder: Vec<u8>,
-    pub starting_at: String,
-    pub wave_height_labels: Vec<String>,
-    pub current_wave_height: String,
-    pub current_wave_period: f64,
-    pub current_wave_direction: f64,
 }
 
 impl Forecast {
@@ -131,7 +132,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             .ok_or(anyhow!("Unidentified suffix"))?
             .parse::<NaiveDateTime>()?;
 
-        let last_updated = Central
+        let as_of = Central
             .from_utc_datetime(&last_updated)
             .to_rfc2822()
             .strip_suffix(" -0500")
@@ -163,7 +164,7 @@ impl TryFrom<serde_json::Value> for Forecast {
         let cloud_cover = try_from_value(properties, "skyCover", &|v| v as u8)?;
         let probability_of_thunder =
             try_from_value(properties, "probabilityOfThunder", &|v| v as u8)?;
-        let wave_height_labels = try_labels_from_value(properties, "waveHeight")?;
+        let wave_height_labels = try_labels_from_value(properties)?;
 
         let starting_at = DateTime::parse_from_str(
             properties
@@ -184,7 +185,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             get_current_wave_data(properties, &wave_height, &wave_period, &wave_direction)?;
 
         Ok(Self {
-            last_updated,
+            as_of,
             wave_height,
             wave_direction,
             wave_period,
@@ -320,16 +321,16 @@ fn convert<T>(v: &serde_json::Value, f: &dyn Fn(f64) -> T) -> anyhow::Result<Vec
 
     Ok(out)
 }
-/// Limits the f64 to two decimal points
+/// Limits f64 to two decimal points
 fn truncate_to_two_decimals(v: f64) -> f64 {
     (v * 100.0).trunc() / 100.0
 }
 
 // Try to write this better !
-fn try_labels_from_value(properties: &serde_json::Value, key: &str) -> anyhow::Result<Vec<String>> {
+fn try_labels_from_value(properties: &serde_json::Value) -> anyhow::Result<Vec<String>> {
     Ok(properties
-        .get(key)
-        .ok_or(anyhow!("no {key} found!"))?
+        .get("waveHeight")
+        .ok_or(anyhow!("no waveHeight found!"))?
         .get("values")
         .ok_or(anyhow!("no values found!"))?
         .as_array()

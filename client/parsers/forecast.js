@@ -42,7 +42,7 @@ let probability_of_thunder;
  * @property {string[]} wind_gust
  * @property {string[]} wave_period
  * @property {string[]} wave_height_labels
- * @property {string[]} forecast_as_of
+ * @property {string[]} as_of
  * @property {string[]} temperature
  * @property {string[]} probability_of_precipitation
  * @property {string[]} dewpoint
@@ -212,8 +212,8 @@ export function parseForecast(data) {
   );
   setText("legend-wave-period", wave_period[startingAt]);
   setText("legend-wind-gust", wind_gusts[startingAt]);
-  setText("forecast-as-of", `Updated ${data.forecast_as_of}`);
-  setText("forecast-as-of-2", `Forecast Last Ran @ ${data.forecast_as_of}`);
+  setText("forecast-as-of", `Updated ${data.as_of}`);
+  setText("forecast-as-of-2", `Updated ${data.as_of}`);
 
   removeElements(".loader");
   removeHidden("forecast");
