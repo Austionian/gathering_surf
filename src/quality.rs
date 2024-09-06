@@ -7,7 +7,7 @@ pub const POOR: Quality = Quality("Poor", "#ff9500");
 pub const VERY_POOR: Quality = Quality("Very Poor", "#f4496d");
 pub const FLAT: Quality = Quality("Flat", "#a8a29e");
 
-const HIGH_WIND: f64 = 18.8;
+const HIGH_WIND: f64 = 25.0;
 
 impl Quality {
     fn basic_wave_check(wave_height: f64) -> Option<&'static Self> {

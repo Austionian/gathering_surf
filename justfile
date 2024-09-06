@@ -95,13 +95,13 @@ update:
 test:
     #!/bin/bash
     # unseen: writes new snapshots and writes .snap.new for exisiting
-    INSTA_UPDATE=unseen cargo t
+    INSTA_UPDATE=unseen cargo t --features mock-time
 
 # Runs the tests, and updates all snapshots
 test-update:
     #!/bin/bash
     # always: overwrites old snapshot files with new ones unasked
-    INSTA_UPDATE=always cargo t
+    INSTA_UPDATE=always cargo t --features mock-time
 
 # Installs rollup and the terser plugin globally
 install-rollup:
