@@ -75,9 +75,6 @@ impl Forecast {
     ///
     /// Not all data from the api will cover the same length of
     /// time. This ensures no dangling data.
-    ///
-    /// TODO - Might not be necessary. Prone to future bug. No way
-    /// to ensure all relevent fields are taken into account.
     fn condense(&mut self) {
         let lengths = [
             self.wave_period.len(),
@@ -94,6 +91,7 @@ impl Forecast {
         let _ = self.wind_gust.split_off(*min);
         let _ = self.wind_direction.split_off(*min);
         let _ = self.wave_height.split_off(*min);
+        let _ = self.wave_height_labels.split_off(*min);
     }
 
     pub fn compute_quality(&mut self, location: &Location) {
