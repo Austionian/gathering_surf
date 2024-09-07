@@ -1,5 +1,8 @@
 use super::Spot;
-use crate::utils::{convert_celsius_to_fahrenheit, convert_meter_to_feet, convert_meter_to_mile};
+use crate::utils::{
+    convert_celsius_to_fahrenheit, convert_meter_per_second_to_miles_per_hour,
+    convert_meter_to_feet,
+};
 
 use anyhow::bail;
 use chrono::{TimeZone, Utc};
@@ -40,20 +43,29 @@ impl Realtime {
         let mut measurements = measurements.split_whitespace();
         let wind_direction = measurements.next().unwrap().parse().unwrap_or(0);
 
-        let wind_speed = convert_meter_to_mile(measurements.next().unwrap());
-        let gusts = convert_meter_to_mile(measurements.next().unwrap());
+        let wind_speed = convert_meter_per_second_to_miles_per_hour(measurements.next().unwrap());
+        let gusts = convert_meter_per_second_to_miles_per_hour(measurements.next().unwrap());
 
         let wave_height = Self::parse_wave_height(measurements.next().unwrap_or(""));
         let wave_period = measurements.next().unwrap().parse().ok();
 
         let _ = measurements.next();
 
-        let wave_direction = measurements
+        // Sometimes bouys only update the wave direction every third hour,
+        // this attempts to fallback to earlier readings.
+        let wave_direction = match measurements
             .next()
             .unwrap()
             .parse::<u16>()
             .ok()
-            .map(|v| v + 180);
+            .map(|v| v + 180)
+        {
+            Some(v) => Some(v),
+            None => match Self::get_wave_direction(&latest, 1) {
+                Some(v) => Some(v),
+                None => Self::get_wave_direction(&latest, 2),
+            },
+        };
 
         let _ = measurements.next();
 
@@ -150,5 +162,17 @@ impl Realtime {
         let as_of = as_of.with_timezone(&Central).to_rfc2822();
 
         Ok(as_of.split(" -").next().unwrap().to_string())
+    }
+
+    fn get_wave_direction(latest: &[&str], offset: usize) -> Option<u16> {
+        latest
+            .get(2 + offset)
+            .unwrap()
+            .split_whitespace()
+            .nth(11)
+            .unwrap()
+            .parse::<u16>()
+            .ok()
+            .map(|v| v + 180)
     }
 }

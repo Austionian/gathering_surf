@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use chrono::{DateTime, NaiveDateTime, TimeZone};
+use chrono::{DateTime, Timelike};
 use chrono_tz::US::Central;
 
 pub fn convert_meter_to_feet(value: f64) -> f64 {
@@ -10,7 +10,7 @@ pub fn convert_kilo_meter_to_mile(value: f64) -> f64 {
     value * 0.621
 }
 
-pub fn convert_meter_to_mile(value: &str) -> String {
+pub fn convert_meter_per_second_to_miles_per_hour(value: &str) -> String {
     format!("{:.0}", value.parse().unwrap_or(0.0) * 2.2369)
 }
 
@@ -20,53 +20,153 @@ pub fn convert_celsius_to_fahrenheit(value: f64) -> String {
 
 pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     if let Some((_, hour)) = s.split_once('T') {
-        let hour = hour.strip_suffix("H\"").ok_or(anyhow!("no hour found!"))?;
+        let hour = hour.strip_suffix("H").ok_or(anyhow!("no hour found!"))?;
         return Ok(hour.parse()?);
     };
 
     Err(anyhow!("no hour found!"))
 }
 
-fn convert_military_to_standard(time: &str) -> String {
-    let time = time.split(':').next().unwrap();
-
-    let value = time.parse::<u8>().unwrap();
-
-    if value == 12 {
+fn convert_24_to_12_hour(hour: u32) -> String {
+    if hour == 12 {
         return "12 PM".to_string();
     }
-    if value == 0 {
+    if hour == 0 {
         return "12 AM".to_string();
     }
 
-    if value < 12 {
-        return format!("{time} AM");
+    if hour < 10 {
+        return format!("0{} AM", hour);
     }
 
-    let value = value - 12;
-    if value < 10 {
-        return format!("0{} PM", value);
+    if hour < 12 {
+        return format!("{hour} AM");
     }
 
-    format!("{} PM", value)
+    let hour = hour - 12;
+    if hour < 10 {
+        return format!("0{} PM", hour);
+    }
+
+    format!("{} PM", hour)
 }
 
-pub fn increment_time(t: &str, amount: usize) -> anyhow::Result<(String, Option<String>)> {
-    let time = t.strip_prefix('"').unwrap();
-    let time = time.strip_suffix("+00:00").unwrap();
-    let mut time = time.parse::<NaiveDateTime>().unwrap();
-    time += std::time::Duration::from_secs(amount as u64 * 3_600);
-    let time: DateTime<_> = Central.from_utc_datetime(&time);
+/// Given a time string, e.g. "2024-09-06T11:00:00+00:00" and a number
+/// of hours to increase to, e.g. 2, returns a display friendly time, e.g.
+/// "Fri 09 AM"
+pub fn increment_time(t: &str, hours: usize) -> anyhow::Result<String> {
+    let time = DateTime::parse_from_str(t, "%+")
+        .unwrap()
+        .with_timezone(&Central)
+        + chrono::Duration::hours(hours as i64);
 
-    let valid_time = time.to_rfc3339();
+    let hour = convert_24_to_12_hour(time.hour());
+
     let time = time.to_rfc2822();
 
-    let (day, rest) = time.split_once(',').unwrap();
+    let (day, _) = time.split_once(',').unwrap();
 
-    let time = rest.split_whitespace().nth(3).unwrap();
+    Ok(format!("{day} {hour}"))
+}
 
-    Ok((
-        valid_time,
-        Some(format!("{day} {}", convert_military_to_standard(time))),
-    ))
+/// Limits f64 to two decimal points
+pub fn truncate_to_two_decimals(v: f64) -> f64 {
+    (v * 100.0).trunc() / 100.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn truncate_to_two_decimals_limits_f64_to_two_decimals() {
+        assert_eq!(truncate_to_two_decimals(12.121212), 12.12)
+    }
+
+    #[test]
+    fn increment_time_creates_display_string() {
+        assert_eq!(
+            increment_time("2024-09-06T11:00:00+00:00", 2).unwrap(),
+            "Fri 08 AM"
+        )
+    }
+
+    #[test]
+    fn increment_time_creates_display_string_with_a_pm_time() {
+        assert_eq!(
+            increment_time("2024-09-06T11:00:00+00:00", 12).unwrap(),
+            "Fri 06 PM"
+        )
+    }
+
+    #[test]
+    fn increment_time_creates_handles_noon() {
+        assert_eq!(
+            increment_time("2024-09-06T11:00:00+00:00", 6).unwrap(),
+            "Fri 12 PM"
+        )
+    }
+
+    #[test]
+    fn increment_time_creates_handles_midnight() {
+        assert_eq!(
+            increment_time("2024-09-06T11:00:00+00:00", 18).unwrap(),
+            "Sat 12 AM"
+        )
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_adds_a_leading_zero_to_am() {
+        assert_eq!(convert_24_to_12_hour(7), "07 AM")
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_adds_a_leading_zero_to_pm() {
+        assert_eq!(convert_24_to_12_hour(13), "01 PM")
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_does_not_add_a_leading_zero_to_am() {
+        assert_eq!(convert_24_to_12_hour(10), "10 AM")
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_does_not_add_a_leading_zero_to_pm() {
+        assert_eq!(convert_24_to_12_hour(22), "10 PM")
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_handles_noon() {
+        assert_eq!(convert_24_to_12_hour(12), "12 PM")
+    }
+
+    #[test]
+    fn convert_24_to_12_hour_handles_midnight() {
+        assert_eq!(convert_24_to_12_hour(00), "12 AM")
+    }
+
+    #[test]
+    fn parse_hour_gets_the_number_of_hours_from_a_period_string() {
+        assert_eq!(parse_hour("T12H").unwrap(), 12)
+    }
+
+    #[test]
+    fn convert_meter_per_second_to_miles_per_hour_converts_correctly() {
+        assert_eq!(convert_meter_per_second_to_miles_per_hour("6.0"), "13")
+    }
+
+    #[test]
+    fn convert_meter_to_feet_converts_correctly() {
+        assert_eq!(convert_meter_to_feet(1.0), 3.281)
+    }
+
+    #[test]
+    fn convert_kilo_meter_to_mile_converts_correctly() {
+        assert_eq!(convert_kilo_meter_to_mile(11.5), 7.1415)
+    }
+
+    #[test]
+    fn convert_celsius_to_fahrenheit_converts_correctly() {
+        assert_eq!(convert_celsius_to_fahrenheit(66.0), "151")
+    }
 }

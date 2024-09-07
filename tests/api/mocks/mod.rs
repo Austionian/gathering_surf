@@ -32,7 +32,7 @@ pub fn forecast_json() -> &'static serde_json::Value {
                 "uom": "wmoUnit:degC",
                 "values": [
                     {
-                        "validTime": "2024-06-10T20:00:00+00:00/PT1H",
+                        "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                         "value": 15.555555555555555
                     },
                 ]},
@@ -40,27 +40,27 @@ pub fn forecast_json() -> &'static serde_json::Value {
             "uom": "wmoUnit:m",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT3H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 0.30480000000000002
                 }]},
                 "wavePeriod": {
             "uom": "nwsUnit:s",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT2H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 4
                 }]},
                 "waveDirection": {
             "uom": "wmoUnit:degree_(angle)",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT3H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 30
                 }]},
                  "probabilityOfThunder": {
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT22H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 0
                 }]},
                 "probabilityOfPrecipitation": {
@@ -74,35 +74,35 @@ pub fn forecast_json() -> &'static serde_json::Value {
             "uom": "wmoUnit:km_h-1",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT1H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 25.928000000000001
                 }]},
                 "windSpeed": {
             "uom": "wmoUnit:km_h-1",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT1H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 18.52
                 }]},
                 "windDirection": {
             "uom": "wmoUnit:degree_(angle)",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT1H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 30
                 }]},
                 "skyCover": {
             "uom": "wmoUnit:percent",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT4H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 4
                 }]},
                     "dewpoint": {
             "uom": "wmoUnit:degC",
             "values": [
                 {
-                    "validTime": "2024-06-10T20:00:00+00:00/PT4H",
+                    "validTime": "2024-06-10T20:00:00+00:00/PT20H",
                     "value": 6.666666666666667
                 }]}
         }})

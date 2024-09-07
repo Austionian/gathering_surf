@@ -7,6 +7,8 @@ pub const POOR: Quality = Quality("Poor", "#ff9500");
 pub const VERY_POOR: Quality = Quality("Very Poor", "#f4496d");
 pub const FLAT: Quality = Quality("Flat", "#a8a29e");
 
+const HIGH_WIND: f64 = 25.0;
+
 impl Quality {
     fn basic_wave_check(wave_height: f64) -> Option<&'static Self> {
         if wave_height < 0.98 {
@@ -32,21 +34,21 @@ impl Quality {
 
         // Primarily north wind
         if (0.0..70.0).contains(&wind_direction) || (270.0..361.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &GOOD;
             }
             return &OK;
         }
 
         if (70.0..120.0).contains(&wind_direction) || (230.0..270.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &OK;
             }
             return &POOR;
         }
 
         if (120.0..230.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &POOR;
             }
             return &VERY_POOR;
@@ -70,28 +72,28 @@ impl Quality {
         }
 
         if (120.0..330.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &GOOD;
             }
             return &OK;
         }
 
         if wind_direction >= 330.0 {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &POOR;
             }
             return &VERY_POOR;
         }
 
         if (80.0..120.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &OK;
             }
             return &POOR;
         }
 
         if (0.0..80.0).contains(&wind_direction) {
-            if wind_speed <= 30.0 {
+            if wind_speed <= HIGH_WIND {
                 return &POOR;
             }
             return &VERY_POOR;

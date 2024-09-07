@@ -1,30 +1,35 @@
+use std::cmp::Ordering;
+
 use super::{Location, Spot};
-use crate::{convert_celsius_to_fahrenheit, convert_kilo_meter_to_mile, utils};
+use crate::utils::*;
 
 use anyhow::{anyhow, bail};
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
 use reqwest::Response;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
-use std::cmp::Ordering;
 use tracing::{error, info, warn};
 
+#[derive(serde::Serialize)]
 pub struct Forecast {
-    pub last_updated: String,
-    pub probability_of_precipitation: Vec<ForecastValue>,
+    pub as_of: String,
+    pub cloud_cover: Vec<u8>,
+    pub current_wave_height: String,
+    pub current_wave_period: f64,
+    pub current_wave_direction: f64,
+    pub dewpoint: Vec<String>,
+    pub probability_of_precipitation: Vec<u8>,
+    pub probability_of_thunder: Vec<u8>,
     pub quality: Option<Vec<String>>,
-    pub temperature: Vec<ForecastValue>,
-    pub wave_height: Vec<ForecastValue>,
-    pub wave_period: Vec<ForecastValue>,
-    pub wave_direction: Vec<ForecastValue>,
-    pub wind_speed: Vec<ForecastValue>,
-    pub wind_gust: Vec<ForecastValue>,
-    pub wind_direction: Vec<ForecastValue>,
-    pub dewpoint: Vec<ForecastValue>,
-    pub cloud_cover: Vec<ForecastValue>,
-    pub probability_of_thunder: Vec<ForecastValue>,
-    pub starting_at: Option<String>,
-    pub waves: Option<Vec<f64>>,
+    pub starting_at: String,
+    pub temperature: Vec<u8>,
+    #[serde(skip_serializing)]
+    pub wave_direction: Vec<f64>,
+    pub wave_height: Vec<f64>,
+    pub wave_height_labels: Vec<String>,
+    pub wave_period: Vec<f64>,
+    pub wind_speed: Vec<f64>,
+    pub wind_gust: Vec<f64>,
+    pub wind_direction: Vec<f64>,
 }
 
 impl Forecast {
@@ -33,7 +38,8 @@ impl Forecast {
 
         let mut forecast: Self = (data.json::<serde_json::Value>().await?).try_into()?;
 
-        forecast.compute_and_condense(&spot.location);
+        forecast.condense();
+        forecast.compute_quality(&spot.location);
 
         Ok(forecast)
     }
@@ -62,18 +68,10 @@ impl Forecast {
         bail!("Non 200 response from NOAA");
     }
 
-    fn compute_and_condense(&mut self, location: &Location) {
-        self.condense();
-        self.get_wave_data(location);
-    }
-
     /// Condenses the forecast to even length vecs.
     ///
     /// Not all data from the api will cover the same length of
     /// time. This ensures no dangling data.
-    ///
-    /// TODO - Might not be necessary. Prone to future bug. No way
-    /// to ensure all relevent fields are taken into account.
     fn condense(&mut self) {
         let lengths = [
             self.wave_period.len(),
@@ -90,138 +88,10 @@ impl Forecast {
         let _ = self.wind_gust.split_off(*min);
         let _ = self.wind_direction.split_off(*min);
         let _ = self.wave_height.split_off(*min);
-
-        self.starting_at = Some(self.wave_height.first().unwrap().valid_time.clone())
+        let _ = self.wave_height_labels.split_off(*min);
     }
 
-    fn get_labels(&self) -> Vec<String> {
-        self.wave_height
-            .iter()
-            .map(|v| v.display_time.clone().unwrap_or_default())
-            .collect()
-    }
-
-    fn get_wave_data(&mut self, location: &Location) {
-        let mut smoothed_data = Vec::with_capacity(self.wave_height.len());
-        let mut out = Vec::with_capacity(self.wave_height.len());
-        self.wave_height
-            .iter()
-            .for_each(|data| smoothed_data.push(utils::convert_meter_to_feet(data.value)));
-
-        smoothed_data.windows(3).for_each(|window| match window {
-            [x, y, z] => out.push((x + y + z) / 3.0),
-            [x, y] => out.push((x + y) / 2.0),
-            [x] => out.push(*x),
-            _ => panic!("what dafuq is this?"),
-        });
-
-        for (forecast, computed) in self.wave_height.iter_mut().zip(out.iter()) {
-            forecast.value = Self::truncc(*computed);
-        }
-
-        self.compute_quality(location);
-    }
-
-    /// Limits the f64 to two decimal points
-    fn truncc(v: f64) -> f64 {
-        (v * 100.0).trunc() / 100.0
-    }
-
-    fn get_wind_data(&self) -> Vec<f64> {
-        self.wind_speed
-            .iter()
-            .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
-            .collect()
-    }
-
-    fn get_wind_direction_data(&self) -> Vec<f64> {
-        self.wind_direction
-            .iter()
-            .map(|v| Self::truncc(v.value) + 180.0)
-            .collect()
-    }
-
-    fn get_wind_gust_data(&self) -> Vec<f64> {
-        self.wind_gust
-            .iter()
-            .map(|v| Self::truncc(convert_kilo_meter_to_mile(v.value)))
-            .collect()
-    }
-
-    fn get_temperature(&self) -> Vec<u8> {
-        self.temperature
-            .iter()
-            .filter_map(|v| convert_celsius_to_fahrenheit(v.value).parse().ok())
-            .collect()
-    }
-
-    fn get_probability_of_precipitation(&self) -> Vec<u8> {
-        self.probability_of_precipitation
-            .iter()
-            .map(|v| v.value as u8)
-            .collect()
-    }
-
-    fn get_wave_period_data(&self) -> Vec<f64> {
-        self.wave_period.iter().map(|v| v.value).collect()
-    }
-
-    fn get_dewpoint(&self) -> Vec<String> {
-        self.dewpoint
-            .iter()
-            .map(|v| convert_celsius_to_fahrenheit(v.value))
-            .collect()
-    }
-
-    fn get_cloud_cover(&self) -> Vec<u8> {
-        self.cloud_cover.iter().map(|v| v.value as u8).collect()
-    }
-
-    fn get_probability_of_thunder(&self) -> Vec<u8> {
-        self.probability_of_thunder
-            .iter()
-            .map(|v| v.value as u8)
-            .collect()
-    }
-
-    fn get_waves(&self) -> Vec<f64> {
-        self.wave_height.iter().map(|v| v.value).collect()
-    }
-
-    /// Returns the wave height, period and direction from the forecasted
-    /// data relative to the time of request.
-    fn get_current_wave_data(&self) -> (String, String, String) {
-        for (i, wave_height) in self.wave_height.iter().enumerate() {
-            if DateTime::parse_from_str(&wave_height.valid_time, "%+").unwrap() > Utc::now() {
-                let height = wave_height.value as u8;
-                let period = self.wave_period.get(i).unwrap().value.to_string();
-                let direction = self.wave_direction.get(i).unwrap().value.to_string();
-
-                // Try to get range of current surf
-                if let Some(last_hour) = self.wave_height.get(i - 1) {
-                    let last_hour_height = last_hour.value as u8;
-                    return match height.partial_cmp(&last_hour_height) {
-                        Some(Ordering::Less) => (
-                            format!("{:.0}-{:.0}", height, last_hour_height),
-                            period,
-                            direction,
-                        ),
-                        Some(Ordering::Greater) => (
-                            format!("{:.0}-{:.0}+", last_hour_height, height),
-                            period,
-                            direction,
-                        ),
-                        Some(Ordering::Equal) => (format!("{:.0}", height), period, direction),
-                        None => unreachable!("Found no ordering in wave heights."),
-                    };
-                }
-                return (format!("{:.0}", height), period, direction);
-            }
-        }
-
-        ("0".to_string(), String::default(), String::default())
-    }
-
+    /// Takes the relative attributes and computes their quality
     pub fn compute_quality(&mut self, location: &Location) {
         let mut qualities = Vec::with_capacity(self.wind_direction.len());
         for ((wind_direction, wind_speed), wave_height) in self
@@ -232,7 +102,7 @@ impl Forecast {
         {
             qualities.push(
                 location
-                    .get_quality(wave_height.value, wind_speed.value, wind_direction.value)
+                    .get_quality(*wave_height, *wind_speed, *wind_direction)
                     .1
                     .to_string(),
             );
@@ -240,50 +110,81 @@ impl Forecast {
 
         self.quality = Some(qualities)
     }
-}
 
-impl Serialize for Forecast {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let (current_wave_height, current_wave_period, current_wave_direction) =
-            self.get_current_wave_data();
+    /// Smooths the wave data by taking the average of three data points, turns data
+    /// from something like [0,0,1,2] into [.33, 1, 1.5, 2] to better show growing wave heights.
+    fn smooth_wave_data(wave_height: &[f64]) -> Vec<f64> {
+        let mut smoothed_data = Vec::with_capacity(wave_height.len());
+        let mut out = Vec::with_capacity(wave_height.len());
+        wave_height
+            .iter()
+            .for_each(|data| smoothed_data.push(convert_meter_to_feet(*data)));
 
-        let mut state = serializer.serialize_struct("Forecast", 17)?;
-        state.serialize_field("forecast_as_of", &self.last_updated)?;
-        state.serialize_field("wave_height_data", &self.get_waves())?;
-        state.serialize_field("current_wave_height", &current_wave_height)?;
-        state.serialize_field("current_wave_direction", &current_wave_direction)?;
-        state.serialize_field("current_wave_period", &current_wave_period)?;
-        state.serialize_field("wind_speed_data", &self.get_wind_data())?;
-        state.serialize_field("wind_direction_data", &self.get_wind_direction_data())?;
-        state.serialize_field("wind_gust_data", &self.get_wind_gust_data())?;
-        state.serialize_field("wave_period_data", &self.get_wave_period_data())?;
-        state.serialize_field("wave_height_labels", &self.get_labels())?;
-        state.serialize_field("temperature", &self.get_temperature())?;
-        state.serialize_field(
-            "probability_of_precipitation",
-            &self.get_probability_of_precipitation(),
-        )?;
-        state.serialize_field("dewpoint", &self.get_dewpoint())?;
-        state.serialize_field("cloud_cover", &self.get_cloud_cover())?;
-        state.serialize_field("probability_of_thunder", &self.get_probability_of_thunder())?;
-        state.serialize_field("starting_at", &self.starting_at)?;
-        state.serialize_field("qualities", &self.quality.clone().unwrap())?;
-        state.end()
+        smoothed_data.windows(3).for_each(|window| match window {
+            [x, y, z] => out.push(truncate_to_two_decimals((x + y + z) / 3.0)),
+            [x, y] => out.push(truncate_to_two_decimals((x + y) / 2.0)),
+            [x] => out.push(truncate_to_two_decimals(*x)),
+            _ => panic!("what dafuq is this?"),
+        });
+
+        out
     }
-}
 
-#[derive(serde::Serialize)]
-pub struct ForecastValue {
-    value: f64,
-    valid_time: String,
-    display_time: Option<String>,
-}
+    /// Returns the wave height, period and direction from the forecasted
+    /// data relative to the time of request.
+    fn get_current_wave_data(
+        wave_height: &[f64],
+        wave_period: &[f64],
+        wave_direction: &[f64],
+        starting_at: &DateTime<FixedOffset>,
+    ) -> anyhow::Result<(String, f64, f64)> {
+        // Required for unit tests to have a consistent as of time
+        #[cfg(not(feature = "mock-time"))]
+        let current_time_index = Self::get_current_time_index(starting_at)? + 1;
+        #[cfg(feature = "mock-time")]
+        let current_time_index = 1;
 
-impl ForecastValue {
-    fn get(properties: &serde_json::Value, key: &str) -> anyhow::Result<Vec<Self>> {
+        if current_time_index > wave_height.len() {
+            bail!("Invalid accessing index found!");
+        }
+
+        let height = *wave_height.get(current_time_index).unwrap() as u8;
+        let period = wave_period.get(current_time_index).unwrap();
+        let direction = wave_direction.get(current_time_index).unwrap() + 180.0;
+
+        // Try to get range of current surf
+        if let Some(last_hour) = wave_height.get(current_time_index - 1) {
+            let last_hour = *last_hour as u8;
+            return match height.partial_cmp(&last_hour) {
+                Some(Ordering::Less) => Ok((
+                    format!("{:.0}-{:.0}", height, last_hour),
+                    *period,
+                    direction,
+                )),
+                Some(Ordering::Greater) => Ok((
+                    format!("{:.0}-{:.0}+", last_hour, height),
+                    *period,
+                    direction,
+                )),
+                Some(Ordering::Equal) => Ok((format!("{:.0}", height), *period, direction)),
+                None => unreachable!("Found no ordering in wave heights."),
+            };
+        }
+
+        Ok((format!("{:.0}", height), *period, direction))
+    }
+
+    fn get_current_time_index(starting_at: &DateTime<FixedOffset>) -> anyhow::Result<usize> {
+        Ok((Utc::now() - starting_at.with_timezone(&Utc))
+            .num_hours()
+            .try_into()?)
+    }
+
+    fn try_from_value<T: std::clone::Clone>(
+        properties: &serde_json::Value,
+        key: &str,
+        f: &dyn Fn(f64) -> T,
+    ) -> anyhow::Result<Vec<T>> {
         Ok(properties
             .get(key)
             .ok_or(anyhow!("no {key} found!"))?
@@ -293,37 +194,91 @@ impl ForecastValue {
             .ok_or(anyhow!("array not found!"))?
             .clone()
             .into_iter()
-            .filter_map(|value| Self::try_from(value).ok())
-            .flat_map(|w| Self::expand_time_ranges(&w).unwrap())
+            .flat_map(|value| Self::expand_and_convert(&value, f).unwrap())
             .collect())
     }
 
-    fn expand_time_ranges(&self) -> anyhow::Result<Vec<Self>> {
-        let (time, period) = self
-            .valid_time
+    fn expand_and_convert<T: std::clone::Clone>(
+        v: &serde_json::Value,
+        f: &dyn Fn(f64) -> T,
+    ) -> anyhow::Result<Vec<T>> {
+        let (value, valid_time) = Self::get_value_and_time(v)?;
+
+        let (_, period) = valid_time
             .split_once("/P")
             .ok_or(anyhow!("Unknown period found!"))?;
 
-        let mut total = 0;
+        let period_len = Self::parse_period(period);
+
+        Ok(vec![f(value); period_len])
+    }
+
+    /// Extracts the value and it's time attribute from the object,
+    /// e.g. {
+    ///     "value": 5.3,
+    ///     "validTime": "2024-07-18T05:00:00+00:00/P1D5H"
+    /// } -> (5.3, "2024-07-18T05:00:00+00:00/P1D5H")
+    fn get_value_and_time(v: &serde_json::Value) -> anyhow::Result<(f64, &str)> {
+        let value = v
+            .get("value")
+            .ok_or(anyhow!("No value found."))?
+            .as_f64()
+            .ok_or(anyhow!("Not an f64"))?;
+        let valid_time = v
+            .get("validTime")
+            .ok_or(anyhow!("No validTime found."))?
+            .as_str()
+            .unwrap();
+
+        Ok((value, valid_time))
+    }
+
+    /// Parses the period into its length in hours,
+    /// e.g. 1DT5H -> 29
+    fn parse_period(period: &str) -> usize {
+        let mut period_len = 0;
+
         if let Some((day, hour)) = period.split_once('D') {
-            total += day.parse::<usize>().unwrap() * 24;
-            total += utils::parse_hour(hour).unwrap_or(0);
+            period_len += day.parse::<usize>().unwrap() * 24;
+            period_len += parse_hour(hour).unwrap_or(0);
         } else {
-            total += utils::parse_hour(period).unwrap_or(0);
+            period_len += parse_hour(period).unwrap_or(0);
         };
 
-        let mut out = Vec::with_capacity(total);
+        period_len
+    }
 
-        for i in 0..total {
-            let (valid_time, display_time) = utils::increment_time(time, i)?;
-            out.push(Self {
-                value: self.value,
-                valid_time,
-                display_time,
+    // Try to write this better !
+    /// Expands and creates the time labels from the wave_height data
+    /// in the JSON. e.g. ["Fri 10 AM", "Fri 11 AM", ...]
+    fn try_labels(properties: &serde_json::Value) -> anyhow::Result<Vec<String>> {
+        Ok(properties
+            .get("waveHeight")
+            .ok_or(anyhow!("no waveHeight found!"))?
+            .get("values")
+            .ok_or(anyhow!("no values found!"))?
+            .as_array()
+            .ok_or(anyhow!("array not found!"))?
+            .clone()
+            .into_iter()
+            .flat_map(|value| {
+                let (_, valid_time) = Self::get_value_and_time(&value).unwrap();
+
+                let (time, period) = valid_time
+                    .split_once("/P")
+                    .ok_or(anyhow!("Unknown period found!"))
+                    .unwrap();
+
+                let period_len = Self::parse_period(period);
+                let mut labels = Vec::with_capacity(period_len);
+
+                for i in 0..period_len {
+                    labels.push(increment_time(time, i).unwrap());
+                }
+
+                labels
             })
-        }
-
-        Ok(out)
+            .collect())
     }
 }
 
@@ -344,31 +299,61 @@ impl TryFrom<serde_json::Value> for Forecast {
             .ok_or(anyhow!("Unidentified suffix"))?
             .parse::<NaiveDateTime>()?;
 
-        let last_updated = Central
+        let as_of = Central
             .from_utc_datetime(&last_updated)
             .to_rfc2822()
             .strip_suffix(" -0500")
             .ok_or(anyhow!("Unidentified suffix"))?
             .to_string();
 
-        let wave_height = ForecastValue::get(properties, "waveHeight")?;
-        let wave_period = ForecastValue::get(properties, "wavePeriod")?;
-        let wave_direction = ForecastValue::get(properties, "waveDirection")?;
-        let wind_speed = ForecastValue::get(properties, "windSpeed")?;
-        let wind_gust = ForecastValue::get(properties, "windGust")?;
-        let wind_direction = ForecastValue::get(properties, "windDirection")?;
-        let temperature = ForecastValue::get(properties, "temperature")?;
+        let wave_height =
+            Self::smooth_wave_data(&Self::try_from_value(properties, "waveHeight", &|v| v)?);
+
+        let wave_period = Self::try_from_value(properties, "wavePeriod", &|v| v)?;
+        let wave_direction = Self::try_from_value(properties, "waveDirection", &|v| v)?;
+        let wind_speed = Self::try_from_value(properties, "windSpeed", &|v| {
+            truncate_to_two_decimals(convert_kilo_meter_to_mile(v))
+        })?;
+        let wind_gust = Self::try_from_value(properties, "windGust", &|v| {
+            truncate_to_two_decimals(convert_kilo_meter_to_mile(v))
+        })?;
+        let wind_direction = Self::try_from_value(properties, "windDirection", &|v| {
+            truncate_to_two_decimals(v)
+        })?;
+        let temperature = Self::try_from_value(properties, "temperature", &|v| {
+            convert_celsius_to_fahrenheit(v).parse::<u8>().unwrap()
+        })?;
         let probability_of_precipitation =
-            ForecastValue::get(properties, "probabilityOfPrecipitation")?;
-        let dewpoint = ForecastValue::get(properties, "dewpoint")?;
-        let cloud_cover = ForecastValue::get(properties, "skyCover")?;
-        let probability_of_thunder = ForecastValue::get(properties, "probabilityOfThunder")?;
+            Self::try_from_value(properties, "probabilityOfPrecipitation", &|v| v as u8)?;
+        let dewpoint = Self::try_from_value(properties, "dewpoint", &|v| {
+            convert_celsius_to_fahrenheit(v)
+        })?;
+        let cloud_cover = Self::try_from_value(properties, "skyCover", &|v| v as u8)?;
+        let probability_of_thunder =
+            Self::try_from_value(properties, "probabilityOfThunder", &|v| v as u8)?;
+        let wave_height_labels = Self::try_labels(properties)?;
+
+        let starting_at = DateTime::parse_from_str(
+            properties
+                .get("validTimes")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .split_once('/')
+                .unwrap()
+                .0,
+            "%+",
+        )
+        .unwrap();
+
+        let (current_wave_height, current_wave_period, current_wave_direction) =
+            Self::get_current_wave_data(&wave_height, &wave_period, &wave_direction, &starting_at)?;
 
         Ok(Self {
-            last_updated,
+            as_of,
             wave_height,
-            wave_period,
             wave_direction,
+            wave_period,
             wind_speed,
             wind_gust,
             wind_direction,
@@ -378,30 +363,41 @@ impl TryFrom<serde_json::Value> for Forecast {
             dewpoint,
             cloud_cover,
             probability_of_thunder,
-            starting_at: None,
-            waves: None,
+            starting_at: starting_at.to_string(),
+            wave_height_labels,
+            current_wave_period,
+            current_wave_height,
+            current_wave_direction,
         })
     }
 }
 
-impl TryFrom<serde_json::Value> for ForecastValue {
-    type Error = anyhow::Error;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    fn try_from(v: serde_json::Value) -> Result<Self, Self::Error> {
-        let value = v
-            .get("value")
-            .ok_or(anyhow!("No value found."))?
-            .as_f64()
-            .ok_or(anyhow!("Not an f64"))?;
-        let valid_time = v
-            .get("validTime")
-            .ok_or(anyhow!("No validTime found."))?
-            .to_string();
+    #[test]
+    fn parse_period_parses_an_hours_only_string() {
+        assert_eq!(Forecast::parse_period("T2H"), 2);
+    }
+    #[test]
+    fn parse_period_parses_an_hours_and_days_string() {
+        assert_eq!(Forecast::parse_period("2DT10H"), 58);
+    }
+    #[test]
+    fn parse_period_parses_an_empty_string() {
+        assert_eq!(Forecast::parse_period(""), 0);
+    }
 
-        Ok(Self {
-            value,
-            valid_time,
-            display_time: None,
-        })
+    #[test]
+    fn get_value_and_time_gets_values() {
+        assert_eq!(
+            Forecast::get_value_and_time(&serde_json::json!({
+                "value": 81.15151,
+                "validTime": "2024-09-06T11:00:00+00:00/PT1H",
+            }))
+            .unwrap(),
+            (81.15151, "2024-09-06T11:00:00+00:00/PT1H")
+        )
     }
 }
