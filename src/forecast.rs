@@ -346,7 +346,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             .0;
 
         let (current_wave_height, current_wave_period, current_wave_direction) =
-            Self::get_current_wave_data(&wave_height, &wave_period, &wave_direction, &starting_at)?;
+            Self::get_current_wave_data(&wave_height, &wave_period, &wave_direction, starting_at)?;
 
         Ok(Self {
             as_of,
