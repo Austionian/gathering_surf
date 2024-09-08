@@ -4,7 +4,7 @@ use super::{Location, Spot};
 use crate::utils::*;
 
 use anyhow::{anyhow, bail};
-use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
 use reqwest::Response;
 use tracing::{error, info, warn};
@@ -68,7 +68,7 @@ impl Forecast {
         bail!("Non 200 response from NOAA");
     }
 
-    /// Condenses the forecast to even length vecs.
+    /// Condenses the forecast to equal length vecs.
     ///
     /// Not all data from the api will cover the same length of
     /// time. This ensures no dangling data.
@@ -136,7 +136,7 @@ impl Forecast {
         wave_height: &[f64],
         wave_period: &[f64],
         wave_direction: &[f64],
-        starting_at: &DateTime<FixedOffset>,
+        starting_at: &str,
     ) -> anyhow::Result<(String, f64, f64)> {
         // Required for unit tests to have a consistent as of time
         #[cfg(not(feature = "mock-time"))]
@@ -174,10 +174,13 @@ impl Forecast {
         Ok((format!("{:.0}", height), *period, direction))
     }
 
-    fn get_current_time_index(starting_at: &DateTime<FixedOffset>) -> anyhow::Result<usize> {
-        Ok((Utc::now() - starting_at.with_timezone(&Utc))
-            .num_hours()
-            .try_into()?)
+    fn get_current_time_index(starting_at: &str) -> anyhow::Result<usize> {
+        Ok((Utc::now()
+            - DateTime::parse_from_str(starting_at, "%+")
+                .unwrap()
+                .with_timezone(&Utc))
+        .num_hours()
+        .try_into()?)
     }
 
     fn try_from_value<T: std::clone::Clone>(
@@ -333,18 +336,14 @@ impl TryFrom<serde_json::Value> for Forecast {
             Self::try_from_value(properties, "probabilityOfThunder", &|v| v as u8)?;
         let wave_height_labels = Self::try_labels(properties)?;
 
-        let starting_at = DateTime::parse_from_str(
-            properties
-                .get("validTimes")
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .split_once('/')
-                .unwrap()
-                .0,
-            "%+",
-        )
-        .unwrap();
+        let starting_at = properties
+            .get("validTimes")
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .split_once('/')
+            .unwrap()
+            .0;
 
         let (current_wave_height, current_wave_period, current_wave_direction) =
             Self::get_current_wave_data(&wave_height, &wave_period, &wave_direction, &starting_at)?;
