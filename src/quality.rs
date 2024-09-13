@@ -116,6 +116,8 @@ mod tests {
 
     const NORTH_WIND: f64 = 180.0;
     const SOUTH_WIND: f64 = 0.0;
+    const SOUTH_WEST_WIND: f64 = 275.0;
+    const NORTH_WEST_WIND: f64 = 95.0;
 
     #[test]
     fn basic_wave_check_works_when_its_not_flat() {
@@ -139,6 +141,22 @@ mod tests {
         assert_eq!(
             Quality::north(HIGH_WAVES, HIGH_WIND, NORTH_WIND).0,
             "Very Poor"
+        );
+    }
+
+    #[test]
+    fn a_north_beach_shoud_be_ok_in_some_condition() {
+        assert_eq!(
+            Quality::north(HIGH_WAVES, HIGH_WIND, SOUTH_WEST_WIND).0,
+            "Fair to Good"
+        );
+    }
+
+    #[test]
+    fn a_north_beach_shoud_be_poor_in_some_condition() {
+        assert_eq!(
+            Quality::north(HIGH_WAVES, HIGH_WIND, NORTH_WEST_WIND).0,
+            "Poor"
         );
     }
 
