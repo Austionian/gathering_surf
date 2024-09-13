@@ -1,19 +1,19 @@
 <div x-cloak>
   <div
     x-show="showLiveFeed"
-    class="fixed z-50 inset-0 bg-black/10 backdrop-blur-md"
+    class="fixed inset-0 z-50 bg-black/10 backdrop-blur-md"
   ></div>
   <div
     x-show="showLiveFeed"
-    class="absolute top-24 left-0 right-0 z-50 m-auto w-[90%] h-[315px] md:h-[472px] lg:w-[1040px] lg:h-[630px]"
+    class="absolute left-0 right-0 top-24 z-50 m-auto h-[315px] w-[90%] md:h-[472px] lg:h-[630px] lg:w-[1040px]"
   >
     <div class="h-full">
       <div class="h-12">
-        <div class="w-full absolute top-0 flex justify-end pt-5">
+        <div class="absolute top-0 flex w-full justify-end pt-5">
           <button
             type="button"
             @click="showLiveFeed = false"
-            class="-m-2.5 p-2.5 group"
+            class="group -m-2.5 p-2.5"
           >
             <span class="sr-only">Close sidebar</span>
             {% include "includes/exit.html" %}

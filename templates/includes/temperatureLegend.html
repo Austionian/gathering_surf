@@ -1,19 +1,16 @@
 {% include "includes/legendLoader.html" %}
-<div
-  id="temperature-legend-container"
-  class="hidden bg-[#ffc0cb] rounded"
->
+<div id="temperature-legend-container" class="hidden rounded bg-[#ffc0cb]">
   <div
     id="temperature-legend"
-    class="rounded text-white pointer-events-none transition flex justify-center text-lg m-auto"
+    class="pointer-events-none m-auto flex justify-center rounded text-lg text-white transition"
     style="display: hidden"
   >
     <div class="mx-auto max-w-7xl text-black">
-      <div class="px-2 grid gap-px grid-cols-2 sm:grid-cols-3">
-        <div class="grid items-end p-2 py-1 sm:py-2 sm:px-6 lg:px-8 min-w-72">
+      <div class="grid grid-cols-2 gap-px px-2 sm:grid-cols-3">
+        <div class="grid min-w-72 items-end p-2 py-1 sm:px-6 sm:py-2 lg:px-8">
           <p class="mt-2 flex items-baseline gap-x-2">
             <span
-              class="text-xl sm:text-3xl font-medium tracking-tight"
+              class="text-xl font-medium tracking-tight sm:text-3xl"
               id="temperature-legend-label"
             ></span>
           </p>
@@ -21,13 +18,13 @@
 
         <div class="sm:hidden"></div>
 
-        <div class="grid items-end p-2 lg:px-8 grid-rows-1">
+        <div class="grid grid-rows-1 items-end p-2 lg:px-8">
           <p class="text-sm font-medium leading-6 text-gray-900">
             Air Temperature
           </p>
           <p class="mt-2 flex items-baseline gap-x-2">
             <span
-              class="text-2xl sm:text-3xl font-semibold tracking-tight"
+              class="text-2xl font-semibold tracking-tight sm:text-3xl"
               id="temperature-legend-temperature"
             ></span>
             <span class="text-sm text-gray-900">°F</span>
@@ -38,7 +35,7 @@
           <p class="mt-2 flex items-baseline gap-x-2">
             <span
               id="temperature-legend-dewpoint"
-              class="text-2xl sm:text-3xl font-semibold tracking-tight"
+              class="text-2xl font-semibold tracking-tight sm:text-3xl"
             ></span>
             <span class="text-sm text-gray-900">°F</span>
           </p>

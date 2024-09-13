@@ -1,5 +1,5 @@
 <div
-  class="sticky top-0 z-40 flex h-16 shrink-0 justify-between items-center bg-black/90 px-4 shadow-sm sm:px-6 lg:px-8"
+  class="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between bg-black/90 px-4 shadow-sm sm:px-6 lg:px-8"
 >
   <div class="flex gap-x-6">
     <button
@@ -22,10 +22,14 @@
       </svg>
     </button>
     <a href="/" class="group"
-      ><p class="group-hover:text-gray-500 text-3xl font-['Array'] flex items-center">🌈<span class="hidden sm:block ml-2 text-2xl">gathering surf</span></p></a
+      ><p
+        class="flex items-center font-['Array'] text-3xl group-hover:text-gray-500"
+      >
+        🌈<span class="ml-2 hidden text-2xl sm:block">gathering surf</span>
+      </p></a
     >
   </div>
-  <p class="text-2xl sm:text-4xl font-light text-end font-['Array'] sm:ml-6">
+  <p class="text-end font-['Array'] text-2xl font-light sm:ml-6 sm:text-4xl">
     {{ spot.name | lower }}
   </p>
 </div>
