@@ -1,4 +1,5 @@
 /// Contains quality text and associated color.
+#[derive(Debug)]
 pub struct Quality(pub &'static str, pub &'static str);
 
 pub const GOOD: Quality = Quality("Good", "#0bd674");
@@ -100,5 +101,49 @@ impl Quality {
         }
 
         &POOR
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const HIGH_WIND: f64 = 33.3;
+    const LOW_WIND: f64 = 5.5;
+
+    const HIGH_WAVES: f64 = 5.7;
+    const SMALL_WAVES: f64 = 0.3;
+
+    const NORTH_WIND: f64 = 180.0;
+    const SOUTH_WIND: f64 = 0.0;
+
+    #[test]
+    fn basic_wave_check_works_when_its_not_flat() {
+        assert!(Quality::basic_wave_check(2.1).is_none());
+    }
+
+    #[test]
+    fn basic_wave_check_works_when_it_is_flat() {
+        assert!(Quality::basic_wave_check(0.1).is_some());
+        assert_eq!(Quality::basic_wave_check(0.1).unwrap().0, "Flat");
+        assert_eq!(Quality::basic_wave_check(0.1).unwrap().1, "#a8a29e");
+    }
+
+    #[test]
+    fn a_north_beach_should_be_good_in_some_condition() {
+        assert_eq!(Quality::north(HIGH_WAVES, LOW_WIND, SOUTH_WIND).0, "Good");
+    }
+
+    #[test]
+    fn a_north_beach_shoud_be_bad_in_some_condition() {
+        assert_eq!(
+            Quality::north(HIGH_WAVES, HIGH_WIND, NORTH_WIND).0,
+            "Very Poor"
+        );
+    }
+
+    #[test]
+    fn a_north_beach_shoud_be_flat_in_some_condition() {
+        assert_eq!(Quality::north(SMALL_WAVES, HIGH_WIND, NORTH_WIND).0, "Flat");
     }
 }

@@ -8,11 +8,14 @@ default-run = "gathering_surf"
 
 [dependencies]
 anyhow = "1.0.81"
-axum = { version = "0.7", features= ["ws"]}
+axum = { version = "0.7", features = ["ws"] }
 chrono = "0.4"
 chrono-tz = "0.9"
-config = { git = "https://github.com/mehcode/config-rs.git", rev = "e3c1d0b452639478662a44f15ef6d5b6d969bf9b", default-features = false, features = ["yaml"] }
+config = { git = "https://github.com/mehcode/config-rs.git", rev = "e3c1d0b452639478662a44f15ef6d5b6d969bf9b", default-features = false, features = [
+  "yaml",
+] }
 hyper = { version = "1", features = ["full"] }
+maud = { version = "0.26.0", features = ["axum"] }
 notify = "6.1.1"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
@@ -25,7 +28,7 @@ tokio-stream = "0.1.15"
 tower = "0.5"
 tower-http = { version = "0.5", features = ["full"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] } 
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 insta = { version = "1", features = ["yaml"] }

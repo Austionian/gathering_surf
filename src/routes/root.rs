@@ -6,8 +6,36 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use maud::{html, Markup, PreEscaped};
 use std::{convert::Infallible, sync::Arc};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
+
+/// This is ugly. Might be worth reverting to tera to create the
+/// inline JS. Allows not having to pass the context around in a
+/// mutex to the other threads though.
+fn error_markup(error_type: &str, e: anyhow::Error) -> Markup {
+    html! {
+        script {
+            (PreEscaped("document.querySelector('#"))
+            (error_type)
+            (PreEscaped(r#"-container').classList.add("hidden");
+                    document.querySelector('#"#))
+            (error_type)
+            (PreEscaped(r#"-error').innerHTML = `
+                        <div class='p-12 flex flex-col items-center align-middle justify-center text-center'>
+                          <h2 class='text-xl'>
+                          Error loading "#))
+            (error_type)
+            (PreEscaped(r#" data - please refresh the page or try again later.
+                          </h2>
+                          <p>"#))
+            span class="font-mono" {
+                "Error: " (e)
+            }
+            (PreEscaped("</p></div>`;"))
+        }
+    }
+}
 
 /// Handler to return the website's index
 pub async fn root(
@@ -17,49 +45,40 @@ pub async fn root(
     // Create a channel to stream content to client as we get it
     let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
 
-    let context = Arc::new(Mutex::new(tera::Context::new()));
+    let mut context = tera::Context::new();
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
 
     // Add the initial context to the page for the loading state
-    {
-        let mut context = context.lock().await;
+    context.insert("spot", &*spot);
+    context.insert("breaks", &state.breaks);
+    #[cfg(debug_assertions)]
+    context.insert("live_reload", &true);
+    #[cfg(not(debug_assertions))]
+    context.insert("live_reload", &false);
 
-        // Update with inital values.
-        context.insert("spot", &*spot);
-        context.insert("breaks", &state.breaks);
-        #[cfg(debug_assertions)]
-        context.insert("live_reload", &true);
-        #[cfg(not(debug_assertions))]
-        context.insert("live_reload", &false);
-
-        tx.send(Ok(TEMPLATES.render("index.html", &context)?))
-            .await?;
-    }
+    tx.send(Ok(TEMPLATES.render("index.html", &context)?))
+        .await?;
 
     let realtime_tx = tx.clone();
-    let realtime_context = context.clone();
     let realtime_spot = spot.clone();
     let realtime_state = state.clone();
     tokio::spawn(async move {
         match Realtime::try_get(realtime_spot, realtime_state.realtime_url).await {
             Ok(realtime) => {
-                let mut context = realtime_context.lock().await;
-                context.insert("realtime_json", &serde_json::to_string(&realtime).unwrap());
+                let html = html!(
+                    script type="application/json" id="realtime-data" {(
+                    PreEscaped(
+                            serde_json::to_string(&realtime).unwrap())
+                    )}
+                )
+                .into();
 
-                realtime_tx
-                    .send(Ok(TEMPLATES.render("realtime.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                realtime_tx.send(Ok(html)).await.unwrap();
             }
             Err(e) => {
-                let mut context = realtime_context.lock().await;
-                context.insert("error", &e.to_string());
-                context.insert("error_type", &"latest");
-                context.insert("container", &"latest-container");
-                context.insert("error_container", &"latest-error");
                 realtime_tx
-                    .send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                    .send(Ok(html!((error_markup("latest", e))).into()))
                     .await
                     .unwrap();
             }
@@ -67,33 +86,24 @@ pub async fn root(
     });
 
     let water_quality_tx = tx.clone();
-    let water_quality_context = context.clone();
     let water_quality_spot = spot.clone();
     let water_quality_state = state.clone();
     tokio::spawn(async move {
         match WaterQuality::try_get(water_quality_spot, water_quality_state.quality_url).await {
             Ok(water_quality) => {
-                let mut context = water_quality_context.lock().await;
-                context.insert(
-                    "water_quality_json",
-                    &serde_json::to_string(&water_quality).unwrap(),
-                );
+                let html = html!(
+                    script type="application/json" id="water-quality-data" {(
+                    PreEscaped(
+                            serde_json::to_string(&water_quality).unwrap())
+                    )}
+                )
+                .into();
 
-                water_quality_tx
-                    .send(Ok(TEMPLATES
-                        .render("water_quality.html", &context)
-                        .unwrap()))
-                    .await
-                    .unwrap();
+                water_quality_tx.send(Ok(html)).await.unwrap();
             }
             Err(e) => {
-                let mut context = water_quality_context.lock().await;
-                context.insert("error", &e.to_string());
-                context.insert("error_type", &"beach status");
-                context.insert("container", &"water-quality-container");
-                context.insert("error_container", &"water-quality-error");
                 water_quality_tx
-                    .send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                    .send(Ok(html!((error_markup("water quality", e))).into()))
                     .await
                     .unwrap();
             }
@@ -103,22 +113,21 @@ pub async fn root(
     tokio::spawn(async move {
         match Forecast::try_get(&spot, state.forecast_url).await {
             Ok(forecast) => {
-                let mut context = context.lock().await;
-                context.insert("forecast_json", &serde_json::to_string(&forecast).unwrap());
+                let html = html!(
+                    script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" {}
+                    script type="application/json" id="forecast-data" {(
+                    PreEscaped(
+                            serde_json::to_string(&forecast).unwrap())
+                    )}
+                )
+                .into();
 
-                tx.send(Ok(TEMPLATES.render("forecast.html", &context).unwrap()))
-                    .await
-                    .unwrap();
+                tx.send(Ok(html)).await.unwrap();
 
                 Ok(())
             }
             Err(e) => {
-                let mut context = context.lock().await;
-                context.insert("error", &e.to_string());
-                context.insert("error_type", &"forecast");
-                context.insert("container", &"forecast-container");
-                context.insert("error_container", &"forecast-error");
-                tx.send(Ok(TEMPLATES.render("error.html", &context).unwrap()))
+                tx.send(Ok(html!((error_markup("forecast", e))).into()))
                     .await
                     .unwrap();
 

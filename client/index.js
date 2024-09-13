@@ -35,7 +35,7 @@ const observerCallback = (mutationList) => {
             if (mutation.target instanceof HTMLElement) {
               try {
                 parseForecast(JSON.parse(mutation.target.innerText));
-              } catch(e) {
+              } catch (e) {
                 forecastFailed(e);
               }
             }
