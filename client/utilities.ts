@@ -4,11 +4,8 @@
  * Convenient non-null assertion helper function allows asserting that something is not
  * null or undefined without having to write a JSDoc type cast that has to
  * explicitly know the non-null type (which is error prone).
- *
- * @template {any} T
- * @param {T} item
  */
-export function nonNull(item) {
+export function nonNull<T>(item: T) {
   if (item === null || item === undefined) throw "item is null or undefined";
   return item;
 }
@@ -16,11 +13,8 @@ export function nonNull(item) {
 /**
  * Convenient button assertion helper function allows asserting that something is
  * an HTMLButtonElement
- *
- * @template {any} T
- * @param {T} item
  */
-export function asButton(item) {
+export function asButton<T>(item: T) {
   if (item === null || item === undefined) throw "item is null or undefined";
   if (item instanceof HTMLButtonElement) return item;
   throw "item is not a button";
@@ -28,32 +22,22 @@ export function asButton(item) {
 
 /**
  * Sets an html element's innerText
- *
- * @param {string} id
- * @param {string} text
  */
-export function setText(id, text) {
+export function setText(id: string, text: string) {
   nonNull(document.getElementById(id)).innerText = text;
 }
 
 /**
  * Sets an html element's attribute
- *
- * @param {string} id
- * @param {string} attribute
- * @param {string} value
  */
-export function setAttribute(id, attribute, value) {
+export function setAttribute(id: string, attribute: string, value: string) {
   document.getElementById(id)?.setAttribute(attribute, value);
 }
 
 /**
  * Sets an html element's style attribute
- *
- * @param {string | string[]} id
- * @param {string} value
  */
-export function setStyleAttribute(id, value) {
+export function setStyleAttribute(id: string | string[], value: string) {
   if (id instanceof Array) {
     id.forEach((i) => {
       setAttribute(i, "style", value);
@@ -65,48 +49,36 @@ export function setStyleAttribute(id, value) {
 
 /**
  * Removes all elements with the given class name.
- *
- * @param {string} className
  */
-export function removeElements(className) {
+export function removeElements(className: string) {
   document.querySelectorAll(className).forEach((e) => e.remove());
 }
 
 /**
  * Removes an element with the given id.
- *
- * @param {string} id
  */
-export function removeElement(id) {
+export function removeElement(id: string) {
   document.getElementById(id)?.remove();
 }
 
 /**
  *
  * Removes an element's style from its classList
- *
- * @param {string} id
- * @param {string} style
  */
-export function removeStyle(id, style) {
+export function removeStyle(id: string, style: string) {
   document.getElementById(id)?.classList.remove(style);
 }
 
 /**
  * Removes the hidden classname from an element's classlist
- *
- * @param {string} id
  */
-export function removeHidden(id) {
+export function removeHidden(id: string) {
   removeStyle(id, "hidden");
 }
 
 /**
  * Appends an HTML string to the innerHTML of the given element
- *
- * @param {string} id
- * @param {string} html
  */
-export function appendElements(id, html) {
+export function appendElements(id: string, html: string) {
   nonNull(document.getElementById(id)).innerHTML = html;
 }

@@ -8,27 +8,24 @@ import {
   removeHidden,
 } from "../utilities";
 
-/**
- * @typedef {Object} LatestData
- * @property {string} quality_color - The hexcode of the quality.
- * @property {string} quality_text - The computed text of the quality.
- * @property {string} water_temp - The latest water temperature.
- * @property {number} wind_direction - The current wind direction.
- * @property {string} wind_speed - The current wind speed.
- * @property {string} gusts - The current wind gust.
- * @property {string} air_temp
- * @property {?string} wave_height
- * @property {?string} wave_direction
- * @property {?string} wave_period
- * @property {string} as_of
- */
+type LatestData = {
+  quality_color: string;
+  quality_text: string;
+  water_temp: string;
+  wind_direction: string;
+  wind_speed: string;
+  gusts: string;
+  air_temp: string;
+  wave_height?: string;
+  wave_direction?: string;
+  wave_period?: string;
+  as_of: string;
+};
 
 /**
  * Takes the latest data JSON and updates the HTML
- *
- * @param {LatestData} data
  */
-export function parseRealtime(data) {
+export function parseRealtime(data: LatestData) {
   if (data.wave_height) {
     setText("current-wave-height", data.wave_height);
     setStyleAttribute(
@@ -87,10 +84,8 @@ export function parseRealtime(data) {
 
 /**
  * Takes the latest data JSON and creates the wind string
- *
- * @param {LatestData} data
  */
-const getWindData = (data) =>
+const getWindData = (data: LatestData) =>
   data.wind_speed === data.gusts
     ? data.wind_speed
     : data.gusts === "0"

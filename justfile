@@ -4,12 +4,13 @@ set dotenv-load
 default:
     just -l
 
+alias b := build
 alias u := update
 alias d := dev
 alias t := test
 alias t-u := test-update
 
-ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iife"
+ROLLUP := "rollup ./dist/index.js --file assets/static/index.min.js --format iife"
 TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
 
 # Runs the Tailwind binary in watch mode
@@ -38,13 +39,13 @@ run-axum:
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
-    {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
+    tsc --watch & {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
 
 # Builds and minifies the JS with rollup 
 build-rollup:
     #!/bin/bash
     echo "building JS"
-    {{ROLLUP}} -p @rollup/plugin-terser 
+    tsc && {{ROLLUP}} -p @rollup/plugin-terser 
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.

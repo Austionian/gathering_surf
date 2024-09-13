@@ -5,18 +5,15 @@ import {
   setStyleAttribute,
 } from "../utilities";
 
-/**
- * @typedef {Object} WaterQualityData
- * @property {'Open' | 'Closed' | 'Advisory' | 'Closed for season'} water_quality - The latest water quality.
- * @property {string} water_quality_text - The latest water quality information.
- */
+type WaterQualityData = {
+  water_quality: "Open" | "Closed" | "Advisory" | "Closed for season";
+  water_quality_text: string;
+};
 
 /**
  * Takes the latest data JSON and updates the HTML
- *
- * @param {WaterQualityData} data
  */
-export function parseWaterQuality(data) {
+export function parseWaterQuality(data: WaterQualityData) {
   removeElements(".water-quality-loader");
   removeHidden(`current-water-quality`);
   setText(

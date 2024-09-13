@@ -1,9 +1,10 @@
 import { removeElement, appendElements } from "./utilities";
 
 /**
- * @param {Error} e
+ * Function to update the frontend when there is a JS error on the client,
+ * prevents the front from staying in an endless loading state.
  */
-export function forecastFailed(e) {
+export function forecastFailed(e: Error) {
   removeElement("forecast-container");
 
   appendElements(

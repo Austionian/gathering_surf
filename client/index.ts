@@ -2,22 +2,20 @@ import {
   parseWaterQuality,
   parseRealtime,
   parseForecast,
-} from "./parsers/index";
+  // @ts-ignore
+} from "./parsers/index.js";
 import { forecastFailed } from "./fallback";
-import { nonNull } from "./utilities";
 
 // Select the node that will be observed for mutations
-const targetNode = nonNull(document.querySelector("body"));
+const targetNode = document.querySelector("body") as HTMLElement;
 
 // Options for the observer (which mutations to observe)
 const config = { attributes: true, childList: true, subtree: true };
 
 /**
  * Callback function to execute when mutations are observed
- *
- * @param {MutationRecord[]} mutationList
  */
-const observerCallback = (mutationList) => {
+const observerCallback = (mutationList: MutationRecord[]) => {
   for (const mutation of mutationList) {
     if (mutation.target instanceof HTMLElement) {
       if (mutation.target.id === "realtime-data") {
@@ -36,7 +34,7 @@ const observerCallback = (mutationList) => {
               try {
                 parseForecast(JSON.parse(mutation.target.innerText));
               } catch (e) {
-                forecastFailed(e);
+                forecastFailed(e as Error);
               }
             }
           }, 100);
