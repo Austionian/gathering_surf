@@ -10,7 +10,7 @@ default-run = "gathering_surf"
 anyhow = "1.0.81"
 axum = { version = "0.7", features = ["ws"] }
 chrono = "0.4"
-chrono-tz = "0.9"
+chrono-tz = "0.10"
 config = { git = "https://github.com/mehcode/config-rs.git", rev = "e3c1d0b452639478662a44f15ef6d5b6d969bf9b", default-features = false, features = [
   "yaml",
 ] }
