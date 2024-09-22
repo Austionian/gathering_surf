@@ -30,16 +30,23 @@ const observerCallback = (mutationList) => {
         try {
           parseForecast(JSON.parse(mutation.target.innerText));
         } catch {
-          console.log("failed to parse forecast, trying again.");
           setTimeout(() => {
             if (mutation.target instanceof HTMLElement) {
               try {
                 parseForecast(JSON.parse(mutation.target.innerText));
               } catch (e) {
-                forecastFailed(e);
+                setTimeout(() => {
+                  if (mutation.target instanceof HTMLElement) {
+                    try {
+                      parseForecast(JSON.parse(mutation.target.innerText));
+                    } catch (e) {
+                      forecastFailed(e);
+                    }
+                  }
+                }, 500);
               }
             }
-          }, 550);
+          }, 250);
         }
       }
     }
