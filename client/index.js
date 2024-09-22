@@ -39,7 +39,7 @@ const observerCallback = (mutationList) => {
                 forecastFailed(e);
               }
             }
-          }, 100);
+          }, 550);
         }
       }
     }

@@ -87,7 +87,7 @@ dev:
 update:
     #!/bin/bash
     cargo update
-    echo $'Dependencies updated!\n'
+    echo -e "Dependencies updated! \n"
     cargo clippy
     just test
 
@@ -163,3 +163,11 @@ install:
 
         just install-rollup
     fi
+
+# Builds the docker image
+docker-build:
+    docker build --tag gathering_surf --file Dockerfile .
+
+# Transfers the docker image to the pi
+deploy:
+     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load
