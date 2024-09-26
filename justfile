@@ -170,4 +170,4 @@ docker-build:
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
-     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load && ssh austin@raspberrypi.local ./deploy_gathering_surf
+     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load && ssh austin@raspberrypi.local ./deploy_gathering_surf.sh
