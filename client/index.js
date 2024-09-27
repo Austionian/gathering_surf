@@ -43,10 +43,10 @@ const observerCallback = (mutationList) => {
                       forecastFailed(e);
                     }
                   }
-                }, 500);
+                }, 1_000);
               }
             }
-          }, 250);
+          }, 400);
         }
       }
     }
