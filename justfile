@@ -168,6 +168,9 @@ install:
 docker-build:
     docker build --tag gathering_surf --file Dockerfile .
 
+docker-deploy:
+    DOCKER_HOST="ssh://austin@raspberrypi.local" docker compose up -d
+
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
-     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load && ssh austin@raspberrypi.local ./deploy_gathering_surf.sh
+     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load && just docker-deploy 
