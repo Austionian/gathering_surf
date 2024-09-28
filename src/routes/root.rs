@@ -143,7 +143,8 @@ pub async fn root(
         .status(StatusCode::OK)
         .header("Content-Type", "text/html; charset=UTF-8")
         .header("X-Content-Type-Options", "nosniff")
-        .header("content-encoding", "")
+        .header("content-encoding", "none")
+        .header("cache-control", "no-transform")
         .body(body)?)
 }
 

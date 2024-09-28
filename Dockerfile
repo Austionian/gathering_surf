@@ -1,7 +1,9 @@
-FROM lukemathwalker/cargo-chef:latest-rust-bookworm AS chef
+FROM rust:1.81 AS chef
 
 WORKDIR /app
-RUN apt update && apt install lld clang -y
+
+RUN cargo install --locked cargo-chef sccache
+ENV RUSTC_WRAPPER=sccache SCCACHE_DIR=/sccache
 
 FROM chef AS planner
 COPY . .
@@ -9,20 +11,21 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
+    cargo chef cook --release --recipe-path recipe.json
 COPY . . 
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
+    cargo build --release
 
-FROM debian:bookworm-slim AS runtime
+FROM gcr.io/distroless/cc-debian12 AS runtime
 WORKDIR /app
-RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends openssl ca-certificates pkg-config \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/gathering_surf gathering_surf 
 COPY config config
 COPY assets assets
 COPY templates templates
-ENV APP_ENVIRONMENT production 
+ENV APP_ENVIRONMENT=production 
 ENTRYPOINT ["./gathering_surf"]
