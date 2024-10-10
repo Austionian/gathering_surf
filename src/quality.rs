@@ -81,9 +81,9 @@ impl Quality {
 
         if wind_direction >= 330.0 {
             if wind_speed <= HIGH_WIND {
-                return &POOR;
+                return &OK;
             }
-            return &VERY_POOR;
+            return &POOR;
         }
 
         if (80.0..120.0).contains(&wind_direction) {
