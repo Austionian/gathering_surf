@@ -38,6 +38,7 @@ impl Realtime {
 
         let as_of = Self::parse_as_of(as_of)?;
 
+        // Check if the bouy data is older than a day, if so fallback to other path.
         if Utc::now() - as_of > TimeDelta::days(1) {
             let data = Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?;
             let latest = data.lines().collect::<Vec<_>>();
