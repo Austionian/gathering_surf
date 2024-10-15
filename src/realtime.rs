@@ -54,7 +54,7 @@ impl Realtime {
 
     async fn parse_data(
         measurements: &str,
-        latest: &Vec<&str>,
+        latest: &[&str],
         as_of: &DateTime<Utc>,
         spot: &Spot,
         realtime_url: &str,
@@ -93,9 +93,9 @@ impl Realtime {
             .map(|v| v + 180)
         {
             Some(v) => Some(v),
-            None => match Self::get_wave_direction(&latest, 1) {
+            None => match Self::get_wave_direction(latest, 1) {
                 Some(v) => Some(v),
-                None => Self::get_wave_direction(&latest, 2),
+                None => Self::get_wave_direction(latest, 2),
             },
         };
 
