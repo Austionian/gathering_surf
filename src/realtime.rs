@@ -5,7 +5,7 @@ use crate::utils::{
 };
 
 use anyhow::bail;
-use chrono::{TimeZone, Utc};
+use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use chrono_tz::US::Central;
 use std::sync::Arc;
 use tracing::{error, info, warn};
@@ -27,9 +27,6 @@ pub struct Realtime {
 
 impl Realtime {
     pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
-        // MID Lake bouy is in the water yeat round
-        // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
-        // Fallback to Atwater bouy for now.
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
         let data = Self::get_latest_data(&spot, realtime_url).await?;
@@ -40,6 +37,40 @@ impl Realtime {
         let (as_of, measurements) = line.split_at(16);
 
         let as_of = Self::parse_as_of(as_of)?;
+
+        if Utc::now() - as_of > TimeDelta::days(1) {
+            let data = Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?;
+            let latest = data.lines().collect::<Vec<_>>();
+            let line = latest.get(2).unwrap();
+
+            let (as_of, measurements) = line.split_at(16);
+            let as_of = Self::parse_as_of(as_of)?;
+            return Self::parse_data(measurements, &latest, &as_of, &spot, realtime_url).await;
+        }
+
+        Self::parse_data(measurements, &latest, &as_of, &spot, realtime_url).await
+    }
+
+    async fn parse_data(
+        measurements: &str,
+        latest: &Vec<&str>,
+        as_of: &DateTime<Utc>,
+        spot: &Spot,
+        realtime_url: &str,
+    ) -> anyhow::Result<Self> {
+        // MID Lake bouy is in the water yeat round
+        // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
+        // Fallback to Atwater bouy for now.
+        const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
+
+        let as_of = as_of
+            .with_timezone(&Central)
+            .to_rfc2822()
+            .split(" -")
+            .next()
+            .unwrap()
+            .to_string();
+
         let mut measurements = measurements.split_whitespace();
         let wind_direction = measurements.next().unwrap().parse().unwrap_or(0);
 
@@ -120,10 +151,10 @@ impl Realtime {
         })
     }
 
-    async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {
+    async fn get_data(path: &str, realtime_url: &str) -> Result<String, anyhow::Error> {
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
-            let response = reqwest::get(format!("{}{}", realtime_url, spot.realtime_path)).await?;
+            let response = reqwest::get(format!("{}{}", realtime_url, path)).await?;
             if response.status().as_u16() == 200 {
                 info!("NOAA realtime 200 success.");
                 return match response.text().await {
@@ -138,6 +169,22 @@ impl Realtime {
         bail!("Non 200 response from NOAA realtime");
     }
 
+    async fn get_latest_data(spot: &Spot, realtime_url: &str) -> Result<String, anyhow::Error> {
+        Self::get_data(spot.realtime_path, realtime_url).await
+    }
+
+    async fn get_fallback_data(
+        spot: &Spot,
+        realtime_url: &str,
+        fallback_url: &str,
+    ) -> Result<String, anyhow::Error> {
+        if let Some(path) = spot.fallback_realtime_path {
+            Self::get_data(path, realtime_url).await
+        } else {
+            Self::get_data(fallback_url, realtime_url).await
+        }
+    }
+
     fn parse_wave_height(wave_height: &str) -> Option<String> {
         if let Ok(v) = wave_height.parse::<f64>() {
             Some(format!("{:.2}", convert_meter_to_feet(v)))
@@ -146,7 +193,7 @@ impl Realtime {
         }
     }
 
-    fn parse_as_of(as_of: &str) -> anyhow::Result<String> {
+    fn parse_as_of(as_of: &str) -> anyhow::Result<DateTime<Utc>> {
         let as_of = as_of.trim().split(' ').collect::<Vec<_>>();
         let as_of = Utc
             .with_ymd_and_hms(
@@ -159,9 +206,7 @@ impl Realtime {
             )
             .unwrap();
 
-        let as_of = as_of.with_timezone(&Central).to_rfc2822();
-
-        Ok(as_of.split(" -").next().unwrap().to_string())
+        Ok(as_of)
     }
 
     fn get_wave_direction(latest: &[&str], offset: usize) -> Option<u16> {
