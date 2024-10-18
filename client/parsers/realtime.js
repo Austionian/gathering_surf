@@ -21,6 +21,7 @@ import {
  * @property {?string} wave_direction
  * @property {?string} wave_period
  * @property {string} as_of
+ * @property {boolean} loaded_from_fallback - Wether the latest data used a bouy or land data.
  */
 
 /**
@@ -83,6 +84,10 @@ export function parseRealtime(data) {
   removeHidden("wave-icon-container");
   removeStyle("as-of-container", "animate-pulse");
   removeHidden("wave-quality");
+
+  if (data.loaded_from_fallback) {
+    removeHidden("wave-fallback-icon");
+  }
 }
 
 /**

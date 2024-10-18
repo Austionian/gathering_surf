@@ -23,6 +23,7 @@ pub struct Realtime {
     pub wave_height: Option<String>,
     pub wave_period: Option<u8>,
     pub wave_direction: Option<u16>,
+    pub loaded_from_fallback: bool,
 }
 
 impl Realtime {
@@ -30,6 +31,8 @@ impl Realtime {
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
         let data = Self::get_latest_data(&spot, realtime_url).await?;
+
+        let mut loaded_from_fallback = !spot.has_bouy;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
@@ -41,15 +44,32 @@ impl Realtime {
         // Check if the bouy data is older than a day, if so fallback to other path.
         if Utc::now() - as_of > TimeDelta::days(1) {
             let data = Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?;
+            loaded_from_fallback = true;
             let latest = data.lines().collect::<Vec<_>>();
             let line = latest.get(2).unwrap();
 
             let (as_of, measurements) = line.split_at(16);
             let as_of = Self::parse_as_of(as_of)?;
-            return Self::parse_data(measurements, &latest, &as_of, &spot, realtime_url).await;
+            return Self::parse_data(
+                measurements,
+                &latest,
+                &as_of,
+                &spot,
+                realtime_url,
+                loaded_from_fallback,
+            )
+            .await;
         }
 
-        Self::parse_data(measurements, &latest, &as_of, &spot, realtime_url).await
+        Self::parse_data(
+            measurements,
+            &latest,
+            &as_of,
+            &spot,
+            realtime_url,
+            loaded_from_fallback,
+        )
+        .await
     }
 
     async fn parse_data(
@@ -58,6 +78,7 @@ impl Realtime {
         as_of: &DateTime<Utc>,
         spot: &Spot,
         realtime_url: &str,
+        loaded_from_fallback: bool,
     ) -> anyhow::Result<Self> {
         // MID Lake bouy is in the water yeat round
         // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
@@ -149,6 +170,7 @@ impl Realtime {
             wave_height,
             wave_period,
             wave_direction,
+            loaded_from_fallback,
         })
     }
 

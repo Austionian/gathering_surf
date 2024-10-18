@@ -23,6 +23,7 @@ pub struct Spot {
     pub location: Location,
     pub live_feed_url: Option<&'static str>,
     pub name: &'static str,
+    pub has_bouy: bool,
 }
 
 fn get_status_query(id: &str) -> String {
@@ -62,7 +63,8 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: None,
                 location: Location::Bradford,
                 live_feed_url: None,
-                name: "Bradford"
+                name: "Bradford",
+                has_bouy: false,
             },
             Location::PortWashington => Spot {
                 forecast_path: PORT_WASHINGTON_PATH,
@@ -72,7 +74,8 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: None,
                 location: Location::PortWashington,
                 live_feed_url: None,
-                name: "Port Washington"
+                name: "Port Washington",
+                has_bouy: false,
             },
             Location::Sheboygan => Spot {
                 forecast_path: SHEBOYGAN_PATH,
@@ -82,7 +85,8 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
-                name: "Sheboygan - North"
+                name: "Sheboygan - North",
+                has_bouy: true,
             },
             Location::SheboyganSouth => Spot {
                 forecast_path: SHEBOYGAN_SOUTH_PATH,
@@ -92,7 +96,8 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
-                name: "Sheboygan - South"
+                name: "Sheboygan - South",
+                has_bouy: true,
             },
             Location::Racine => Spot {
                 forecast_path: RACINE_PATH,
@@ -102,7 +107,8 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: Some(RACINE_FALLBACK_REALTIME_PATH),
                 location: Location::Racine,
                 live_feed_url: None,
-                name: "Racine"
+                name: "Racine",
+                has_bouy: true,
             },
             Location::Atwater => Spot {
                 forecast_path: ATWATER_PATH,
@@ -113,6 +119,7 @@ impl From<SpotParam> for Spot {
                 location: Location::Atwater,
                 live_feed_url: None,
                 name: "Atwater",
+                has_bouy: true,
             },
         }
     }
