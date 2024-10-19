@@ -6,6 +6,7 @@ import {
   removeElement,
   removeStyle,
   removeHidden,
+  setAttribute,
 } from "../utilities";
 
 /**
@@ -87,6 +88,18 @@ export function parseRealtime(data) {
 
   if (data.loaded_from_fallback) {
     removeHidden("wave-fallback-icon");
+  }
+
+  let oneDayMs = 60 * 60 * 24 * 1_000;
+  if (new Date(data.as_of) < new Date() - oneDayMs) {
+    setStyleAttribute(
+      "as-of-container",
+      "background-color: #facc15; color: #000; display: flex; align-items: center; flex-direction: row-reverse; gap: 8px",
+    );
+    document.getElementById("as-of-container").innerHTML +=
+      `<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>`;
   }
 }
 

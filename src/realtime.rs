@@ -50,6 +50,7 @@ impl Realtime {
 
             let (as_of, measurements) = line.split_at(16);
             let as_of = Self::parse_as_of(as_of)?;
+            println!("{as_of}");
             return Self::parse_data(
                 measurements,
                 &latest,
