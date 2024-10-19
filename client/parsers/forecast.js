@@ -6,6 +6,7 @@ import {
   removeElement,
   removeElements,
   asButton,
+  outOfDate,
 } from "../utilities";
 
 const FLAT_COLOR = "#a8a29e";
@@ -214,6 +215,11 @@ export function parseForecast(data) {
   setText("legend-wind-gust", wind_gusts[startingAt]);
   setText("forecast-as-of", `Updated ${data.as_of}`);
   setText("forecast-as-of-2", `Updated ${data.as_of}`);
+
+  let oneDayMs = 60 * 60 * 24 * 1_000;
+  if (new Date(data.as_of) < new Date() - oneDayMs) {
+    outOfDate(["forecast-as-of-container-2", "forecast-as-of-container"]);
+  }
 
   removeElements(".loader");
   removeHidden("forecast");
