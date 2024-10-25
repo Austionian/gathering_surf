@@ -92,8 +92,22 @@ export function parseRealtime(data) {
   }
 
   let oneDayMs = 60 * 60 * 24 * 1_000;
-  if (new Date(data.as_of) < new Date() - oneDayMs) {
+  let olderThanOneDay = new Date(data.as_of) < new Date() - oneDayMs;
+
+  if (olderThanOneDay) {
+    setText("as-of", "bouy/weather station down");
     outOfDate("as-of-container");
+  }
+
+  if (data.loaded_from_fallback && olderThanOneDay) {
+    setText("wind", "---");
+    setStyleAttribute("wind-icon-container", "display: none;");
+    setText("wind-measurement", "unavailable");
+    setText(
+      ["current-air-temp-2-measurement", "current-air-temp-measurement"],
+      "unavailable",
+    );
+    setText(["current-air-temp-2", "current-air-temp"], "---");
   }
 }
 

@@ -29,10 +29,24 @@ export function asButton(item) {
 /**
  * Sets an html element's innerText
  *
- * @param {string} id
+ * @param {string | string[]} id
  * @param {string} text
  */
 export function setText(id, text) {
+  if (id instanceof Array) {
+    id.forEach((i) => _setInnerText(i, text));
+  } else {
+    _setInnerText(id, text);
+  }
+}
+
+/**
+ * Private function that sets an html element's innerText
+ *
+ * @param {string} id
+ * @param {string} text
+ */
+function _setInnerText(id, text) {
   nonNull(document.getElementById(id)).innerText = text;
 }
 

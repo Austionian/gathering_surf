@@ -18,7 +18,7 @@
       id="as-of-container"
       class="order-first flex animate-pulse rounded-full bg-gray-400/10 px-3 py-1 font-mono text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-400/30 sm:order-none"
     >
-      <span id="as-of">____________________________</span>
+      <span id="as-of" class="pt-[2px]">____________________________</span>
     </div>
   </div>
 
@@ -185,7 +185,10 @@
         </div>
       </div>
     </div>
-    <div class="border-t border-white/5 px-4 py-3 sm:border-l sm:p-3 lg:px-8">
+    <div
+      id="wind-container"
+      class="border-t border-white/5 px-4 py-3 sm:border-l sm:p-3 lg:px-8"
+    >
       <p class="text-sm font-medium leading-6 text-gray-400">Wind</p>
       <div
         class="mt-2 flex items-baseline gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-4xl"
@@ -210,7 +213,7 @@
           class="latest-loader h-[40px] w-[40px] animate-pulse rounded-xl bg-gray-700"
         ></div>
         <span id="wind"></span>
-        <span class="text-sm text-gray-400">mph</span>
+        <span id="wind-measurement" class="text-sm text-gray-400">mph</span>
       </div>
     </div>
     <div
@@ -243,7 +246,9 @@
             class="latest-loader h-[40px] w-[40px] animate-pulse rounded-xl bg-gray-700"
           ></div>
           <span id="current-air-temp-2"></span>
-          <span class="text-sm font-semibold tracking-tight text-gray-400"
+          <span
+            id="current-air-temp-2-measurement"
+            class="text-sm font-semibold tracking-tight text-gray-400"
             >°F</span
           >
         </div>
@@ -286,7 +291,9 @@
           class="latest-loader h-[40px] w-[40px] animate-pulse rounded-xl bg-gray-700"
         ></div>
         <span id="current-air-temp"></span>
-        <span class="text-sm font-semibold tracking-tight text-gray-400"
+        <span
+          id="current-air-temp-measurement"
+          class="text-sm font-semibold tracking-tight text-gray-400"
           >°F</span
         >
       </div>
