@@ -1,10 +1,8 @@
-use crate::helpers::TestApp;
+use crate::{helpers::TestApp, integration_test_app};
 
 #[tokio::test]
 async fn an_invalid_url_returns_the_404_not_found() {
-    let app = TestApp::try_new()
-        .await
-        .expect("Unable to start test server.");
+    let app = integration_test_app!();
 
     let response = reqwest::get(format!("http://{}/four-oh-four-please", &app.addr))
         .await
