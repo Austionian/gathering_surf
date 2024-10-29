@@ -14,6 +14,13 @@ export function nonNull(item) {
 }
 
 /**
+ * @param {number} ms
+ */
+export function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Convenient button assertion helper function allows asserting that something is
  * an HTMLButtonElement
  *
