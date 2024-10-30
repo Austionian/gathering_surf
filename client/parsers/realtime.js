@@ -6,9 +6,8 @@ import {
   removeElement,
   removeStyle,
   removeHidden,
-  setAttribute,
   outOfDate,
-} from "../utilities";
+} from "../utilities.js";
 
 /**
  * @typedef {Object} LatestData
@@ -116,7 +115,7 @@ export function parseRealtime(data) {
  *
  * @param {LatestData} data
  */
-const getWindData = (data) =>
+export const getWindData = (data) =>
   data.wind_speed === data.gusts
     ? data.wind_speed
     : data.gusts === "0"

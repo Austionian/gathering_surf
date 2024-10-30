@@ -95,7 +95,7 @@ update:
 test:
     #!/bin/bash
     # unseen: writes new snapshots and writes .snap.new for exisiting
-    INSTA_UPDATE=unseen cargo t --features mock-time
+    INSTA_UPDATE=unseen cargo t --features mock-time && node --test
 
 # Runs the tests, and updates all snapshots
 test-update:

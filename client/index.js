@@ -40,7 +40,7 @@ const observerCallback = async (mutationList) => {
  */
 async function parseForecastData(mutation) {
   try {
-    parseForecast(JSON.parse("jlkjk"));
+    parseForecast(JSON.parse(mutation.target.innerText));
   } catch {
     await wait(500);
     try {
