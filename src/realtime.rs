@@ -27,6 +27,35 @@ pub struct Realtime {
 }
 
 impl Realtime {
+    pub async fn try_get_string(
+        spot: Arc<Spot>,
+        realtime_url: &'static str,
+    ) -> anyhow::Result<String> {
+        let client = redis::Client::open("redis://127.0.0.1/")?;
+        let mut conn = client.get_connection()?;
+        let data: Option<String> = redis::cmd("GET")
+            .arg(format!("realtime-{}", spot.name))
+            .query(&mut conn)
+            .expect("failed to execute GET for 'foo'");
+
+        if let Some(data) = data {
+            tracing::info!("redis cache hit!");
+            return Ok(data);
+        }
+
+        let data = Self::try_get(spot.clone(), realtime_url).await?;
+        let data = serde_json::to_string(&data)?;
+        let _: () = redis::cmd("PSETEX")
+            .arg(format!("realtime-{}", spot.name))
+            .arg("10000")
+            .arg(data.clone())
+            .query(&mut conn)
+            .expect("failed to execute SET for 'foo'");
+        tracing::info!("setting redis value");
+
+        Ok(data)
+    }
+
     pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
         const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
 
@@ -50,7 +79,6 @@ impl Realtime {
 
             let (as_of, measurements) = line.split_at(16);
             let as_of = Self::parse_as_of(as_of)?;
-            println!("{as_of}");
             return Self::parse_data(
                 measurements,
                 &latest,

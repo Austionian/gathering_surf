@@ -64,12 +64,12 @@ pub async fn root(
     let realtime_spot = spot.clone();
     let realtime_state = state.clone();
     tokio::spawn(async move {
-        match Realtime::try_get(realtime_spot, realtime_state.realtime_url).await {
+        match Realtime::try_get_string(realtime_spot, realtime_state.realtime_url).await {
             Ok(realtime) => {
                 let html = html!(
                     script type="application/json" id="realtime-data" {(
                     PreEscaped(
-                            serde_json::to_string(&realtime).unwrap())
+                            realtime)
                     )}
                 )
                 .into();

@@ -166,10 +166,13 @@ install:
 
 # Builds the docker image
 docker-build:
-    docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile .
+    docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile.prod .
 
 docker-deploy:
     DOCKER_HOST="ssh://austin@raspberrypi.local" docker compose up -d
+
+docker-local:
+    docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
