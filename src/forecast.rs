@@ -4,8 +4,7 @@ use super::{Location, Spot};
 use crate::utils::*;
 
 use anyhow::{anyhow, bail};
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use chrono_tz::US::Central;
+use chrono::{DateTime, Local, Utc};
 use reqwest::Response;
 use tracing::{error, info, warn};
 
@@ -293,20 +292,13 @@ impl TryFrom<serde_json::Value> for Forecast {
             .get("properties")
             .ok_or(anyhow!("no properties found!"))?;
 
-        let last_updated = properties
+        let as_of = properties
             .get("updateTime")
             .ok_or(anyhow!("no updateTime found"))?
             .as_str()
             .ok_or(anyhow!("string not found"))?
-            .strip_suffix("+00:00")
-            .ok_or(anyhow!("Unidentified suffix"))?
-            .parse::<NaiveDateTime>()?;
-
-        let as_of = Central
-            .from_utc_datetime(&last_updated)
+            .parse::<DateTime<Local>>()?
             .to_rfc2822()
-            .strip_suffix(" -0500")
-            .ok_or(anyhow!("Unidentified suffix"))?
             .to_string();
 
         let wave_height =

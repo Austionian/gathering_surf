@@ -1,6 +1,18 @@
 services:
   web:
     image: gathering_surf:latest
+    environment:
+      - REDIS_HOST=cache
     ports:
       - "8080:8080"
-    platform: linux/arm64
+  cache:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - cache:/data
+volumes:
+  cache:
+    driver: local
