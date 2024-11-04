@@ -7,7 +7,7 @@ use crate::utils::{
 use anyhow::bail;
 use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use chrono_tz::US::Central;
-use std::sync::Arc;
+use std::{env::var, sync::Arc};
 use tracing::{error, info, warn};
 
 #[derive(serde::Serialize)]
@@ -31,7 +31,11 @@ impl Realtime {
         spot: Arc<Spot>,
         realtime_url: &'static str,
     ) -> anyhow::Result<String> {
-        let client = redis::Client::open("redis://127.0.0.1/")?;
+        let client = redis::Client::open(format!(
+            "redis://{}:{}",
+            var("REDIS_HOST").unwrap_or("127.0.0.1".to_string()),
+            var("REDIS_PORT").unwrap_or("6379".to_string())
+        ))?;
         let mut conn = client.get_connection()?;
         let data: Option<String> = redis::cmd("GET")
             .arg(format!("realtime-{}", spot.name))
