@@ -5,6 +5,7 @@ use crate::utils::*;
 
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, Local, Utc};
+use chrono_tz::US::Central;
 use reqwest::Response;
 use tracing::{error, info, warn};
 
@@ -297,7 +298,8 @@ impl TryFrom<serde_json::Value> for Forecast {
             .ok_or(anyhow!("no updateTime found"))?
             .as_str()
             .ok_or(anyhow!("string not found"))?
-            .parse::<DateTime<Local>>()?
+            .parse::<DateTime<Utc>>()?
+            .with_timezone(&Central)
             .to_rfc2822()
             .to_string();
 
