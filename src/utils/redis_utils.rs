@@ -1,27 +1,23 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
+use redis::{AsyncCommands, SetExpiry, SetOptions};
 
+/// Gets the value from the Redis cache if it exists.
 pub async fn get(key: &str, pool: &Pool<RedisConnectionManager>) -> Option<String> {
-    let mut conn = pool.get().await.ok()?;
-
-    redis::cmd("GET")
-        .arg(key)
-        .query_async(&mut *conn)
-        .await
-        .expect("failed to execute GET")
+    pool.get().await.ok()?.get(key).await.ok()
 }
 
-pub async fn set(key: &str, data: &str, pool: &Pool<RedisConnectionManager>) -> anyhow::Result<()> {
-    let mut conn = pool.get().await?;
-
-    tracing::info!("setting redis value");
-    let _: () = redis::cmd("PSETEX")
-        .arg(key)
-        .arg("100000")
-        .arg(data)
-        .query_async(&mut *conn)
-        .await
-        .expect("failed to execute SET");
+/// Sets the given k,v pair for 100 seconds in the Redis cache.
+pub async fn set(
+    key: &str,
+    value: &str,
+    pool: &Pool<RedisConnectionManager>,
+) -> anyhow::Result<()> {
+    let opts = SetOptions::default().with_expiration(SetExpiry::EX(100));
+    pool.get()
+        .await?
+        .set_options::<&str, &str, ()>(key, value, opts)
+        .await?;
 
     Ok(())
 }

@@ -21,7 +21,7 @@ maud = { git = "https://github.com/austionian/maud.git", rev = "b4bdfe31e9c3de97
   "axum",
 ] }
 notify = "6.1.1"
-redis = { version = "0.27", features = ["r2d2"] }
+redis = { version = "0.27", features = ["tokio-comp"] }
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
