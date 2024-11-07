@@ -8,6 +8,8 @@ mod utils;
 mod water_quality;
 
 use axum::{routing::get, Router};
+use bb8::Pool;
+use bb8_redis::RedisConnectionManager;
 use std::sync::Arc;
 use tokio::sync::broadcast::Sender;
 use tower_http::services::ServeDir;
@@ -25,6 +27,7 @@ templates::init!();
 
 #[derive(Clone)]
 pub struct AppState {
+    redis_pool: Pool<RedisConnectionManager>,
     breaks: Vec<Location>,
     forecast_url: &'static str,
     realtime_url: &'static str,
@@ -33,7 +36,7 @@ pub struct AppState {
     event_stream: Sender<&'static str>,
 }
 
-pub fn startup(
+pub async fn startup(
     settings: &'static Settings,
 ) -> Result<(Option<Sender<&'static str>>, Router), String> {
     #[cfg(debug_assertions)]
@@ -42,8 +45,18 @@ pub fn startup(
     #[cfg(not(debug_assertions))]
     let tx = None;
 
+    let redis_manager = RedisConnectionManager::new(format!(
+        "redis://{}:{}",
+        std::env::var("REDIS_HOST").unwrap_or("127.0.0.1".to_string()),
+        std::env::var("REDIS_PORT").unwrap_or("6379".to_string())
+    ))
+    .unwrap();
+
+    let redis_pool = bb8::Pool::builder().build(redis_manager).await.unwrap();
+
     // Create an AppState that is shared across the app.
     let state = AppState {
+        redis_pool,
         breaks: Location::get_all(),
         forecast_url: &settings.forecast_api.base_url,
         realtime_url: &settings.realtime_api.base_url,

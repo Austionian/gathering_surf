@@ -64,7 +64,7 @@ pub async fn root(
     let realtime_spot = spot.clone();
     let realtime_state = state.clone();
     tokio::spawn(async move {
-        match Realtime::try_get_string(realtime_spot, realtime_state.realtime_url).await {
+        match Realtime::try_get_string(realtime_spot, realtime_state).await {
             Ok(realtime) => {
                 let html = html!(
                     script type="application/json" id="realtime-data" {(
@@ -89,12 +89,12 @@ pub async fn root(
     let water_quality_spot = spot.clone();
     let water_quality_state = state.clone();
     tokio::spawn(async move {
-        match WaterQuality::try_get(water_quality_spot, water_quality_state.quality_url).await {
+        match WaterQuality::try_get_string(water_quality_spot, water_quality_state).await {
             Ok(water_quality) => {
                 let html = html!(
                     script type="application/json" id="water-quality-data" {(
                     PreEscaped(
-                            serde_json::to_string(&water_quality).unwrap())
+                            water_quality)
                     )}
                 )
                 .into();
@@ -111,13 +111,13 @@ pub async fn root(
     });
 
     tokio::spawn(async move {
-        match Forecast::try_get(&spot, state.forecast_url).await {
+        match Forecast::try_get_string(&spot, state).await {
             Ok(forecast) => {
                 let html = html!(
                     script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" {}
                     script type="application/json" id="forecast-data" {(
                     PreEscaped(
-                            serde_json::to_string(&forecast).unwrap())
+                            forecast)
                     )}
                 )
                 .into();

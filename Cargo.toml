@@ -9,6 +9,8 @@ default-run = "gathering_surf"
 [dependencies]
 anyhow = "1.0.81"
 axum = { version = "0.7", features = ["ws"] }
+bb8 = "0.8.6"
+bb8-redis = "0.17.0"
 chrono = "0.4"
 chrono-tz = "0.10"
 config = { git = "https://github.com/mehcode/config-rs.git", rev = "e3c1d0b452639478662a44f15ef6d5b6d969bf9b", default-features = false, features = [
@@ -19,7 +21,7 @@ maud = { git = "https://github.com/austionian/maud.git", rev = "b4bdfe31e9c3de97
   "axum",
 ] }
 notify = "6.1.1"
-redis = "0.27.5"
+redis = { version = "0.27", features = ["r2d2"] }
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
@@ -43,7 +45,6 @@ wiremock = "0.6.0"
 
 [profile.dev.package]
 insta.opt-level = 3
-similar.opt-level = 3
 
 [features]
 mock-time = []

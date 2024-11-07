@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 use super::{Location, Spot};
-use crate::utils::*;
+use crate::{utils::*, AppState};
 
 use anyhow::{anyhow, bail};
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use chrono_tz::US::Central;
 use reqwest::Response;
 use tracing::{error, info, warn};
@@ -33,6 +33,22 @@ pub struct Forecast {
 }
 
 impl Forecast {
+    pub async fn try_get_string(spot: &Spot, state: Arc<AppState>) -> anyhow::Result<String> {
+        if let Some(data) =
+            redis_utils::get(&format!("forecast-{}", spot.name), &state.redis_pool).await
+        {
+            tracing::info!("redis cache hit!");
+            return Ok(data);
+        }
+
+        let data = Self::try_get(spot, state.forecast_url).await?;
+        let data = serde_json::to_string(&data)?;
+
+        redis_utils::set(&format!("forecast-{}", spot.name), &data, &state.redis_pool).await?;
+
+        Ok(data)
+    }
+
     pub async fn try_get(spot: &Spot, forecast_url: &str) -> anyhow::Result<Self> {
         let data = Self::fetch_data(spot.forecast_path, forecast_url).await?;
 
@@ -61,7 +77,7 @@ impl Forecast {
                 info!("NOAA 200 success.");
                 return Ok(response);
             }
-            warn!("NOAA non-200, retrying.");
+            warn!("NOAA non-200, retrying: {}{}", forecast_url, forecast_path);
         }
 
         error!("Non 200 response from NOAA");
@@ -174,6 +190,7 @@ impl Forecast {
         Ok((format!("{:.0}", height), *period, direction))
     }
 
+    #[cfg(not(feature = "mock-time"))]
     fn get_current_time_index(starting_at: &str) -> anyhow::Result<usize> {
         Ok((Utc::now()
             - DateTime::parse_from_str(starting_at, "%+")

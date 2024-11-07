@@ -1,13 +1,16 @@
 use super::Spot;
-use crate::utils::{
-    convert_celsius_to_fahrenheit, convert_meter_per_second_to_miles_per_hour,
-    convert_meter_to_feet,
+use crate::{
+    utils::{
+        convert_celsius_to_fahrenheit, convert_meter_per_second_to_miles_per_hour,
+        convert_meter_to_feet, redis_utils,
+    },
+    AppState,
 };
 
 use anyhow::bail;
 use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use chrono_tz::US::Central;
-use std::{env::var, sync::Arc};
+use std::sync::Arc;
 use tracing::{error, info, warn};
 
 #[derive(serde::Serialize)]
@@ -27,35 +30,18 @@ pub struct Realtime {
 }
 
 impl Realtime {
-    pub async fn try_get_string(
-        spot: Arc<Spot>,
-        realtime_url: &'static str,
-    ) -> anyhow::Result<String> {
-        let client = redis::Client::open(format!(
-            "redis://{}:{}",
-            var("REDIS_HOST").unwrap_or("127.0.0.1".to_string()),
-            var("REDIS_PORT").unwrap_or("6379".to_string())
-        ))?;
-        let mut conn = client.get_connection()?;
-        let data: Option<String> = redis::cmd("GET")
-            .arg(format!("realtime-{}", spot.name))
-            .query(&mut conn)
-            .expect("failed to execute GET for 'foo'");
-
-        if let Some(data) = data {
+    pub async fn try_get_string(spot: Arc<Spot>, state: Arc<AppState>) -> anyhow::Result<String> {
+        if let Some(data) =
+            redis_utils::get(&format!("realtime-{}", spot.name), &state.redis_pool).await
+        {
             tracing::info!("redis cache hit!");
             return Ok(data);
         }
 
-        let data = Self::try_get(spot.clone(), realtime_url).await?;
+        let data = Self::try_get(spot.clone(), state.realtime_url).await?;
         let data = serde_json::to_string(&data)?;
-        let _: () = redis::cmd("PSETEX")
-            .arg(format!("realtime-{}", spot.name))
-            .arg("10000")
-            .arg(data.clone())
-            .query(&mut conn)
-            .expect("failed to execute SET for 'foo'");
-        tracing::info!("setting redis value");
+
+        redis_utils::set(&format!("realtime-{}", spot.name), &data, &state.redis_pool).await?;
 
         Ok(data)
     }

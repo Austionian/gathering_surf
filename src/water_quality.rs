@@ -1,4 +1,4 @@
-use crate::{Spot, QUALITY_PATH};
+use crate::{redis_utils, AppState, Spot, QUALITY_PATH};
 
 use anyhow::anyhow;
 use std::sync::Arc;
@@ -10,6 +10,27 @@ pub struct WaterQuality {
 }
 
 impl WaterQuality {
+    pub async fn try_get_string(spot: Arc<Spot>, state: Arc<AppState>) -> anyhow::Result<String> {
+        if let Some(data) =
+            redis_utils::get(&format!("water-quality-{}", spot.name), &state.redis_pool).await
+        {
+            tracing::info!("redis cache hit!");
+            return Ok(data);
+        }
+
+        let data = Self::try_get(spot.clone(), state.quality_url).await?;
+        let data = serde_json::to_string(&data)?;
+
+        redis_utils::set(
+            &format!("water-quality-{}", spot.name),
+            &data,
+            &state.redis_pool,
+        )
+        .await?;
+
+        Ok(data)
+    }
+
     pub async fn try_get(spot: Arc<Spot>, quality_url: &'static str) -> anyhow::Result<Self> {
         let (water_quality, water_quality_text) =
             Self::get_quality_data(spot.quality_query, spot.status_query, quality_url).await?;

@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use chrono::{DateTime, Timelike};
 use chrono_tz::US::Central;
+pub mod redis_utils;
 
 pub fn convert_meter_to_feet(value: f64) -> f64 {
     value * 3.281
