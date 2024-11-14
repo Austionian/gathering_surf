@@ -347,13 +347,15 @@ export function parseForecast(data) {
    */
   function updateLegends(x) {
     let v;
-    if (x >= wave_height_labels.length - prefillLength) {
+    if (start === 0) {
+      v = x;
+    } else if (x >= wave_height_labels.length - prefillLength) {
       v = wave_height_labels.length - prefillLength - 1;
     } else {
       v = x;
     }
-
     const beginning = start === 0 ? dataStartingAt : start;
+
     applyUpdateToLegends(v + beginning);
   }
 
