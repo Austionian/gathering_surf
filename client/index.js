@@ -42,7 +42,7 @@ async function parseForecastData(mutation) {
   try {
     parseForecast(JSON.parse(mutation.target.innerText));
   } catch {
-    await wait(500);
+    await wait(1000);
     try {
       parseForecast(JSON.parse(mutation.target.innerText));
     } catch (e) {
