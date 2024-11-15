@@ -43,7 +43,7 @@ pub async fn root(
     selected_spot: Query<SpotParam>,
 ) -> Result<Response, AppError> {
     // Create a channel to stream content to client as we get it
-    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(100);
+    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(20);
 
     let mut context = tera::Context::new();
 
@@ -99,7 +99,10 @@ pub async fn root(
                 )
                 .into();
 
-                water_quality_tx.send(Ok(html)).await.unwrap();
+                if let Err(e) = water_quality_tx.send(Ok(html)).await {
+                    println!("error: {e}");
+                    let _ = water_quality_tx.send(Ok("error".to_string())).await;
+                }
             }
             Err(e) => {
                 water_quality_tx
