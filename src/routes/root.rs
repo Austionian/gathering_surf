@@ -43,7 +43,7 @@ pub async fn root(
     selected_spot: Query<SpotParam>,
 ) -> Result<Response, AppError> {
     // Create a channel to stream content to client as we get it
-    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(2);
+    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(100);
 
     let mut context = tera::Context::new();
 

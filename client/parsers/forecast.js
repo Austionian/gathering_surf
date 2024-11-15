@@ -348,7 +348,11 @@ export function parseForecast(data) {
   function updateLegends(x) {
     let v;
     if (start === 0) {
-      v = x;
+      if (wave_height_labels.length - prefillLength - 1 <= x) {
+        v = wave_height_labels.length - prefillLength - 1;
+      } else {
+        v = x;
+      }
     } else if (x >= wave_height_labels.length - prefillLength) {
       v = wave_height_labels.length - prefillLength - 1;
     } else {
