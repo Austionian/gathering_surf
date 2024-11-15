@@ -8,7 +8,7 @@ use axum::{
 };
 use maud::{html, Markup, PreEscaped};
 use std::{convert::Infallible, sync::Arc};
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, Sender};
 
 /// This is ugly. Might be worth reverting to tera to create the
 /// inline JS. Allows not having to pass the context around in a
@@ -48,6 +48,7 @@ pub async fn root(
     let mut context = tera::Context::new();
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
+    let tx: Arc<Sender<Result<_, _>>> = Arc::new(tx);
 
     // Add the initial context to the page for the loading state
     context.insert("spot", &*spot);
@@ -75,6 +76,7 @@ pub async fn root(
                 .into();
 
                 realtime_tx.send(Ok(html)).await.unwrap();
+                drop(realtime_tx);
             }
             Err(e) => {
                 realtime_tx
@@ -99,10 +101,8 @@ pub async fn root(
                 )
                 .into();
 
-                if let Err(e) = water_quality_tx.send(Ok(html)).await {
-                    println!("error: {e}");
-                    let _ = water_quality_tx.send(Ok("error".to_string())).await;
-                }
+                water_quality_tx.send(Ok(html)).await.unwrap();
+                drop(water_quality_tx);
             }
             Err(e) => {
                 water_quality_tx
@@ -126,15 +126,14 @@ pub async fn root(
                 .into();
 
                 tx.send(Ok(html)).await.unwrap();
-
-                Ok(())
+                tx.send(Ok(html!(div id="forecast-complete" {}).into()))
+                    .await
+                    .unwrap();
             }
             Err(e) => {
                 tx.send(Ok(html!((error_markup("forecast", e))).into()))
                     .await
                     .unwrap();
-
-                Err(AppError(anyhow!("Failed to load forecast.")))
             }
         }
     });

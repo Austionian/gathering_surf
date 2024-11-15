@@ -4,7 +4,7 @@ import {
   parseForecast,
 } from "./parsers/index";
 import { forecastFailed } from "./fallback";
-import { nonNull, wait } from "./utilities";
+import { nonNull } from "./utilities";
 
 // Select the node that will be observed for mutations
 const targetNode = nonNull(document.querySelector("body"));
@@ -26,8 +26,10 @@ const observerCallback = async (mutationList) => {
       if (mutation.target.id === "water-quality-data") {
         parseWaterQuality(JSON.parse(mutation.target.innerText));
       }
-      if (mutation.target.id === "forecast-data") {
-        await parseForecastData(mutation);
+      for (let i = 0; i < mutation.addedNodes.length; i++) {
+        if (mutation.addedNodes[i].id === "forecast-complete") {
+          parseForecastData();
+        }
       }
     }
   }
@@ -35,19 +37,13 @@ const observerCallback = async (mutationList) => {
 
 /**
  * JSON.parse sometimes executes before all the data has gotten to the DOM.
- *
- * @param {MutationRecord} mutation
  */
-async function parseForecastData(mutation) {
+function parseForecastData() {
+  const forecastData = document.getElementById("forecast-data");
   try {
-    parseForecast(JSON.parse(mutation.target.innerText));
-  } catch {
-    await wait(1000);
-    try {
-      parseForecast(JSON.parse(mutation.target.innerText));
-    } catch (e) {
-      forecastFailed(e);
-    }
+    parseForecast(JSON.parse(forecastData.innerText));
+  } catch (e) {
+    forecastFailed(e);
   }
 }
 
