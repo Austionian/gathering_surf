@@ -41,8 +41,10 @@ pub async fn root(
     State(state): State<Arc<AppState>>,
     selected_spot: Query<SpotParam>,
 ) -> Result<Response, AppError> {
-    // Create a channel to stream content to client as we get it
-    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(20);
+    // Create a channel to stream content to client as we get it.
+    // Only allow one message at time so the buffer is cleared out
+    // as messages are sent.
+    let (tx, rx) = mpsc::channel::<Result<String, Infallible>>(1);
 
     let mut context = tera::Context::new();
 
@@ -121,13 +123,13 @@ pub async fn root(
                     PreEscaped(
                             forecast)
                     )}
+                // send completion div so JSON parsing of data isn't attempted until it's all
+                // there.
+                div id="forecast-complete" {}
                 )
                 .into();
 
                 tx.send(Ok(html)).await.unwrap();
-                tx.send(Ok(html!(div id="forecast-complete" {}).into()))
-                    .await
-                    .unwrap();
             }
             Err(e) => {
                 tx.send(Ok(html!((error_markup("forecast", e))).into()))
