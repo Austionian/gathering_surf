@@ -1,5 +1,4 @@
 use crate::{AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality, TEMPLATES};
-use anyhow::anyhow;
 use axum::{
     body::Body,
     extract::{Query, State},
