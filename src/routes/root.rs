@@ -49,6 +49,7 @@ pub async fn root(
     let mut context = tera::Context::new();
 
     let spot: Arc<Spot> = Arc::new(selected_spot.0.into());
+    // Wrap the sender in an arc so the channel doesn't close early
     let tx: Arc<Sender<Result<_, _>>> = Arc::new(tx);
 
     // Add the initial context to the page for the loading state
