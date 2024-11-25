@@ -47,9 +47,18 @@ impl Realtime {
     }
 
     pub async fn try_get(spot: Arc<Spot>, realtime_url: &'static str) -> anyhow::Result<Self> {
-        const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
+        const FALLBACK_BOUY: &str = "/data/realtime2/45007.txt";
 
-        let data = Self::get_latest_data(&spot, realtime_url).await?;
+        let mut from_fallback = false;
+
+        // Seems as though bouy data is removed from noaa after it gets stale enough with no new
+        // information. Check if there was an error and then try the fallback.
+        let data = if let Ok(data) = Self::get_latest_data(&spot, realtime_url).await {
+            data
+        } else {
+            from_fallback = true;
+            Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?
+        };
 
         let mut loaded_from_fallback = !spot.has_bouy;
 
@@ -60,8 +69,9 @@ impl Realtime {
 
         let as_of = Self::parse_as_of(as_of)?;
 
-        // Check if the bouy data is older than a day, if so fallback to other path.
-        if Utc::now() - as_of > TimeDelta::days(1) {
+        // Check if the bouy data is older than a day, if so fallback to other path. And only if
+        // the data isn't already from the fallback.
+        if Utc::now() - as_of > TimeDelta::days(1) && !from_fallback {
             let data = Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?;
             loaded_from_fallback = true;
             let latest = data.lines().collect::<Vec<_>>();
@@ -100,9 +110,7 @@ impl Realtime {
         loaded_from_fallback: bool,
     ) -> anyhow::Result<Self> {
         // MID Lake bouy is in the water yeat round
-        // const MID_LAKE_BOUY: &str = "https://www.ndbc.noaa.gov/data/realtime2/45214.txt";
-        // Fallback to Atwater bouy for now.
-        const FALLBACK_BOUY: &str = "/data/realtime2/45013.txt";
+        const FALLBACK_BOUY: &str = "/data/realtime2/45007.txt";
 
         let as_of = as_of
             .with_timezone(&Central)
@@ -152,16 +160,33 @@ impl Realtime {
                 .await?
                 .text()
                 .await?;
+
+            // Start at row two to get past the table headers
+            let mut row = 2;
+            // Loop until a valid value is found.
+            while bouy_data
+                .lines()
+                .nth(row)
+                .unwrap()
+                .split_whitespace()
+                .nth(14)
+                .unwrap()
+                .parse::<f64>()
+                .is_err()
+            {
+                row += 1;
+            }
+
             convert_celsius_to_fahrenheit(
                 bouy_data
                     .lines()
-                    .nth(2)
+                    .nth(row)
                     .unwrap()
                     .split_whitespace()
                     .nth(14)
                     .unwrap()
                     .parse()
-                    .unwrap_or(0.0),
+                    .unwrap(),
             )
         } else {
             convert_celsius_to_fahrenheit(raw_water_temp.parse().unwrap_or(0.0))
@@ -215,6 +240,7 @@ impl Realtime {
         Self::get_data(spot.realtime_path, realtime_url).await
     }
 
+    /// Checks if the bouy has a fallback available, otherwise uses the path provided.
     async fn get_fallback_data(
         spot: &Spot,
         realtime_url: &str,
