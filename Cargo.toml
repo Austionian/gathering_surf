@@ -8,7 +8,7 @@ default-run = "gathering_surf"
 
 [dependencies]
 anyhow = "1.0.81"
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.8", features = ["ws"] }
 bb8 = "0.8.6"
 bb8-redis = "0.17.0"
 chrono = "0.4"
