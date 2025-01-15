@@ -21,7 +21,7 @@ pub struct Forecast {
     pub probability_of_thunder: Vec<u8>,
     pub quality: Option<Vec<String>>,
     pub starting_at: String,
-    pub temperature: Vec<u8>,
+    pub temperature: Vec<i8>,
     #[serde(skip_serializing)]
     pub wave_direction: Vec<f64>,
     pub wave_height: Vec<f64>,
@@ -335,7 +335,7 @@ impl TryFrom<serde_json::Value> for Forecast {
             truncate_to_two_decimals(v)
         })?;
         let temperature = Self::try_from_value(properties, "temperature", &|v| {
-            convert_celsius_to_fahrenheit(v).parse::<u8>().unwrap()
+            convert_celsius_to_fahrenheit(v).parse::<i8>().unwrap()
         })?;
         let probability_of_precipitation =
             Self::try_from_value(properties, "probabilityOfPrecipitation", &|v| v as u8)?;
