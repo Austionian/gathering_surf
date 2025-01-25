@@ -167,10 +167,10 @@ impl Realtime {
             while bouy_data
                 .lines()
                 .nth(row)
-                .unwrap()
+                .unwrap_or("")
                 .split_whitespace()
                 .nth(14)
-                .unwrap()
+                .unwrap_or("0.0")
                 .parse::<f64>()
                 .is_err()
             {
@@ -181,10 +181,10 @@ impl Realtime {
                 bouy_data
                     .lines()
                     .nth(row)
-                    .unwrap()
+                    .unwrap_or("")
                     .split_whitespace()
                     .nth(14)
-                    .unwrap()
+                    .unwrap_or("0.0")
                     .parse()
                     .unwrap(),
             )
