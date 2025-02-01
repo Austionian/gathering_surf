@@ -9,8 +9,8 @@ default-run = "gathering_surf"
 [dependencies]
 anyhow = "1.0.81"
 axum = { version = "0.8", features = ["ws"] }
-bb8 = "0.8.6"
-bb8-redis = "0.17.0"
+bb8 = "0.9"
+bb8-redis = "0.20"
 chrono = "0.4"
 chrono-tz = "0.10"
 config = { version = "0.15", default-features = false, features = ["yaml"] }
@@ -19,7 +19,7 @@ maud = { git = "https://github.com/austionian/maud.git", rev = "b4bdfe31e9c3de97
   "axum",
 ] }
 notify = "6.1.1"
-redis = { version = "0.27", features = ["tokio-comp"] }
+redis = { version = "0.28", features = ["tokio-comp"] }
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
