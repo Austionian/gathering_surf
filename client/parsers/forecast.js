@@ -177,7 +177,6 @@ export function parseForecast(data) {
 
   // This means there was no wave height data from the bouy
   if (wave_height_container?.innerText === "") {
-    removeHidden("wave-fallback-icon");
     wave_height_container.innerText = data.current_wave_height;
 
     // if the current wave height data is under a foot, update the

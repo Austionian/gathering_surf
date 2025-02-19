@@ -60,7 +60,7 @@ impl Realtime {
             Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?
         };
 
-        let mut loaded_from_fallback = !spot.has_bouy;
+        let mut loaded_from_fallback = !spot.has_bouy || from_fallback;
 
         let latest = data.lines().collect::<Vec<_>>();
         let line = latest.get(2).unwrap();
