@@ -1,9 +1,9 @@
-use gathering_surf::{get_configuration, startup, Settings, ATWATER_PATH, ATWATER_REALTIME_PATH};
+use gathering_surf::{ATWATER_PATH, ATWATER_REALTIME_PATH, Settings, get_configuration, startup};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use wiremock::{
-    matchers::{method, path},
     Mock, MockServer, ResponseTemplate,
+    matchers::{method, path},
 };
 
 use crate::mocks;

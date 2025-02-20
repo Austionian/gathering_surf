@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, sync::Arc};
 
 use super::{Location, Spot};
-use crate::{utils::*, AppState};
+use crate::{AppState, utils::*};
 
 use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};

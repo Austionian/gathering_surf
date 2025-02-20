@@ -9,9 +9,11 @@ async fn an_invalid_url_returns_the_404_not_found() {
         .unwrap();
 
     assert_eq!(response.status().as_u16(), 404);
-    assert!(response
-        .text()
-        .await
-        .unwrap()
-        .contains("Nothing to see here"));
+    assert!(
+        response
+            .text()
+            .await
+            .unwrap()
+            .contains("Nothing to see here")
+    );
 }

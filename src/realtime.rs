@@ -1,10 +1,10 @@
 use super::Spot;
 use crate::{
+    AppState,
     utils::{
         convert_celsius_to_fahrenheit, convert_meter_per_second_to_miles_per_hour,
         convert_meter_to_feet, redis_utils,
     },
-    AppState,
 };
 
 use anyhow::bail;
@@ -53,11 +53,12 @@ impl Realtime {
 
         // Seems as though bouy data is removed from noaa after it gets stale enough with no new
         // information. Check if there was an error and then try the fallback.
-        let data = if let Ok(data) = Self::get_latest_data(&spot, realtime_url).await {
-            data
-        } else {
-            from_fallback = true;
-            Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?
+        let data = match Self::get_latest_data(&spot, realtime_url).await {
+            Ok(data) => data,
+            _ => {
+                from_fallback = true;
+                Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?
+            }
         };
 
         let mut loaded_from_fallback = !spot.has_bouy || from_fallback;

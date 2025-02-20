@@ -1,11 +1,11 @@
-use crate::{AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality, TEMPLATES};
+use crate::{AppState, Forecast, Realtime, Spot, SpotParam, TEMPLATES, WaterQuality};
 use axum::{
     body::Body,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use maud::{html, Markup, PreEscaped};
+use maud::{Markup, PreEscaped, html};
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc::{self, Sender};
 

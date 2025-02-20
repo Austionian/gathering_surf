@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{
-    extract::{ws::WebSocketUpgrade, State},
+    extract::{State, ws::WebSocketUpgrade},
     response::IntoResponse,
 };
 use std::sync::Arc;

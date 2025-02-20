@@ -1,4 +1,4 @@
-use crate::{redis_utils, AppState, Spot, QUALITY_PATH};
+use crate::{AppState, QUALITY_PATH, Spot, redis_utils};
 
 use anyhow::anyhow;
 use std::sync::Arc;

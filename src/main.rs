@@ -1,4 +1,4 @@
-use gathering_surf::{get_configuration, startup, Settings};
+use gathering_surf::{Settings, get_configuration, startup};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::Level;

@@ -31,7 +31,10 @@ fn get_status_query(id: &str) -> String {
 }
 
 fn get_quality_query(id: &str) -> String {
-    format!("?f=json&objectIds={}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID", id)
+    format!(
+        "?f=json&objectIds={}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID",
+        id
+    )
 }
 
 macro_rules! quality_once_lock {
@@ -84,7 +87,9 @@ impl From<SpotParam> for Spot {
                 status_query: status_once_lock!(SHEBOYGAN_NORTH_QUALITY_ID),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
-                live_feed_url: Some("https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0"),
+                live_feed_url: Some(
+                    "https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0",
+                ),
                 name: "Sheboygan - North",
                 has_bouy: true,
             },
@@ -95,7 +100,9 @@ impl From<SpotParam> for Spot {
                 status_query: status_once_lock!(SHEBOYGAN_SOUTH_QUALITY_ID),
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
-                live_feed_url: Some("https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0"),
+                live_feed_url: Some(
+                    "https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0",
+                ),
                 name: "Sheboygan - South",
                 has_bouy: true,
             },
@@ -152,8 +159,7 @@ const RACINE_FALLBACK_REALTIME_PATH: &str = "/data/realtime2/KNSW3.txt";
 //
 // -- Water Quality Queries --
 // Base path for all spot queries
-pub const QUALITY_PATH: &str =
-"/arcgis2/rest/services/OGW_Beach_Monitoring/OGW_Beach_Monitoring_Locations_Ext/MapServer/0/query";
+pub const QUALITY_PATH: &str = "/arcgis2/rest/services/OGW_Beach_Monitoring/OGW_Beach_Monitoring_Locations_Ext/MapServer/0/query";
 //
 const ATWATER_QUALITY_ID: &str = "171";
 const RACINE_QUALITY_ID: &str = "204";
