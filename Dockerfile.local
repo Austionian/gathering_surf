@@ -1,4 +1,4 @@
-FROM rust:latest AS chef
+FROM rust:1.85.0 AS chef
 
 WORKDIR /app
 
