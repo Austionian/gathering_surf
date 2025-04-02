@@ -492,7 +492,7 @@ export function parseForecast(data) {
   // includes that height. Otherwise keep the chart consistent at
   // 10 ft.
   let wave_height_max = wave_heights.reduce(
-    (acc, curr) => (curr > acc ? curr : acc),
+    (acc, curr) => (curr > acc ? Math.ceil(curr) : acc),
     10,
   );
 
