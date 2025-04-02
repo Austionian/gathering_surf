@@ -439,7 +439,6 @@ export function parseForecast(data) {
   let end = start + stepBy;
 
   const font = {
-    size: stepBy === 24 ? 14 : 18,
     weight: "semi-bold",
   };
 
@@ -482,12 +481,7 @@ export function parseForecast(data) {
            *
            * @param {number} value
            */
-          callback: function (value) {
-            if (value % 2 !== 0) {
-              return "";
-            }
-            return value;
-          },
+          callback: (value) => (value & 1 ? null : value),
           font,
         },
       },
@@ -501,6 +495,8 @@ export function parseForecast(data) {
     (acc, curr) => (curr > acc ? curr : acc),
     10,
   );
+
+  if (wave_height_max & 1) wave_height_max++;
 
   const waveForecast = new Chart(document.getElementById("forecast"), {
     type: "bar",
