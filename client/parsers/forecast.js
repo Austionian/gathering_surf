@@ -494,6 +494,14 @@ export function parseForecast(data) {
     },
   });
 
+  // If a wave height is greater than 10, make sure the chart
+  // includes that height. Otherwise keep the chart consistent at
+  // 10 ft.
+  let wave_height_max = wave_heights.reduce(
+    (acc, curr) => (curr > acc ? curr : acc),
+    10,
+  );
+
   const waveForecast = new Chart(document.getElementById("forecast"), {
     type: "bar",
     plugins: [plugin],
@@ -515,7 +523,7 @@ export function parseForecast(data) {
       ],
     },
     options: {
-      ...options(undefined),
+      ...options(wave_height_max),
 
       elements: {
         bar: {

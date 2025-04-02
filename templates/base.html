@@ -37,7 +37,7 @@
       rel="stylesheet"
     />
 
-    <link rel="preload" href="/assets/styles.css?version=168" as="style" />
+    <link rel="preload" href="/assets/styles.css?version=169" as="style" />
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
@@ -45,12 +45,12 @@
     />
     <link
       rel="preload"
-      href="/assets/static/index.min.js?version=171"
+      href="/assets/static/index.min.js?version=172"
       as="script"
     />
 
     <link
-      href="/assets/styles.css?version=168"
+      href="/assets/styles.css?version=169"
       rel="stylesheet"
       type="text/css"
     />
@@ -66,7 +66,7 @@
     @keyup.escape="showLiveFeed = false; showNav = false;"
     :class="{ 'overflow-hidden': showNav || showLiveFeed }"
   >
-    <script src="/assets/static/index.min.js?version=171"></script>
+    <script src="/assets/static/index.min.js?version=172"></script>
     {% block body %} {% endblock %} {% include "includes/footer.html" %} {% if
     live_reload %}
     <script>
@@ -82,7 +82,7 @@
         // Reload when a message arrives, meaning a template or js has been updated.
         // Wait 50 ms for assets to be re-compilied.
         socket.onmessage = () => {
-          setTimeout(() => location.reload(), 50);
+          setTimeout(() => location.reload(), 100);
         };
 
         // Reload when the connection closes, meaning the server has changed and the
