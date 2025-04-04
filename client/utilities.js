@@ -5,6 +5,8 @@
  * null or undefined without having to write a JSDoc type cast that has to
  * explicitly know the non-null type (which is error prone).
  *
+ * Throws if the item is null | undefined
+ *
  * @template {any} T
  * @param {T} item
  */
@@ -23,6 +25,8 @@ export function wait(ms) {
 /**
  * Convenient button assertion helper function allows asserting that something is
  * an HTMLButtonElement
+ *
+ * Throws if the button is null | undefined | !HTMLButtonElement
  *
  * @template {any} T
  * @param {T} item
