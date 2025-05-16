@@ -169,11 +169,11 @@ docker-build:
     docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile.prod .
 
 docker-deploy:
-    DOCKER_HOST="ssh://austin@raspberrypi.local" docker compose up -d
+    DOCKER_HOST="ssh://austin@cluster.local" docker compose up -d
 
 docker-local:
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
-     just docker-build && docker save gathering_surf | bzip2 | ssh austin@raspberrypi.local docker load && just docker-deploy 
+     just docker-build && docker save gathering_surf | bzip2 | ssh austin@cluster.local docker load && just docker-deploy 
