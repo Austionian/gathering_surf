@@ -46,3 +46,6 @@ insta.opt-level = 3
 
 [features]
 mock-time = []
+
+[workspace.lints.clippy]
+pendantic = { level = "deny" }

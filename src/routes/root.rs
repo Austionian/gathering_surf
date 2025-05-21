@@ -25,8 +25,7 @@ fn error_markup(error_type: &str, e: anyhow::Error) -> Markup {
                           <h2 class='text-xl'>
                           Error loading "#))
             (error_type)
-            (PreEscaped(r#" data - please refresh the page or try again later.
-                          </h2>
+            (PreEscaped(r#" data</h2>
                           <p>"#))
             span class="font-mono" {
                 "Error: " (e)
@@ -108,7 +107,7 @@ pub async fn root(
             }
             Err(e) => {
                 water_quality_tx
-                    .send(Ok(html!((error_markup("water quality", e))).into()))
+                    .send(Ok(html!((error_markup("water-quality", e))).into()))
                     .await
                     .unwrap();
             }
