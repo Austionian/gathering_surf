@@ -8,6 +8,7 @@ use axum::{
 use maud::{Markup, PreEscaped, html};
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc::{self, Sender};
+use tracing::error;
 
 /// This is ugly. Might be worth reverting to tera to create the
 /// inline JS. Allows not having to pass the context around in a
@@ -80,6 +81,7 @@ pub async fn root(
                 drop(realtime_tx);
             }
             Err(e) => {
+                error!("Failed to load realtime data: {e}");
                 realtime_tx
                     .send(Ok(html!((error_markup("latest", e))).into()))
                     .await
@@ -106,8 +108,17 @@ pub async fn root(
                 drop(water_quality_tx);
             }
             Err(e) => {
+                error!("Failed to load water quality: {e}");
+
+                // If there's a water quality error, just hide the container. It's not
+                // pivotal to the page.
                 water_quality_tx
-                    .send(Ok(html!((error_markup("water-quality", e))).into()))
+                    .send(Ok(html!(
+                        script {
+                            (PreEscaped("document.getElementById(\"water-quality-container\").classList.add(\"hidden\")"))
+                        }
+                    )
+                    .into()))
                     .await
                     .unwrap();
             }
@@ -132,6 +143,7 @@ pub async fn root(
                 tx.send(Ok(html)).await.unwrap();
             }
             Err(e) => {
+                error!("Failed to load the forecast data: {e}");
                 tx.send(Ok(html!((error_markup("forecast", e))).into()))
                     .await
                     .unwrap();
