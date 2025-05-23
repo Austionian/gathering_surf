@@ -1,0 +1,5 @@
+---
+source: tests/api/realtime.rs
+expression: data
+---
+{"as_of":"Fri, 23 May 2025 13:30:00","wind_direction":90,"wind_speed":"4","gusts":"7","water_temp":"46","air_temp":"46","quality_color":"#0bd674","quality_text":"Good","wave_height":"0.98","wave_period":5,"wave_direction":204,"loaded_from_fallback":false}

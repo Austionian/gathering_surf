@@ -57,6 +57,16 @@ impl TestApp {
                         ),
                 )
                 .await;
+
+            client
+                .register(
+                    Mock::given(method("GET"))
+                        .and(path(ATWATER_REALTIME_PATH))
+                        .respond_with(
+                            ResponseTemplate::new(200).set_body_string(mocks::REALTIME_RESPONSE),
+                        ),
+                )
+                .await;
         }
     }
 
