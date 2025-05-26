@@ -72,7 +72,13 @@ impl Realtime {
 
         // Check if the bouy data is older than a day, if so fallback to other path. And only if
         // the data isn't already from the fallback.
-        if Utc::now() - as_of > TimeDelta::days(1) && !from_fallback {
+        #[cfg(not(feature = "mock-time"))]
+        let get_from_fallback = Utc::now() - as_of > TimeDelta::days(1) && !from_fallback;
+        // When mocking time, ignore how old the data is, it's being mocked
+        #[cfg(feature = "mock-time")]
+        let get_from_fallback = false;
+
+        if get_from_fallback {
             let data = Self::get_fallback_data(&spot, realtime_url, FALLBACK_BOUY).await?;
             loaded_from_fallback = true;
             let latest = data.lines().collect::<Vec<_>>();
@@ -223,6 +229,7 @@ impl Realtime {
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
             let response = reqwest::get(format!("{}{}", realtime_url, path)).await?;
+            println!("{response:?}");
             if response.status().as_u16() == 200 {
                 info!("NOAA realtime 200 success.");
                 return match response.text().await {
