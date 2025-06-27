@@ -163,7 +163,7 @@ impl Realtime {
 
         let water_temp = if raw_water_temp == "MM" {
             info!("fetching fallback bouy data for water temp");
-            let bouy_data = reqwest::get(format!("{}{}", realtime_url, FALLBACK_BOUY))
+            let bouy_data = reqwest::get(format!("{realtime_url}{FALLBACK_BOUY}"))
                 .await?
                 .text()
                 .await?;
@@ -228,7 +228,7 @@ impl Realtime {
     async fn get_data(path: &str, realtime_url: &str) -> Result<String, anyhow::Error> {
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
-            let response = reqwest::get(format!("{}{}", realtime_url, path)).await?;
+            let response = reqwest::get(format!("{realtime_url}{path}")).await?;
             println!("{response:?}");
             if response.status().as_u16() == 200 {
                 info!("NOAA realtime 200 success.");

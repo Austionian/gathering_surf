@@ -37,7 +37,7 @@ fn convert_24_to_12_hour(hour: u32) -> String {
     }
 
     if hour < 10 {
-        return format!("0{} AM", hour);
+        return format!("0{hour} AM");
     }
 
     if hour < 12 {
@@ -46,10 +46,10 @@ fn convert_24_to_12_hour(hour: u32) -> String {
 
     let hour = hour - 12;
     if hour < 10 {
-        return format!("0{} PM", hour);
+        return format!("0{hour} PM");
     }
 
-    format!("{} PM", hour)
+    format!("{hour} PM")
 }
 
 /// Given a time string, e.g. "2024-09-06T11:00:00+00:00" and a number

@@ -69,7 +69,7 @@ impl Forecast {
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
             let response = client
-                .get(format!("{}{}", forecast_url, forecast_path))
+                .get(format!("{forecast_url}{forecast_path}"))
                 .timeout(std::time::Duration::from_secs(10))
                 .send()
                 .await?;
@@ -173,21 +173,21 @@ impl Forecast {
             let last_hour = *last_hour as u8;
             return match height.partial_cmp(&last_hour) {
                 Some(Ordering::Less) => Ok((
-                    format!("{:.0}-{:.0}", height, last_hour),
+                    format!("{height:.0}-{last_hour:.0}"),
                     *period,
                     direction,
                 )),
                 Some(Ordering::Greater) => Ok((
-                    format!("{:.0}-{:.0}+", last_hour, height),
+                    format!("{last_hour:.0}-{height:.0}+"),
                     *period,
                     direction,
                 )),
-                Some(Ordering::Equal) => Ok((format!("{:.0}", height), *period, direction)),
+                Some(Ordering::Equal) => Ok((format!("{height:.0}"), *period, direction)),
                 None => unreachable!("Found no ordering in wave heights."),
             };
         }
 
-        Ok((format!("{:.0}", height), *period, direction))
+        Ok((format!("{height:.0}"), *period, direction))
     }
 
     #[cfg(not(feature = "mock-time"))]

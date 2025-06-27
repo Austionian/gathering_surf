@@ -27,13 +27,12 @@ pub struct Spot {
 }
 
 fn get_status_query(id: &str) -> String {
-    format!("?f=json&objectIds={}&outFields=MAP_STATUS", id)
+    format!("?f=json&objectIds={id}&outFields=MAP_STATUS")
 }
 
 fn get_quality_query(id: &str) -> String {
     format!(
-        "?f=json&objectIds={}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID",
-        id
+        "?f=json&objectIds={id}&outFields=ECOLIPRONAME%2CECOLIVALUE%2CISSUED%2COGW_BEACH_NAME_TEXT%2CSAMPLEDATE%2CSTATIONNAME%2CSTATUS%2CWATERTEMP%2COBJECTID"
     )
 }
 
