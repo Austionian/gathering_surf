@@ -172,16 +172,12 @@ impl Forecast {
         if let Some(last_hour) = wave_height.get(current_time_index - 1) {
             let last_hour = *last_hour as u8;
             return match height.partial_cmp(&last_hour) {
-                Some(Ordering::Less) => Ok((
-                    format!("{height:.0}-{last_hour:.0}"),
-                    *period,
-                    direction,
-                )),
-                Some(Ordering::Greater) => Ok((
-                    format!("{last_hour:.0}-{height:.0}+"),
-                    *period,
-                    direction,
-                )),
+                Some(Ordering::Less) => {
+                    Ok((format!("{height:.0}-{last_hour:.0}"), *period, direction))
+                }
+                Some(Ordering::Greater) => {
+                    Ok((format!("{last_hour:.0}-{height:.0}+"), *period, direction))
+                }
                 Some(Ordering::Equal) => Ok((format!("{height:.0}"), *period, direction)),
                 None => unreachable!("Found no ordering in wave heights."),
             };
