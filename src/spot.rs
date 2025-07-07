@@ -87,7 +87,7 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::Sheboygan,
                 live_feed_url: Some(
-                    "https://www.youtube-nocookie.com/embed/p780CkCgNVE?si=qBa_a4twCnOprcG1&amp;controls=0",
+                    "https://www.youtube.com/embed/KHSabzBYJBk?si=qBa_a4twCnOprcG1&amp;controls=0",
                 ),
                 name: "Sheboygan - North",
                 has_bouy: true,
@@ -100,7 +100,7 @@ impl From<SpotParam> for Spot {
                 fallback_realtime_path: Some(SHEBOYGAN_FALLBACK_REALTIME_PATH),
                 location: Location::SheboyganSouth,
                 live_feed_url: Some(
-                    "https://www.youtube.com/embed/M0Ion4MpsgU?si=yCi2OVy3RIbY_5kC&amp;controls=0",
+                    "https://www.youtube.com/embed/ABRrwDe5Hho?si=yCi2OVy3RIbY_5kC&amp;controls=0",
                 ),
                 name: "Sheboygan - South",
                 has_bouy: true,
