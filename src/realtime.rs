@@ -229,7 +229,6 @@ impl Realtime {
         const RETRY: u8 = 2;
         for _ in 0..RETRY {
             let response = reqwest::get(format!("{realtime_url}{path}")).await?;
-            println!("{response:?}");
             if response.status().as_u16() == 200 {
                 info!("NOAA realtime 200 success.");
                 return match response.text().await {
