@@ -7,7 +7,7 @@ mod spot;
 mod utils;
 mod water_quality;
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use std::sync::Arc;
@@ -15,7 +15,7 @@ use tokio::sync::broadcast::Sender;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
-pub use configuration::{Settings, get_configuration};
+pub use configuration::{get_configuration, Settings};
 pub use forecast::*;
 pub use quality::*;
 pub use realtime::Realtime;
@@ -107,28 +107,34 @@ pub async fn startup(
 macro_rules! init_watchers {
     ($tx:expr) => {
         use gathering_surf::TEMPLATES;
-        use notify::Watcher;
+        use notify::{EventKind, Watcher};
 
         let tx = $tx.expect("available only in debug.");
         let js_tx = tx.clone();
 
         #[allow(unused_must_use)]
         let mut watcher = notify::recommended_watcher(move |res| match res {
-            Ok(_) => {
-                // Get a writer lock to the templates struct
-                let mut tera = TEMPLATES.tera.write().unwrap();
+            Ok(event) => {
+                let event: notify::Event = event;
+                match event.kind {
+                    EventKind::Modify(_) | EventKind::Create(_) | EventKind::Remove(_) => {
+                        // Get a writer lock to the templates struct
+                        let mut tera = TEMPLATES.tera.write().unwrap();
 
-                // Reload tera with template changes
-                match tera.full_reload() {
-                    Ok(_) => tracing::trace!("templates reloaded"),
-                    Err(e) => tracing::error!("failed to reload templates: {e}"),
+                        // Reload tera with template changes
+                        match tera.full_reload() {
+                            Ok(_) => tracing::trace!("templates reloaded"),
+                            Err(e) => tracing::error!("failed to reload templates: {e}"),
+                        }
+
+                        // Notify browswer to reload.
+                        //
+                        // The channel is thrown away after this so no need to
+                        // unwrap as it will cause a poision lock error.
+                        tx.send("reload");
+                    }
+                    EventKind::Access(_) | EventKind::Any | EventKind::Other => {}
                 }
-
-                // Notify browswer to reload.
-                //
-                // The channel is thrown away after this so no need to
-                // unwrap as it will cause a poision lock error.
-                tx.send("reload");
             }
             Err(e) => tracing::warn!("watch error: {e:?}"),
         })
@@ -136,12 +142,18 @@ macro_rules! init_watchers {
 
         #[allow(unused_must_use)]
         let mut js_watcher = notify::recommended_watcher(move |res| match res {
-            Ok(_) => {
-                // Notify browswer to reload.
-                //
-                // The channel is thrown away after this so no need to
-                // unwrap as it will cause a poision lock error.
-                js_tx.send("reload");
+            Ok(event) => {
+                let e: notify::Event = event;
+                match e.kind {
+                    EventKind::Modify(_) | EventKind::Create(_) | EventKind::Remove(_) => {
+                        // Notify browswer to reload.
+                        //
+                        // The channel is thrown away after this so no need to
+                        // unwrap as it will cause a poision lock error.
+                        js_tx.send("reload");
+                    }
+                    EventKind::Access(_) | EventKind::Any | EventKind::Other => {}
+                }
             }
             Err(e) => tracing::warn!("watch error: {e:?}"),
         })
