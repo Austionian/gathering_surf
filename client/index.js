@@ -4,7 +4,7 @@ import {
   parseForecast,
 } from "./parsers/index";
 import { forecastFailed } from "./fallback";
-import { nonNull } from "./utilities";
+import { setTimeoutError, nonNull } from "./utilities";
 
 // Select the node that will be observed for mutations
 const targetNode = nonNull(document.querySelector("body"));
@@ -18,6 +18,12 @@ const config = { attributes: true, childList: true, subtree: true };
  * @param {MutationRecord[]} mutationList
  */
 const observerCallback = async (mutationList) => {
+  // Set a timeout error for each section, without this user could be
+  // presented with an endless loading state.
+  ["latest", "forecast", "water-quality"].forEach((section) => {
+    setTimeoutError(section);
+  });
+
   for (const mutation of mutationList) {
     if (mutation.target instanceof HTMLElement) {
       if (mutation.target.id === "realtime-data") {

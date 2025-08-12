@@ -167,3 +167,26 @@ export function outOfDate(id) {
     appendCaution(id);
   }
 }
+
+/**
+ * Sets a 20 second timeout, if data hasn't been updated on the client, this will
+ * display an error message. Could happen becuase the connection was closed before
+ * the data finished streaming to the frontend.
+ *
+ * @param {string} id
+ */
+export function setTimeoutError(id) {
+  setTimeout(() => {
+    if (document.querySelectorAll(`.${id}-loader`).length > 0) {
+      appendElements(
+        `${id}-container`,
+        `<div class="p-12 flex flex-col items-center align-middle justify-center text-center">
+<h2 class="text-xl font-mono">
+Error loading ${id} data - please refresh the page or try again later.
+</h2>
+<p>Server timed out.</p>
+</div>`,
+      );
+    }
+  }, 20_000);
+}

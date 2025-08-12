@@ -78,7 +78,6 @@ pub async fn root(
                 .into();
 
                 realtime_tx.send(Ok(html)).await.unwrap();
-                drop(realtime_tx);
             }
             Err(e) => {
                 error!("Failed to load realtime data: {e}");
@@ -105,7 +104,6 @@ pub async fn root(
                 .into();
 
                 water_quality_tx.send(Ok(html)).await.unwrap();
-                drop(water_quality_tx);
             }
             Err(e) => {
                 error!("Failed to load water quality: {e}");
@@ -128,16 +126,17 @@ pub async fn root(
     tokio::spawn(async move {
         match Forecast::try_get_string(&spot, state).await {
             Ok(forecast) => {
-                let html = html!(
-                    script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" {}
-                    script type="application/json" id="forecast-data" {(
-                    PreEscaped(
-                            forecast)
-                    )}
-                // send completion div so JSON parsing of data isn't attempted until it's all
-                // there.
-                div id="forecast-complete" {}
-                )
+                let html = html!
+                    (
+                        script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" {}
+                        script type="application/json" id="forecast-data" {(
+                        PreEscaped(
+                                forecast)
+                        )}
+                        // send completion div so JSON parsing of data isn't attempted until it's all
+                        // there.
+                        div id="forecast-complete" {}
+                    )
                 .into();
 
                 tx.send(Ok(html)).await.unwrap();

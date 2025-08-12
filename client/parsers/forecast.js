@@ -223,7 +223,7 @@ export function parseForecast(data) {
     outOfDate(["forecast-as-of-container-2", "forecast-as-of-container"]);
   }
 
-  removeElements(".loader");
+  removeElements(".forecast-loader");
   removeHidden("forecast");
   removeHidden("wave-quality");
   removeHidden("legend-container");
