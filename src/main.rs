@@ -1,4 +1,7 @@
-use gathering_surf::{Settings, get_configuration, startup};
+#[cfg(debug_assertions)]
+use gathering_surf::init_watchers;
+
+use gathering_surf::{get_configuration, startup, Settings};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::Level;
@@ -6,6 +9,7 @@ use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{filter, fmt};
 
+#[warn(clippy::pedantic)]
 #[allow(unused_variables)]
 #[tokio::main]
 async fn main() {
@@ -34,9 +38,6 @@ async fn main() {
 
     #[cfg(debug_assertions)]
     tracing::info!("listening on {}", address);
-
-    #[cfg(debug_assertions)]
-    use gathering_surf::init_watchers;
 
     #[cfg(debug_assertions)]
     init_watchers!(tx);

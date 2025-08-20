@@ -8,7 +8,9 @@ use crate::{
 };
 
 use anyhow::bail;
-use chrono::{DateTime, TimeDelta, TimeZone, Utc};
+#[cfg(not(feature = "mock-time"))]
+use chrono::TimeDelta;
+use chrono::{DateTime, TimeZone, Utc};
 use chrono_tz::US::Central;
 use std::sync::Arc;
 use tracing::{error, info, warn};
