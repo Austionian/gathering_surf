@@ -1,7 +1,5 @@
 /* This file creates your base css that Tailwind will honor. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   html {
@@ -9,7 +7,7 @@
   }
 
   body {
-      font-family: "Satoshi", sans-serif;
+    font-family: "Satoshi", sans-serif;
   }
 
   h1 {
