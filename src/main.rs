@@ -1,7 +1,7 @@
 #[cfg(debug_assertions)]
 use gathering_surf::init_watchers;
 
-use gathering_surf::{Settings, get_configuration, startup};
+use gathering_surf::{get_configuration, startup, Settings};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::Level;

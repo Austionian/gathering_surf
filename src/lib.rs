@@ -7,7 +7,7 @@ mod spot;
 mod utils;
 mod water_quality;
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use std::sync::Arc;
@@ -15,7 +15,7 @@ use tokio::sync::broadcast::Sender;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
-pub use configuration::{Settings, get_configuration};
+pub use configuration::{get_configuration, Settings};
 pub use forecast::*;
 pub use quality::*;
 pub use realtime::Realtime;
