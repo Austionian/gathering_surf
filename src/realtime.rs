@@ -1,10 +1,10 @@
 use super::Spot;
 use crate::{
+    AppState,
     utils::{
         convert_celsius_to_fahrenheit, convert_meter_per_second_to_miles_per_hour,
         convert_meter_to_feet, redis_utils,
     },
-    AppState,
 };
 
 use anyhow::bail;
