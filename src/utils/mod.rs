@@ -23,7 +23,7 @@ pub fn parse_hour(s: &str) -> anyhow::Result<usize> {
     if let Some((_, hour)) = s.split_once('T') {
         let hour = hour.strip_suffix("H").ok_or(anyhow!("no hour found!"))?;
         return Ok(hour.parse()?);
-    };
+    }
 
     Err(anyhow!("no hour found!"))
 }
@@ -71,6 +71,7 @@ pub fn increment_time(t: &str, hours: usize) -> anyhow::Result<String> {
 }
 
 /// Limits f64 to two decimal points
+#[must_use]
 pub fn truncate_to_two_decimals(v: f64) -> f64 {
     (v * 100.0).trunc() / 100.0
 }

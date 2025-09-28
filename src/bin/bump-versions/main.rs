@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
                 .split_once("version=")
                 .ok_or(anyhow!("no version found in line!"))?;
             let current_version = end
-                .split_once("\"")
+                .split_once('"')
                 .ok_or(anyhow!("no qutation mark found with version"))?
                 .0
                 .parse::<u32>()?;

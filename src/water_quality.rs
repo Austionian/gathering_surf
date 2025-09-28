@@ -10,6 +10,11 @@ pub struct WaterQuality {
 }
 
 impl WaterQuality {
+    /// Checks for water quality in the Redis cache, if not found gets the data from the
+    /// source and updates the cache.
+    ///
+    /// # Errors
+    ///
     pub async fn try_get_string(spot: Arc<Spot>, state: Arc<AppState>) -> anyhow::Result<String> {
         if let Some(data) =
             redis_utils::get(&format!("water-quality-{}", spot.name), &state.redis_pool).await
@@ -31,7 +36,7 @@ impl WaterQuality {
         Ok(data)
     }
 
-    pub async fn try_get(spot: Arc<Spot>, quality_url: &'static str) -> anyhow::Result<Self> {
+    async fn try_get(spot: Arc<Spot>, quality_url: &'static str) -> anyhow::Result<Self> {
         let (water_quality, water_quality_text) =
             Self::get_quality_data(spot.quality_query, spot.status_query, quality_url).await?;
 

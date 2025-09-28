@@ -48,4 +48,4 @@ insta.opt-level = 3
 mock-time = []
 
 # [lints.clippy]
-# pedantic = { level = "deny" }
+# pedantic = { level = "warn" }

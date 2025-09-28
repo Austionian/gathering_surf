@@ -30,7 +30,7 @@ async fn main() {
 
     let config: &'static Settings = Box::leak(config);
 
-    let (tx, app) = startup(config).await.expect("Unable to start the server.");
+    let (tx, app) = startup(config).await;
 
     let address = format!("{}:{}", config.application.host, config.application.port)
         .parse::<SocketAddr>()

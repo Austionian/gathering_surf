@@ -36,9 +36,12 @@ pub struct AppState {
     event_stream: Sender<&'static str>,
 }
 
-pub async fn startup(
-    settings: &'static Settings,
-) -> Result<(Option<Sender<&'static str>>, Router), String> {
+/// Function to startup the server
+///
+/// # Panics
+/// Could panic if unable to find Redis instance to connect to.
+///
+pub async fn startup(settings: &'static Settings) -> (Option<Sender<&'static str>>, Router) {
     #[cfg(debug_assertions)]
     let (tx, _) = tokio::sync::broadcast::channel(10);
 
@@ -100,7 +103,7 @@ pub async fn startup(
     let app: Router = Router::new().merge(app).merge(watch_router);
 
     // Create the Axum router.
-    Ok((tx, app))
+    (tx, app)
 }
 
 #[macro_export]
