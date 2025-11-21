@@ -193,6 +193,10 @@ docker-deploy:
 docker-local:
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
+# Builds the x86 docker image, and tags it with the registry location
+build-kube:
+    docker build --tag gathering_surf_x86 --file Dockerfile.local . && docker tag gathering_surf_x86 localhost:5000/gathering_surf
+
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
      just docker-build && docker save gathering_surf | bzip2 | ssh austin@cluster.local docker load && just docker-deploy 
