@@ -1,5 +1,3 @@
-set dotenv-load
-
 # List available commands
 default:
     just -l
@@ -47,8 +45,6 @@ download-tailwind:
 run-axum:
     #!/bin/bash
     echo "Starting the Axum server."
-
-    export API_TOKEN=$API_TOKEN
 
     # Start cargo watch in the background
     cargo watch -w src -x run
@@ -159,12 +155,7 @@ install:
         cargo install cargo-watch
     fi
 
-    just install-bump-versions
-
-    # install the Tailwind binary
-    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
-    chmod +x tailwindcss-macos-arm64
-    mv tailwindcss-macos-arm64 tailwindcss
+    just install-bump-versions && just download-tailwind
 
     # check if npm is available
     if command -v node &> /dev/null; then
@@ -185,14 +176,28 @@ install:
 
 # Builds the docker image
 docker-build:
-    docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile.prod .
+    #!/bin/bash
+    docker buildx build --platform linux/arm64/v8 --tag gathering_surf:$TAG --file Dockerfile.prod .
 
 docker-deploy:
-    DOCKER_HOST="ssh://austin@cluster.local" docker compose up -d
+    #!/bin/bash
+    DOCKER_HOST="ssh://austin@$HOST.local" docker compose up -d
 
 docker-local:
+    #!/bin/bash
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
-     just docker-build && docker save gathering_surf | bzip2 | ssh austin@cluster.local docker load && just docker-deploy 
+    #!/bin/bash
+    export TAG="latest"
+    export HOST="cluster"
+
+    just docker-build && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load && just docker-deploy 
+
+deploy-qa:
+    #!/bin/bash
+    export TAG="qa"
+    export HOST="cx"
+
+    just docker-build && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load && just docker-deploy 

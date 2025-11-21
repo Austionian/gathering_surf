@@ -1,11 +1,13 @@
 services:
   web:
-    image: gathering_surf:latest
+    container_name: gathering_surf_${TAG}
+    image: gathering_surf:${TAG}
     environment:
       - REDIS_HOST=cache
     ports:
       - "8080:8080"
   cache:
+    container_name: gathering_surf_cache_${TAG}
     image: redis:7-alpine
     restart: always
     ports:
@@ -13,6 +15,7 @@ services:
     command: redis-server --save 20 1 --loglevel warning
     volumes:
       - cache:/data
+
 volumes:
   cache:
     driver: local
