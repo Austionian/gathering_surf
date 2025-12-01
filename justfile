@@ -195,7 +195,30 @@ docker-local:
 
 # Builds the x86 docker image, and tags it with the registry location
 build-kube:
-    docker build --tag gathering_surf_x86 --file Dockerfile.local . && docker tag gathering_surf_x86 localhost:5000/gathering_surf
+    docker build --tag gathering_surf_x86 --file Dockerfile.local . && docker tag gathering_surf_x86 registry:5001/gathering_surf
+
+upload-kube:
+    #!/bin/bash
+    ## Build the image
+    just build-kube
+
+    #########################
+    ## 1. Launch the tunnel in background
+    #########################
+    ssh -L 5001:10.110.129.160:80 austin@node0 -p 222 -N &
+    TUNNEL_PID=$$!
+
+    echo "Tunnel started (PID $TUNNEL_PID) – local port 5001 → 10.110.129.160:80"
+
+    #########################
+    ## 3. Push the image to the registry
+    #########################
+    # registry is a hostname for 127.0.0.1
+    docker push registry:5001/gathering_surf
+
+    # Exit – the trap will kill the tunnel.
+    echo "Stopping tunnel..."
+    kill $$TUNNEL_PID 2>/dev/null || true
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
