@@ -199,26 +199,35 @@ build-kube:
 
 upload-kube:
     #!/bin/bash
-    ## Build the image
+    set -euo pipefail
+
+    # Build the image
     just build-kube
 
-    #########################
-    ## 1. Launch the tunnel in background
-    #########################
-    ssh -L 5001:10.110.129.160:80 austin@node0 -p 222 -N &
-    TUNNEL_PID=$$!
+    # Launch the tunnel in background
+    # Map port 5001 to node0:80
+    ssh -L 5001:10.110.129.160:80 austin@192.168.1.121 -p 222 -N &
+    TUNNEL_PID=$!          # capture the background PID
 
+    # Close the tunnel when the process completes or fails
+    trap 'echo "🛑 Stopping tunnel…"; kill "$TUNNEL_PID" 2>/dev/null || true' EXIT INT TERM
+
+    # Wait for the tunnel to be ready
+    echo -n "Waiting for local port 5001 to be ready"
+    while ! nc -z localhost 5001; do
+        sleep .25
+        printf "."
+    done
     echo "Tunnel started (PID $TUNNEL_PID) – local port 5001 → 10.110.129.160:80"
 
-    #########################
-    ## 3. Push the image to the registry
-    #########################
-    # registry is a hostname for 127.0.0.1
+    # Push the image to the registry
+    # Requires that `/etc/hosts` has registry 127.0.0.1
+    # The hostname needs to be registry becuase that's how the ingress in the 
+    # kube cluster knows to route it to the service 
+    # i.e. in the cluster itself `curl -H "Host: registry"` is required
+    # Docker connects to localhost:5001 and sends Host: registry:5001.
+    echo "Pushing image to registry"
     docker push registry:5001/gathering_surf
-
-    # Exit – the trap will kill the tunnel.
-    echo "Stopping tunnel..."
-    kill $$TUNNEL_PID 2>/dev/null || true
 
 # Transfers the docker image to the pi and runs the deploy script
 deploy:
