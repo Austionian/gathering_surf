@@ -177,11 +177,11 @@ install:
 # Builds the docker image
 docker-build:
     #!/bin/bash
-    docker buildx build --platform linux/arm64/v8 --tag gathering_surf:$TAG --file Dockerfile.prod .
+    docker build --tag gathering_surf:$TAG --file Dockerfile.$HOST .
 
 docker-deploy:
     #!/bin/bash
-    DOCKER_HOST="ssh://austin@$HOST.local" docker compose up -d
+    DOCKER_HOST="ssh://austin@raspberry.tail473fdb.ts.net" docker compose up -d
 
 docker-local:
     #!/bin/bash
@@ -193,11 +193,15 @@ deploy:
     export TAG="latest"
     export HOST="cluster"
 
-    just docker-build && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load && just docker-deploy 
+    just docker-build \
+        && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load \
+        && just docker-deploy 
 
 deploy-qa:
     #!/bin/bash
     export TAG="qa"
-    export HOST="cx"
+    export HOST="raspberry"
 
-    just docker-build && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load && just docker-deploy 
+    just docker-build \
+        && docker save gathering_surf:$TAG | bzip2 | pv | ssh austin@raspberry.tail473fdb.ts.net docker load \
+        && just docker-deploy 
