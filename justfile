@@ -183,6 +183,24 @@ docker-deploy:
     #!/bin/bash
     DOCKER_HOST="ssh://austin@raspberry.tail473fdb.ts.net" docker compose up -d
 
+# Build and transfer the gathering_surf image to our raspberry pi, then spin it
+# up with docker compose.
+deploy-qa:
+    #!/bin/bash
+    export TAG="qa"
+    export HOST="raspberry"
+
+    # Build the image
+    just docker-build \
+        # docker save - saves an image to tar archive, streamed to STDOUT
+        # Then compress the tar archive using bzip2
+        # pv is Pipe Viewer, shows to data flow between the piped commands
+        # Then finally ssh into the raspberry pi and tell docker to load the streamed
+        # image.
+        && docker save gathering_surf:$TAG | bzip2 | pv | ssh austin@raspberry.tail473fdb.ts.net docker load \
+        # Run the docker compose command
+        && just docker-deploy 
+
 docker-local:
     #!/bin/bash
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
@@ -197,11 +215,3 @@ deploy:
         && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load \
         && just docker-deploy 
 
-deploy-qa:
-    #!/bin/bash
-    export TAG="qa"
-    export HOST="raspberry"
-
-    just docker-build \
-        && docker save gathering_surf:$TAG | bzip2 | pv | ssh austin@raspberry.tail473fdb.ts.net docker load \
-        && just docker-deploy 
