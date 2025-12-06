@@ -191,14 +191,14 @@ deploy-qa:
     export HOST="raspberry"
 
     # Build the image
+    # docker save - saves an image to tar archive, streamed to STDOUT
+    # Then compress the tar archive using bzip2
+    # pv is Pipe Viewer, shows to data flow between the piped commands
+    # Then finally ssh into the raspberry pi and tell docker to load the streamed
+    # image from STDIN.
+    # Run the docker deploy command
     just docker-build \
-        # docker save - saves an image to tar archive, streamed to STDOUT
-        # Then compress the tar archive using bzip2
-        # pv is Pipe Viewer, shows to data flow between the piped commands
-        # Then finally ssh into the raspberry pi and tell docker to load the streamed
-        # image.
         && docker save gathering_surf:$TAG | bzip2 | pv | ssh austin@raspberry.tail473fdb.ts.net docker load \
-        # Run the docker compose command
         && just docker-deploy 
 
 docker-local:
