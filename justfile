@@ -181,7 +181,7 @@ docker-build:
 
 docker-deploy:
     #!/bin/bash
-    DOCKER_HOST="ssh://austin@raspberry.tail473fdb.ts.net" docker compose up -d
+    DOCKER_HOST="ssh://austin@raspberry.tail473fdb.ts.net" docker compose -f ./docker-compose.yml up -d
 
 # Build and transfer the gathering_surf image to our raspberry pi, then spin it
 # up with docker compose.
@@ -213,5 +213,13 @@ deploy:
 
     just docker-build \
         && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load \
-        && just docker-deploy 
+        && just docker-deploy
 
+scale:
+    #!/bin/bash
+    export TAG="qa"
+    export HOST="austin@raspberry.tail473fdb.ts.net"
+
+    # Transfer the nginx conf
+    scp ./nginx.conf $HOST:/home/austin/nginx.conf \
+        && DOCKER_HOST="ssh://$HOST" docker compose -f ./docker-compose.replicas.yml up -d
