@@ -11,18 +11,22 @@ ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iif
 TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
 
 # Runs the Tailwind binary in watch mode
+[group('Development')]
+[no-exit-message]
 run-tailwind:
     #!/bin/bash
     echo "Starting the Tailwind binary."
     {{TAILWIND}} --watch
 
 # Builds and minifies the CSS with the Tailwind binary
+[group('Build')]
 build-tailwind:
     #!/bin/bash
     echo "minifying css"
     {{TAILWIND}} --minify
 
 # Install the latest tailwind binary in your system
+[group('Set up')]
 download-tailwind:
     #!/bin/bash
     if [ "$(uname)" == "Darwin" ]; then 
@@ -42,6 +46,8 @@ download-tailwind:
     fi
 
 # Runs the axum server in watch mode.
+[group('Development')]
+[no-exit-message]
 run-axum:
     #!/bin/bash
     echo "Starting the Axum server."
@@ -50,12 +56,15 @@ run-axum:
     cargo watch -w src -x run
 
 # Runs rollup in watch mode.
+[group('Development')]
+[no-exit-message]
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
 
 # Builds and minifies the JS with rollup 
+[group('Build')]
 build-rollup:
     #!/bin/bash
     echo "building JS"
@@ -63,12 +72,14 @@ build-rollup:
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.
+[group('Build')]
 bump-assets:
     #!/bin/bash
     echo "bumping static assets version numbers in base.html"
     target/release/bump-versions
 
 # Builds all the static assets and bumps their versions
+[group('Build')]
 build:
     #!/bin/bash
     just build-tailwind &
@@ -81,6 +92,8 @@ build:
 # will automatically be reflected. On exit, will minify tailwind's css and js.
 #
 # Install Just and run with `just dev`
+[group('Development')]
+[no-exit-message]
 dev:
     #!/bin/bash
     minify() {
@@ -99,6 +112,7 @@ dev:
     wait $TAILWIND_PID
 
 # Update dependencies and run the tests.
+[group('Update')]
 update:
     #!/bin/bash
     cargo update
@@ -107,18 +121,21 @@ update:
     just test
 
 # Runs the tests, writes new snapshots
+[group('Update')]
 test:
     #!/bin/bash
     # unseen: writes new snapshots and writes .snap.new for exisiting
     INSTA_UPDATE=unseen cargo t --features mock-time && node --test
 
 # Runs the tests, and updates all snapshots
+[group('Update')]
 test-update:
     #!/bin/bash
     # always: overwrites old snapshot files with new ones unasked
     INSTA_UPDATE=always cargo t --features mock-time
 
 # Installs rollup and the terser plugin globally
+[group('Set up')]
 install-rollup:
     #!/bin/bash
     echo "Installing rollup"
@@ -127,6 +144,7 @@ install-rollup:
     npm install --global @rollup/plugin-terser
 
 # Compiles the helper binary to bump static asset versions in base.html
+[group('Set up')]
 install-bump-versions:
     #!/bin/bash 
     FILE=./target/release/bump-versions
@@ -139,6 +157,7 @@ install-bump-versions:
 
 # Installs the projects dependencies required to run the project, other
 # than Just obviously. MacOS only.
+[group('Set up')]
 install:
     #!/bin/bash
     if command -v cargo &> /dev/null; then
@@ -175,16 +194,20 @@ install:
     fi
 
 # Builds the docker image
+[group('Build')]
 docker-build:
     #!/bin/bash
     docker build --tag gathering_surf:$TAG --file Dockerfile.$HOST .
 
+# Tells remote host to spin up containers
+[group('Deploy')]
 docker-deploy:
     #!/bin/bash
     DOCKER_HOST="ssh://austin@raspberry.tail473fdb.ts.net" docker compose -f ./docker-compose.yml up -d
 
 # Build and transfer the gathering_surf image to our raspberry pi, then spin it
 # up with docker compose.
+[group('Deploy')]
 deploy-qa:
     #!/bin/bash
     export TAG="qa"
@@ -201,11 +224,14 @@ deploy-qa:
         && docker save gathering_surf:$TAG | bzip2 | pv | ssh austin@raspberry.tail473fdb.ts.net docker load \
         && just docker-deploy 
 
+# Run gathering surf locally with Docker Compose
+[group('Deploy')]
 docker-local:
     #!/bin/bash
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
 # Transfers the docker image to the pi and runs the deploy script
+[group('Deploy')]
 deploy:
     #!/bin/bash
     export TAG="latest"
@@ -215,6 +241,7 @@ deploy:
         && docker save gathering_surf:$TAG | bzip2 | ssh austin@$HOST.local docker load \
         && just docker-deploy
 
+[group('Deploy')]
 scale:
     #!/bin/bash
     export TAG="qa"
