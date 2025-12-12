@@ -28,7 +28,7 @@ build-tailwind:
 
 # Install the latest tailwind binary in your system
 [private]
-download-tailwind:
+install-tailwind:
     #!/bin/bash
     if [ "$(uname)" == "Darwin" ]; then 
         curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64 
@@ -112,7 +112,7 @@ update:
     cargo update
     echo -e "Dependencies updated! \n"
     cargo clippy
-    just test
+    just test && cargo set-version --bump patch
 
 # Runs the tests, writes new snapshots
 [group('Test')]
@@ -149,8 +149,18 @@ install-bump-versions:
         cargo build --bin bump-versions --release
     fi
 
-# Installs the projects dependencies required to run the project, other
-# than Just obviously. MacOS only.
+[private, macos]
+install-yq:
+    #!/bin/bash
+    brew install yq
+
+[private, linux]
+install-yq:
+    #!/bin/bash
+    sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq \
+        && chmod +x /usr/local/bin/yq
+
+# Installs the projects dependencies required to run the project, other than just
 [group('Installation')]
 install:
     #!/bin/bash
@@ -161,19 +171,23 @@ install:
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     fi
 
+    if command yq --version &> /dev/null; then
+        echo "yq found, skipping install"
+    else
+        just install-yq
+    fi
+
     if command cargo watch --version &> /dev/null; then
         echo "Cargo watch found, skipping install"
     else
         # install cargo watch
         cargo install cargo-watch
+        cargo install cargo-edit
     fi
 
     just install-bump-versions
 
-    # install the Tailwind binary
-    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
-    chmod +x tailwindcss-macos-arm64
-    mv tailwindcss-macos-arm64 tailwindcss
+    just install-tailwind
 
     # check if npm is available
     if command -v node &> /dev/null; then
@@ -187,7 +201,7 @@ install:
         source ~/.bashrc
 
         # download and install Node.js
-        fnm use --install-if-missing 22
+        fnm use --install-if-missing 24
 
         just install-rollup
     fi
@@ -253,8 +267,9 @@ deploy:
     export TAG=$(yq '.package.version' Cargo.toml)
 
     # Upload the latest build of the image to the internal registry, then
-    # update the kube config file on node0, then apply it.
+    # update the tag in the kube config file, send it to node0, then apply it.
     # User must be in the deploygrp on node0 to be able to create files there!
     just upload-kube \
+        && yq eval -i 'select(.metadata.name=="gathering-surf-server" and .kind=="Deployment").spec.template.spec.containers[].image = "10.108.202.38:5000/gathering_surf:'$TAG'"' kube-deployment.yaml \
         && scp -P "$PORT" ./kube-deployment.yaml $HOST:/opt/deploys/gathering_surf.yaml \
         && ssh -p "$PORT" $HOST "kubectl apply -f /opt/deploys/gathering_surf.yaml"
