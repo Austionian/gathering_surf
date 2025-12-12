@@ -2,7 +2,7 @@ set dotenv-load
 
 # List available commands
 default:
-    just -l
+    @just -l
 
 alias u := update
 alias d := dev
@@ -13,18 +13,21 @@ ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iif
 TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
 
 # Runs the Tailwind binary in watch mode
+[no-exit-message, private]
 run-tailwind:
     #!/bin/bash
     echo "Starting the Tailwind binary."
     {{TAILWIND}} --watch
 
 # Builds and minifies the CSS with the Tailwind binary
+[private]
 build-tailwind:
     #!/bin/bash
     echo "minifying css"
     {{TAILWIND}} --minify
 
 # Install the latest tailwind binary in your system
+[private]
 download-tailwind:
     #!/bin/bash
     if [ "$(uname)" == "Darwin" ]; then 
@@ -44,6 +47,7 @@ download-tailwind:
     fi
 
 # Runs the axum server in watch mode.
+[no-exit-message, private]
 run-axum:
     #!/bin/bash
     echo "Starting the Axum server."
@@ -54,12 +58,14 @@ run-axum:
     cargo watch -w src -x run
 
 # Runs rollup in watch mode.
+[no-exit-message, private]
 run-rollup:
     #!/bin/bash
     echo "Starting rollup."
     {{ROLLUP}} --watch --watch.exclude "src/**" --no-watch.clearScreen
 
 # Builds and minifies the JS with rollup 
+[private]
 build-rollup:
     #!/bin/bash
     echo "building JS"
@@ -67,24 +73,21 @@ build-rollup:
 
 # Updates the requested versions of assets found in the 
 # base.html template to bust cached versions of old assets.
+[private]
 bump-assets:
     #!/bin/bash
     echo "bumping static assets version numbers in base.html"
     target/release/bump-versions
 
 # Builds all the static assets and bumps their versions
-build:
-    #!/bin/bash
-    just build-tailwind &
-    just build-rollup &
-    just bump-assets &
-    wait
-    echo "complete!"
+[group('Build')]
+build: build-tailwind build-rollup bump-assets
 
 # Run the axum server, rollup, and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css and js.
 #
 # Install Just and run with `just dev`
+[group('Development')]
 dev:
     #!/bin/bash
     minify() {
@@ -103,6 +106,7 @@ dev:
     wait $TAILWIND_PID
 
 # Update dependencies and run the tests.
+[group('Update')]
 update:
     #!/bin/bash
     cargo update
@@ -111,18 +115,21 @@ update:
     just test
 
 # Runs the tests, writes new snapshots
+[group('Test')]
 test:
     #!/bin/bash
     # unseen: writes new snapshots and writes .snap.new for exisiting
     INSTA_UPDATE=unseen cargo t --features mock-time && node --test
 
 # Runs the tests, and updates all snapshots
+[group('Test')]
 test-update:
     #!/bin/bash
     # always: overwrites old snapshot files with new ones unasked
     INSTA_UPDATE=always cargo t --features mock-time
 
 # Installs rollup and the terser plugin globally
+[private]
 install-rollup:
     #!/bin/bash
     echo "Installing rollup"
@@ -131,6 +138,7 @@ install-rollup:
     npm install --global @rollup/plugin-terser
 
 # Compiles the helper binary to bump static asset versions in base.html
+[private]
 install-bump-versions:
     #!/bin/bash 
     FILE=./target/release/bump-versions
@@ -143,6 +151,7 @@ install-bump-versions:
 
 # Installs the projects dependencies required to run the project, other
 # than Just obviously. MacOS only.
+[group('Installation')]
 install:
     #!/bin/bash
     if command -v cargo &> /dev/null; then
@@ -184,19 +193,25 @@ install:
     fi
 
 # Builds the docker image
+[private]
 docker-build:
     docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile.prod .
 
+[private]
 docker-deploy:
     DOCKER_HOST="ssh://austin@cluster.local" docker compose up -d
 
+[private]
 docker-local:
     docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
 
-# Builds the x86 docker image, and tags it with the registry location
+# Builds the x86 docker image and tags it with the registry location
+[group('Build')]
 build-kube:
-    docker build --tag gathering_surf_x86 --file Dockerfile.local . && docker tag gathering_surf_x86 registry:5001/gathering_surf
+    docker build --tag registry:5001/gathering_surf:${TAG:-latest} --file Dockerfile.local .
 
+# Updates the cluster's registry with the latest image
+[private]
 upload-kube:
     #!/bin/bash
     set -euo pipefail
@@ -210,7 +225,7 @@ upload-kube:
     TUNNEL_PID=$!          # capture the background PID
 
     # Close the tunnel when the process completes or fails
-    trap 'echo "🛑 Stopping tunnel…"; kill "$TUNNEL_PID" 2>/dev/null || true' EXIT INT TERM
+    trap 'echo "Stopping tunnel…"; kill "$TUNNEL_PID" 2>/dev/null || true' EXIT INT TERM
 
     # Wait for the tunnel to be ready
     echo -n "Waiting for local port 5001 to be ready"
@@ -227,8 +242,19 @@ upload-kube:
     # i.e. in the cluster itself `curl -H "Host: registry"` is required
     # Docker connects to localhost:5001 and sends Host: registry:5001.
     echo "Pushing image to registry"
-    docker push registry:5001/gathering_surf
+    docker push registry:5001/gathering_surf:$TAG
 
-# Transfers the docker image to the pi and runs the deploy script
+# Updates the cluster's image and deployment file, then applies it.
+[group('Deploy')]
 deploy:
-     just docker-build && docker save gathering_surf | bzip2 | ssh austin@cluster.local docker load && just docker-deploy 
+    #!/bin/bash
+    export HOST="austin@192.168.1.121"
+    export PORT="222"
+    export TAG=$(yq '.package.version' Cargo.toml)
+
+    # Upload the latest build of the image to the internal registry, then
+    # update the kube config file on node0, then apply it.
+    # User must be in the deploygrp on node0 to be able to create files there!
+    just upload-kube \
+        && scp -P "$PORT" ./kube-deployment.yaml $HOST:/opt/deploys/gathering_surf.yaml \
+        && ssh -p "$PORT" $HOST "kubectl apply -f /opt/deploys/gathering_surf.yaml"
