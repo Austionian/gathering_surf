@@ -2,12 +2,15 @@ set dotenv-load
 
 # List available commands
 default:
-    @just -l
+    just -l
 
 alias u := update
 alias d := dev
 alias t := test
 alias t-u := test-update
+alias b := bump-patch
+alias bm := bump-minor
+alias bM := bump-major
 
 ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iife"
 TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
@@ -83,6 +86,25 @@ bump-assets:
 [group('Build')]
 build: build-tailwind build-rollup bump-assets
 
+# Updates gathering_surf patch version 
+[group('Maintenance')]
+bump-patch:
+    #!/bin/bash
+    cargo set-version --bump patch
+
+# Updates gathering_surf minor version 
+[group('Maintenance')]
+bump-minor:
+    #!/bin/bash
+    cargo set-version --bump minor
+
+# Updates gathering_surf major version 
+[group('Maintenance')]
+bump-major:
+    #!/bin/bash
+    cargo set-version --bump major
+
+
 # Run the axum server, rollup, and tailwind binary in watch mode so updates
 # will automatically be reflected. On exit, will minify tailwind's css and js.
 #
@@ -112,7 +134,7 @@ update:
     cargo update
     echo -e "Dependencies updated! \n"
     cargo clippy
-    just test && cargo set-version --bump patch
+    just test && just bump-patch
 
 # Runs the tests, writes new snapshots
 [group('Test')]
