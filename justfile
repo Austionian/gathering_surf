@@ -182,7 +182,7 @@ install-yq:
     sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq \
         && chmod +x /usr/local/bin/yq
 
-# Installs the projects dependencies required to run the project, other than just
+# Installs the projects dependencies required to run the project, other than Just
 [group('Installation')]
 install:
     #!/bin/bash
@@ -228,23 +228,20 @@ install:
         just install-rollup
     fi
 
-# Builds the docker image
-[private]
-docker-build:
-    docker buildx build --platform linux/arm64/v8 --tag gathering_surf --file Dockerfile.prod .
+# Builds an ARM compatible docker image
+[group("Build")]
+build-arm:
+    docker buildx build --platform linux/arm64/v8 --tag gathering_surf:${TAG:-arm} --file Dockerfile.arm .
 
-[private]
-docker-deploy:
-    DOCKER_HOST="ssh://austin@cluster.local" docker compose up -d
-
-[private]
-docker-local:
-    docker build --tag gathering_surf --file Dockerfile.local . && docker compose up -d
+# Deploys an instance of gathering_surf locally using Docker Compose
+[group("Deploy")]
+deploy-local:
+    docker build --tag gathering_surf:${TAG:-latest} --file Dockerfile.prod . && docker compose up -d
 
 # Builds the x86 docker image and tags it with the registry location
 [group('Build')]
 build-kube:
-    docker build --tag registry:5001/gathering_surf:${TAG:-latest} --file Dockerfile.local .
+    docker build --tag registry:5001/gathering_surf:${TAG:-latest} --file Dockerfile.prod .
 
 # Updates the cluster's registry with the latest image
 [private]
