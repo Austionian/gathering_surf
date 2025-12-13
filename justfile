@@ -14,6 +14,8 @@ alias bM := bump-major
 
 ROLLUP := "rollup client/index.js --file assets/static/index.min.js --format iife"
 TAILWIND := "./tailwindcss -i ./src/styles/styles.css -o ./assets/styles.css"
+HOST := "austin@192.168.1.121"
+PORT := "222"
 
 # Runs the Tailwind binary in watch mode
 [no-exit-message, private]
@@ -281,8 +283,6 @@ upload-kube:
 [group('Deploy')]
 deploy:
     #!/bin/bash
-    export HOST="austin@192.168.1.121"
-    export PORT="222"
     export TAG=$(yq '.package.version' Cargo.toml)
 
     # Upload the latest build of the image to the internal registry, then
@@ -290,5 +290,14 @@ deploy:
     # User must be in the deploygrp on node0 to be able to create files there!
     just upload-kube \
         && yq eval -i 'select(.metadata.name=="gathering-surf-server" and .kind=="Deployment").spec.template.spec.containers[].image = "10.108.202.38:5000/gathering_surf:'$TAG'"' kube-deployment.yaml \
-        && scp -P "$PORT" ./kube-deployment.yaml $HOST:/opt/deploys/gathering_surf.yaml \
-        && ssh -p "$PORT" $HOST "kubectl apply -f /opt/deploys/gathering_surf.yaml"
+        && scp -P "{{PORT}}" ./kube-deployment.yaml {{HOST}}:/opt/deploys/gathering_surf.yaml \
+        && ssh -p "{{PORT}}" {{HOST}} "kubectl apply -f /opt/deploys/gathering_surf.yaml"
+
+# Updates the cache freshner file, then applies it.
+[group('Deploy')]
+deploy-freshner:
+    #!/bin/bash
+    # Send freshner config to node0, then apply it.
+    # User must be in the deploygrp on node0 to be able to create files there!
+    scp -P "{{PORT}}" ./cache-freshner.yaml {{HOST}}:/opt/deploys/cache-freshner.yaml \
+        && ssh -p "{{PORT}}" {{HOST}} "kubectl apply -f /opt/deploys/cache-freshner.yaml"
