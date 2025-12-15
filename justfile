@@ -255,8 +255,8 @@ upload-kube:
     just build-kube
 
     # Launch the tunnel in background
-    # Map port 5001 to node0:80
-    ssh -L 5001:10.110.129.160:80 austin@192.168.1.121 -p 222 -N &
+    # Map port 5001 to registry-service:5000
+    ssh -L 5001:10.108.202.38:5000 austin@192.168.1.121 -p 222 -N &
     TUNNEL_PID=$!          # capture the background PID
 
     # Close the tunnel when the process completes or fails
@@ -268,7 +268,7 @@ upload-kube:
         sleep .25
         printf "."
     done
-    echo "Tunnel started (PID $TUNNEL_PID) – local port 5001 → 10.110.129.160:80"
+    echo "Tunnel started (PID $TUNNEL_PID) – local port 5001 → 10.108.202.38:5000"
 
     # Push the image to the registry
     # Requires that `/etc/hosts` has registry 127.0.0.1
