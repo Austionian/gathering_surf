@@ -283,21 +283,21 @@ upload-kube:
 [group('Deploy')]
 deploy:
     #!/bin/bash
-    export TAG=$(yq '.package.version' Cargo.toml)
-
     # Upload the latest build of the image to the internal registry, then
     # update the tag in the kube config file, send it to node0, then apply it.
     # User must be in the deploygrp on node0 to be able to create files there!
     just upload-kube \
-        && yq eval -i 'select(.metadata.name=="gathering-surf-server" and .kind=="Deployment").spec.template.spec.containers[].image = "10.108.202.38:5000/gathering_surf:'$TAG'"' kube-deployment.yaml \
+        && just deploy-kube
+
+# Updates the kube-deployment file, then applies it.
+[group('Deploy')]
+deploy-kube:
+    #!/bin/bash
+    export TAG=$(yq '.package.version' Cargo.toml)
+
+    # Update the tag in the kube config file, send it to node0, then apply it.
+    # User must be in the deploygrp on node0 to be able to create files there and
+    # tagged image must already be in the private registry!
+    yq eval -i 'select(.metadata.name=="gathering-surf" and .kind=="Deployment").spec.template.spec.containers[].image = "10.108.202.38:5000/gathering_surf:'$TAG'"' kube-deployment.yaml \
         && scp -P "{{PORT}}" ./kube-deployment.yaml {{HOST}}:/opt/deploys/gathering_surf.yaml \
         && ssh -p "{{PORT}}" {{HOST}} "kubectl apply -f /opt/deploys/gathering_surf.yaml"
-
-# Updates the cache freshner file, then applies it.
-[group('Deploy')]
-deploy-freshner:
-    #!/bin/bash
-    # Send freshner config to node0, then apply it.
-    # User must be in the deploygrp on node0 to be able to create files there!
-    scp -P "{{PORT}}" ./cache-freshner.yaml {{HOST}}:/opt/deploys/cache-freshner.yaml \
-        && ssh -p "{{PORT}}" {{HOST}} "kubectl apply -f /opt/deploys/cache-freshner.yaml"

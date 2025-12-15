@@ -65,27 +65,27 @@ metadata:
     kompose.cmd: kompose convert
     kompose.version: 1.34.0 (cbf2835db)
   labels:
-    io.kompose.service: gathering-surf-server
-  name: gathering-surf-server
+    io.kompose.service: gathering-surf
+  name: gathering-surf
 spec:
   replicas: 3
   selector:
     matchLabels:
-      io.kompose.service: gathering-surf-server
+      io.kompose.service: gathering-surf
   template:
     metadata:
       annotations:
         kompose.cmd: kompose convert
         kompose.version: 1.34.0 (cbf2835db)
       labels:
-        io.kompose.service: gathering-surf-server
+        io.kompose.service: gathering-surf
     spec:
       containers:
         - env:
             - name: REDIS_HOST
               value: gathering-surf-cache
           image: 10.108.202.38:5000/gathering_surf:0.1.1
-          name: gathering-surf-server
+          name: gathering-surf
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -98,15 +98,15 @@ metadata:
     kompose.cmd: kompose convert
     kompose.version: 1.34.0 (cbf2835db)
   labels:
-    io.kompose.service: gathering-surf-server
-  name: gathering-surf-server
+    io.kompose.service: gathering-surf
+  name: gathering-surf
 spec:
   ports:
     - name: "8080"
       port: 8080
       targetPort: 8080
   selector:
-    io.kompose.service: gathering-surf-server
+    io.kompose.service: gathering-surf
 ---
 apiVersion: v1
 kind: Service
@@ -124,3 +124,43 @@ spec:
       targetPort: 6379
   selector:
     io.kompose.service: gathering-surf-cache
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gathering.surf
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gathering-surf
+                port:
+                  number: 8080
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gathering-surf-cache-freshner
+spec:
+  schedule: "*/3 * * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 5
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          containers:
+            - name: gathering-surf-cache-freshner
+              image: alpine
+              command: ["sh", "-c"]
+              args:
+                - |
+                  apk add --no-cache curl && \
+                  curl http://gathering-surf:8080 > /dev/null
+          restartPolicy: OnFailure
