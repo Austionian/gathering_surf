@@ -249,6 +249,7 @@ build-kube:
 [private]
 upload-kube:
     #!/bin/bash
+    : ${TAG=$(yq '.package.version' Cargo.toml)}
     set -euo pipefail
 
     # Build the image
@@ -283,6 +284,8 @@ upload-kube:
 [group('Deploy')]
 deploy:
     #!/bin/bash
+    export TAG=$(yq '.package.version' Cargo.toml)
+
     # Upload the latest build of the image to the internal registry, then
     # update the tag in the kube config file, send it to node0, then apply it.
     # User must be in the deploygrp on node0 to be able to create files there!
@@ -293,7 +296,7 @@ deploy:
 [group('Deploy')]
 deploy-kube:
     #!/bin/bash
-    export TAG=$(yq '.package.version' Cargo.toml)
+    : ${TAG=$(yq '.package.version' Cargo.toml)}
 
     # Update the tag in the kube config file, send it to node0, then apply it.
     # User must be in the deploygrp on node0 to be able to create files there and
