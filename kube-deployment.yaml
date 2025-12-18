@@ -130,6 +130,7 @@ kind: Ingress
 metadata:
   name: gathering-surf-ingress
   annotations:
+    # cert-manager.io/issuer: "letsencrypt-prod"
     # Rate limiting - 10 requests per second per IP
     nginx.ingress.kubernetes.io/limit-rps: "10"
     # Connection limiting - max 5 concurrent connections per IP
@@ -158,12 +159,12 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     # SSL redirect
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-# Custom error pages
-# nginx.ingress.kubernetes.io/custom-http-errors: "403,404,500,502,503"
-# nginx.ingress.kubernetes.io/default-backend: custom-error-pages
-
 spec:
   ingressClassName: nginx
+  # tls:
+  #   - hosts:
+  #       - gathering.surf
+  #     secretName: gathering-surf-tls
   rules:
     - host: gathering.surf
       http:
