@@ -198,5 +198,5 @@ spec:
               args:
                 - |
                   apk add --no-cache curl && \
-                  curl -L https://gathering-surf:8080 > /dev/null
+                  curl http://gathering-surf:8080 > /dev/null
           restartPolicy: OnFailure
