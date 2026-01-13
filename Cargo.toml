@@ -1,6 +1,6 @@
 [package]
 name = "gathering_surf"
-version = "0.1.13"
+version = "0.1.14"
 edition = "2024"
 default-run = "gathering_surf"
 

@@ -346,3 +346,20 @@ deploy-kube:
     yq eval -i 'select(.metadata.name=="gathering-surf" and .kind=="Deployment").spec.template.spec.containers[].image = "10.108.202.38:5000/gathering_surf:'$TAG'"' kube-deployment.yaml \
         && scp -P "{{PORT}}" ./kube-deployment.yaml {{HOST}}:/opt/deploys/gathering_surf.yaml \
         && ssh -p "{{PORT}}" {{HOST}} "kubectl apply -f /opt/deploys/gathering_surf.yaml"
+
+# Revert the deployment to a specific tag.
+[group('Deploy')]
+revert:
+    #!/bin/bash
+    #The tag must already be present in the private registry.
+    read -p "Revert to which tag? " TAG
+
+    # Export the tag so deploy-kube will pick up the variable
+    export TAG=$TAG
+
+    # Check that it's valid
+    if [[ $TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        just deploy-kube
+    else 
+        echo "Invalid tag."
+    fi
