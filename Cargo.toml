@@ -1,6 +1,6 @@
 [package]
 name = "gathering_surf"
-version = "0.1.15"
+version = "0.1.17"
 edition = "2024"
 default-run = "gathering_surf"
 
@@ -20,7 +20,7 @@ maud = { git = "https://github.com/austionian/maud.git", rev = "b4bdfe31e9c3de97
 ] }
 notify = "8"
 redis = { version = "0.32", features = ["tokio-comp"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
 serde_json = "1"

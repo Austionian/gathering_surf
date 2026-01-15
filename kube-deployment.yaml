@@ -89,7 +89,7 @@ spec:
         - env:
             - name: REDIS_HOST
               value: gathering-surf-cache
-          image: 10.108.202.38:5000/gathering_surf:0.1.15
+          image: 10.108.202.38:5000/gathering_surf:0.1.17
           name: gathering-surf
           resources:
             requests:
