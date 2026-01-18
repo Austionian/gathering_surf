@@ -136,7 +136,7 @@ update:
     cargo update
     echo -e "Dependencies updated! \n"
     cargo clippy
-    just test && just bump-patch
+    just test
 
 # Runs the tests, writes new snapshots
 [group('Test')]
