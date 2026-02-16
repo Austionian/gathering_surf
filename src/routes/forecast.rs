@@ -1,13 +1,10 @@
 use super::AppError;
-use crate::{AppState, Forecast, SpotParam};
-use axum::{
-    extract::{Query, State},
-    response::Json,
-};
+use crate::{AppState, Forecast, SpotQuery};
+use axum::{extract::State, Json};
 use std::sync::Arc;
 
 pub async fn forecast(
-    selected_spot: Query<SpotParam>,
+    selected_spot: SpotQuery,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Forecast>, AppError> {
     Ok(Json(

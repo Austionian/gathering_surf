@@ -1,11 +1,11 @@
-use crate::{AppState, Forecast, Realtime, Spot, SpotParam, TEMPLATES, WaterQuality};
+use crate::{AppState, Forecast, Realtime, Spot, SpotParam, WaterQuality, TEMPLATES};
 use axum::{
     body::Body,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use maud::{Markup, PreEscaped, html};
+use maud::{html, Markup, PreEscaped};
 use std::{convert::Infallible, sync::Arc};
 use tokio::sync::mpsc::{self, Sender};
 use tracing::error;
@@ -163,7 +163,7 @@ pub async fn root(
 }
 
 // Make our own error that wraps `anyhow::Error`.
-pub struct AppError(anyhow::Error);
+pub struct AppError(pub anyhow::Error);
 
 // Tell axum how to convert `AppError` into a response.
 impl IntoResponse for AppError {

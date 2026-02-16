@@ -1,13 +1,10 @@
 use super::AppError;
-use crate::{AppState, Realtime, SpotParam};
-use axum::{
-    extract::{Query, State},
-    response::Json,
-};
+use crate::{AppState, Realtime, SpotQuery};
+use axum::{extract::State, response::Json};
 use std::sync::Arc;
 
 pub async fn realtime(
-    selected_spot: Query<SpotParam>,
+    selected_spot: SpotQuery,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Realtime>, AppError> {
     Ok(Json(

@@ -9,8 +9,7 @@ RUN apt install -y gcc-aarch64-linux-gnu
 
 RUN rustup target add aarch64-unknown-linux-musl
 
-RUN cargo install --locked cargo-chef sccache
-ENV RUSTC_WRAPPER=sccache SCCACHE_DIR=/sccache
+RUN cargo install --locked cargo-chef
 
 FROM chef AS planner
 COPY . .
@@ -18,15 +17,9 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
-    cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 COPY . . 
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
-    cargo build --release --target aarch64-unknown-linux-musl
+RUN cargo build --release --target aarch64-unknown-linux-musl
 
 FROM --platform=$BUILDPLATFORM gcr.io/distroless/cc-debian12 AS runtime
 WORKDIR /app

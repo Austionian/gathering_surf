@@ -1,4 +1,10 @@
 use super::Quality;
+use axum::{
+    extract::{FromRequestParts, Query},
+    http::{request::Parts, StatusCode},
+    response::{IntoResponse, Json, Response},
+};
+use serde_json::json;
 use std::sync::OnceLock;
 
 #[derive(serde::Deserialize, Debug)]
@@ -10,6 +16,35 @@ impl SpotParam {
     pub fn get_spot(&mut self) -> Location {
         // Get the selected spot, fallback to Atwater
         self.spot.take().unwrap_or(Location::Atwater)
+    }
+}
+
+/// Custom query extractor for api endpoints
+pub struct SpotQuery(pub SpotParam);
+
+// Ensure api requests with bad query params return JSON rather than plain text.
+impl<S> FromRequestParts<S> for SpotQuery
+where
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        // Parse query string manually to catch errors
+        match Query::<SpotParam>::from_request_parts(parts, _state).await {
+            Ok(Query(param)) => Ok(SpotQuery(param)),
+            Err(e) => {
+                tracing::error!("Query parse error: {:?}", e);
+                let error_response = (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({
+                        "error": "Invalid query parameter",
+                        "details": e.to_string()
+                    })),
+                );
+                Err(error_response.into_response())
+            }
+        }
     }
 }
 
