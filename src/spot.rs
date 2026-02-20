@@ -1,7 +1,7 @@
 use super::Quality;
 use axum::{
     extract::{FromRequestParts, Query},
-    http::{request::Parts, StatusCode},
+    http::{StatusCode, request::Parts},
     response::{IntoResponse, Json, Response},
 };
 use serde_json::json;

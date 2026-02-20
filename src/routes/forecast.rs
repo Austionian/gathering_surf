@@ -1,6 +1,6 @@
 use super::AppError;
 use crate::{AppState, Forecast, SpotQuery};
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use std::sync::Arc;
 
 pub async fn forecast(
